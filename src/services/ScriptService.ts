@@ -95,21 +95,29 @@ export const useScriptService = () => {
         scripts.push(doc.data());
       });
       
+      console.log("User's own scripts:", scripts.length);
+      
       // If admin, also get all protected scripts not owned by the user
       if (includeProtected) {
+        console.log("Admin user - fetching protected scripts");
         const protectedQuery = query(
           collection(db, "scripts"),
           where("visibility", "==", "protected")
         );
         
         const protectedSnapshot = await getDocs(protectedQuery);
+        let protectedCount = 0;
+        
         protectedSnapshot.forEach((doc) => {
           // Don't add duplicates (user's own protected scripts)
           const data = doc.data();
           if (data.userId !== user.uid && !scripts.some(script => script.id === doc.id)) {
             scripts.push(data);
+            protectedCount++;
           }
         });
+        
+        console.log(`Added ${protectedCount} protected scripts from other users`);
       }
       
       return scripts;

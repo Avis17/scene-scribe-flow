@@ -63,20 +63,27 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
+        // Pass isAdmin to getUserScripts to ensure protected scripts are fetched for admins
         const userScripts = await scriptService.getUserScripts(isAdmin);
         
         // Properly transform and validate script data before setting state
-        const validScripts = userScripts.filter(script => 
-          script && script.id && script.title && script.author && 
-          script.createdAt && script.updatedAt
-        ).map(script => ({
-          id: script.id,
-          title: script.title || "Untitled",
-          author: script.author || "Unknown",
-          visibility: script.visibility as ScriptVisibility,
-          createdAt: script.createdAt,
-          updatedAt: script.updatedAt
-        }));
+        const validScripts = userScripts
+          .filter(script => 
+            script && script.id && script.title && 
+            (script.author !== undefined) && 
+            script.createdAt && script.updatedAt
+          )
+          .map(script => ({
+            id: script.id,
+            title: script.title || "Untitled",
+            author: script.author || "Unknown",
+            visibility: script.visibility as ScriptVisibility,
+            createdAt: script.createdAt,
+            updatedAt: script.updatedAt
+          }));
+        
+        console.log("Fetched scripts:", validScripts);
+        console.log("Is admin:", isAdmin);
         
         setScripts(validScripts);
         setFilteredScripts(validScripts);
@@ -184,6 +191,11 @@ const ScriptsList: React.FC = () => {
       <div className="p-6 max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Scriptly - Your Scripts</h1>
+          {isAdmin && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Admin mode: You can see both your scripts and protected scripts
+            </p>
+          )}
         </div>
 
         {loading ? (
