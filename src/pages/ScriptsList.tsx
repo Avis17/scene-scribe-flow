@@ -64,9 +64,22 @@ const ScriptsList: React.FC = () => {
       setLoading(true);
       if (user) {
         const userScripts = await scriptService.getUserScripts(isAdmin);
-        // Type casting to ensure proper type compatibility
-        setScripts(userScripts as ScriptData[]);
-        setFilteredScripts(userScripts as ScriptData[]);
+        
+        // Properly transform and validate script data before setting state
+        const validScripts = userScripts.filter(script => 
+          script && script.id && script.title && script.author && 
+          script.createdAt && script.updatedAt
+        ).map(script => ({
+          id: script.id,
+          title: script.title || "Untitled",
+          author: script.author || "Unknown",
+          visibility: script.visibility as ScriptVisibility,
+          createdAt: script.createdAt,
+          updatedAt: script.updatedAt
+        }));
+        
+        setScripts(validScripts);
+        setFilteredScripts(validScripts);
       }
     } catch (error) {
       console.error("Error fetching scripts:", error);
