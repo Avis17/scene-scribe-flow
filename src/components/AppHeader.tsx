@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const { resetScript } = useScript();
+  
+  useEffect(() => {
+    if (user) {
+      console.log("Current user:", user.email);
+      console.log("Is admin:", isAdmin);
+    }
+  }, [user, isAdmin]);
   
   const handleLogin = () => {
     navigate("/login");

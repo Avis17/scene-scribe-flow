@@ -61,8 +61,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
+        console.log("Checking admin status for:", user.email);
+        
         // Check if user email matches admin email
         if (user.email === ADMIN_EMAIL) {
+          console.log("Email matches admin email, granting admin access");
           setIsAdmin(true);
           
           // Create admin record in database if it doesn't exist
@@ -83,8 +86,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           const userDoc = await getDoc(userRef);
           
           if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
+            console.log("User has admin permission in database");
             setIsAdmin(true);
           } else {
+            console.log("User does not have admin permission");
             setIsAdmin(false);
           }
         }
