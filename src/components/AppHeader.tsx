@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FilePlus, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import HelpDialog from "./HelpDialog";
+import AppLogo from "./AppLogo";
 
 interface AppHeaderProps {
   showSearch?: boolean;
@@ -71,7 +71,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     <div className="p-4 border-b sticky top-0 bg-background z-10">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="font-bold text-primary text-lg mr-4">Scriptly</div>
+          <AppLogo size="md" />
           <Button variant="outline" size="sm" onClick={handleGoHome} type="button">
             <Home className="h-4 w-4 mr-2" />
             Home
