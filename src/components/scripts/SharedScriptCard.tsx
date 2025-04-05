@@ -50,6 +50,12 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
   // Check if user has edit permission
   const hasEditAccess = accessLevel === "edit";
   
+  // Check if script is protected
+  const isProtected = script.visibility === "protected";
+  
+  // Hide export button if script is protected
+  const showExportButton = !isProtected;
+  
   const handleView = () => {
     navigate(`/view/${script.id}`);
   };
@@ -136,17 +142,19 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
             )}
           </div>
           
-          {/* Export button - always show */}
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => onExport(script.id, script.title)}
-            type="button"
-            className="w-full"
-          >
-            <FileDown className="h-4 w-4 mr-1" />
-            <span>Export</span>
-          </Button>
+          {/* Export button - only show if script is not protected */}
+          {showExportButton && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => onExport(script.id, script.title)}
+              type="button"
+              className="w-full"
+            >
+              <FileDown className="h-4 w-4 mr-1" />
+              <span>Export</span>
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>
