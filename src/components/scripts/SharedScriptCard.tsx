@@ -39,7 +39,7 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
     : "view"; // Default to view if not specified
   
-  // Check if user has edit permission (not view-only permission)
+  // Check if user has edit permission
   const hasEditAccess = accessLevel === "edit";
   
   console.log("Shared script access level:", accessLevel, "for script:", script.title, "hasEditAccess:", hasEditAccess);

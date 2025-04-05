@@ -33,9 +33,20 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
 }) => {
   const { user } = useFirebase();
 
-  // Separate own scripts from shared scripts
-  const ownScripts = scripts.filter(script => !script.userId || script.userId === user?.uid);
-  const sharedScripts = scripts.filter(script => script.userId && script.userId !== user?.uid);
+  // Separate own scripts from shared scripts - improved filtering logic
+  const ownScripts = scripts.filter(script => script.userId === user?.uid);
+  const sharedScripts = scripts.filter(script => {
+    // A script is shared if:
+    // 1. It has a userId that is not the current user's
+    // 2. It has a sharedWith property that contains the current user's email
+    return (
+      script.userId && 
+      script.userId !== user?.uid && 
+      script.sharedWith && 
+      user?.email && 
+      script.sharedWith[user.email]
+    );
+  });
   
   console.log("ScriptsGrid - Own scripts:", ownScripts.length, "Shared scripts:", sharedScripts.length);
   if (sharedScripts.length > 0) {
