@@ -36,6 +36,16 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   // Separate own scripts from shared scripts
   const ownScripts = scripts.filter(script => !script.userId || script.userId === user?.uid);
   const sharedScripts = scripts.filter(script => script.userId && script.userId !== user?.uid);
+  
+  console.log("Own scripts:", ownScripts.length, "Shared scripts:", sharedScripts.length);
+  if (sharedScripts.length > 0) {
+    console.log("Example shared script:", {
+      title: sharedScripts[0].title,
+      userId: sharedScripts[0].userId,
+      currentUser: user?.uid,
+      sharedWith: sharedScripts[0].sharedWith
+    });
+  }
 
   return (
     <div className="space-y-6">
