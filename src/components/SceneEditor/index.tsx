@@ -1,0 +1,67 @@
+
+import React, { useState } from "react";
+import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
+import { SpeechRecognitionProvider } from "./SpeechRecognitionContext";
+import ElementEditor from "./ElementEditor";
+import ElementButtons from "./ElementButtons";
+import LanguageSelector from "./LanguageSelector";
+
+interface SceneEditorProps {
+  scene: Scene;
+  onClose: () => void;
+}
+
+const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
+  const { updateScene } = useScript();
+  const [elements, setElements] = useState<SceneElement[]>(scene.elements);
+  
+  const handleElementTypeChange = (index: number, type: SceneElement["type"]) => {
+    const newElements = [...elements];
+    newElements[index] = { ...newElements[index], type };
+    setElements(newElements);
+  };
+
+  const handleElementContentChange = (index: number, content: string) => {
+    const newElements = [...elements];
+    newElements[index] = { ...newElements[index], content };
+    setElements(newElements);
+  };
+
+  const addElement = (type: SceneElement["type"] = "action") => {
+    setElements([...elements, { type, content: "" }]);
+  };
+
+  const removeElement = (index: number) => {
+    const newElements = [...elements];
+    newElements.splice(index, 1);
+    setElements(newElements);
+  };
+
+  const handleSave = () => {
+    updateScene(scene.id, elements);
+    onClose();
+  };
+
+  return (
+    <SpeechRecognitionProvider>
+      <div className="space-y-4">
+        <LanguageSelector />
+        
+        {elements.map((element, index) => (
+          <ElementEditor
+            key={index}
+            element={element}
+            index={index}
+            onTypeChange={handleElementTypeChange}
+            onContentChange={handleElementContentChange}
+            onRemove={removeElement}
+          />
+        ))}
+        
+        <ElementButtons onAddElement={addElement} onSave={handleSave} />
+      </div>
+    </SpeechRecognitionProvider>
+  );
+};
+
+export default SceneEditor;
