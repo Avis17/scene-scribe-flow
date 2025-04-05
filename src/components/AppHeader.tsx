@@ -53,7 +53,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   
   const handleCreateNew = () => {
-    navigate("/", { state: { forceNew: true } });
+    navigate("/editor", { state: { forceNew: true } });
   };
 
   const handleGoHome = () => {

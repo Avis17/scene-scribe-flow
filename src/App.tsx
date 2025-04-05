@@ -42,6 +42,10 @@ const App = () => {
                   <Routes>
                     <Route 
                       path="/" 
+                      element={<Navigate to="/scripts" replace />} 
+                    />
+                    <Route 
+                      path="/editor" 
                       element={
                         <AuthGuard>
                           <ScriptProvider>

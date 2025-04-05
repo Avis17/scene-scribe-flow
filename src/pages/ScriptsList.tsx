@@ -145,12 +145,12 @@ const ScriptsList: React.FC = () => {
 
   const handleOpenScript = (scriptId: string) => {
     setCurrentScriptId(scriptId);
-    navigate("/");
+    navigate("/editor");
   };
 
   const handleCreateNew = () => {
     resetScript();
-    navigate("/", { state: { forceNew: true } });
+    navigate("/editor", { state: { forceNew: true } });
   };
 
   const handleExportPDF = async (scriptId: string, title: string) => {
