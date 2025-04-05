@@ -1,18 +1,16 @@
-
 import React from "react";
 import { useScript } from "@/contexts/ScriptContext";
-import { useFirebase } from "@/contexts/FirebaseContext";
 import { Input } from "@/components/ui/input";
-import ThemeToggle from "./ThemeToggle";
 import { Button } from "./ui/button";
-import { Save, FileDown, Plus, List, LogIn, LogOut, User } from "lucide-react";
+import { Save, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast"; 
-import HelpDialog from "./HelpDialog";
+import AppHeader from "./AppHeader";
+import { useFirebase } from "@/contexts/FirebaseContext";
 
 const ScriptHeader: React.FC = () => {
   const { title, setTitle, author, setAuthor, addScene, saveScript, loading, scenes } = useScript();
-  const { user, signOut } = useFirebase();
+  const { user } = useFirebase();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,21 +31,7 @@ const ScriptHeader: React.FC = () => {
     }
   };
   
-  const handleViewScripts = () => {
-    navigate("/scripts");
-  };
-  
-  const handleLogin = () => {
-    navigate("/login");
-  };
-  
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/login");
-  };
-  
   const handleExport = () => {
-    // Generate a PDF from the current script
     try {
       exportScriptToPDF();
       toast({
@@ -65,7 +49,6 @@ const ScriptHeader: React.FC = () => {
   };
   
   const exportScriptToPDF = () => {
-    // Create a styled HTML string representation of the script
     let content = `
       <html>
         <head>
@@ -87,7 +70,6 @@ const ScriptHeader: React.FC = () => {
           <p class="author">by ${author}</p>
     `;
     
-    // Add each scene to the content
     scenes.forEach((scene, sceneIndex) => {
       scene.elements.forEach((element) => {
         content += `<div class="${element.type}">${element.content}</div>`;
@@ -99,7 +81,6 @@ const ScriptHeader: React.FC = () => {
       </html>
     `;
     
-    // Create an invisible iframe to print from
     const printIframe = document.createElement('iframe');
     printIframe.style.position = 'absolute';
     printIframe.style.top = '-9999px';
@@ -111,7 +92,6 @@ const ScriptHeader: React.FC = () => {
       contentWindow.document.write(content);
       contentWindow.document.close();
       
-      // Wait for content to load before printing
       setTimeout(() => {
         contentWindow.focus();
         contentWindow.print();
@@ -121,63 +101,46 @@ const ScriptHeader: React.FC = () => {
   };
 
   return (
-    <div className="p-4 border-b sticky top-0 bg-background z-10">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <Button onClick={addScene} className="flex items-center">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Scene
-          </Button>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={loading}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <HelpDialog />
-          {user ? (
-            <>
-              <Button variant="outline" size="sm" onClick={handleViewScripts}>
-                <List className="h-4 w-4 mr-2" />
-                My Scripts
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-              <div className="flex items-center ml-2 text-sm">
-                <User className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">{user.displayName || user.email}</span>
-              </div>
-            </>
-          ) : (
-            <Button variant="default" size="sm" onClick={handleLogin}>
-              <LogIn className="h-4 w-4 mr-2" />
-              Login
+    <>
+      <AppHeader />
+      <div className="p-4 border-b bg-background z-5">
+        <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Button onClick={addScene} variant="outline">
+              Add Scene
             </Button>
-          )}
-          <ThemeToggle />
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSave} 
+                disabled={loading}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
+          </div>
+          
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-xl font-bold text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
+            placeholder="Screenplay Title"
+          />
+          <Input
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            className="text-sm text-muted-foreground text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
+            placeholder="Author Name"
+          />
         </div>
       </div>
-      <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="text-xl font-bold border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded text-center"
-          placeholder="Screenplay Title"
-        />
-        <Input
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="text-sm text-muted-foreground border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded text-center"
-          placeholder="Author Name"
-        />
-      </div>
-    </div>
+    </>
   );
 };
 

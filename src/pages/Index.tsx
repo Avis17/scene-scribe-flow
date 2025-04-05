@@ -2,14 +2,21 @@
 import React, { useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useScript } from "@/contexts/ScriptContext";
 
 const Index: React.FC = () => {
-  const { user, loading } = useFirebase();
+  const { user, loading: authLoading } = useFirebase();
+  const { currentScriptId } = useScript();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // We don't force redirect here since ScriptHeader handles login buttons
-  // This makes the app usable without login (until saving)
+  useEffect(() => {
+    // If we have no script ID selected, redirect to scripts list
+    if (!authLoading && !currentScriptId && location.pathname === "/") {
+      navigate("/scripts");
+    }
+  }, [currentScriptId, navigate, authLoading, location.pathname]);
   
   return (
     <div className="min-h-screen bg-background">
