@@ -65,7 +65,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<UserWithPermissions[]>([]);
   const [adminCheckComplete, setAdminCheckComplete] = useState<boolean>(false);
 
-  // Check if current user is admin - improved with better logging and stability
+  // Check if current user is admin - improved with better logging and handling
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -93,30 +93,48 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           console.log("✅ Email matches admin email exactly, granting admin access");
           isUserAdmin = true;
           
-          // Create admin record in database if it doesn't exist
-          const adminRef = doc(db, "permissions", user.uid);
-          const adminDoc = await getDoc(adminRef);
-          
-          if (!adminDoc.exists()) {
-            await setDoc(adminRef, {
-              email: user.email,
-              displayName: user.displayName,
-              permissions: ["read", "write", "delete", "admin"],
-              lastUpdated: new Date().toISOString()
-            });
-            console.log("Created admin record in database");
+          try {
+            // Try to create admin record in database if it doesn't exist,
+            // but don't block access if this fails due to permissions
+            const adminRef = doc(db, "permissions", user.uid);
+            const adminDoc = await getDoc(adminRef);
+            
+            if (!adminDoc.exists()) {
+              try {
+                await setDoc(adminRef, {
+                  email: user.email,
+                  displayName: user.displayName,
+                  permissions: ["read", "write", "delete", "admin"],
+                  lastUpdated: new Date().toISOString()
+                });
+                console.log("Created admin record in database");
+              } catch (dbError) {
+                // Just log this error but don't let it affect admin access
+                console.warn("Could not create admin record in database:", dbError);
+                console.log("Administrator access granted based on email match only");
+              }
+            }
+          } catch (error) {
+            // Just log this error but don't let it affect admin access
+            console.warn("Error checking database for admin record:", error);
+            console.log("Administrator access granted based on email match only");
           }
         } else {
-          // Check if user has admin permission in database
-          console.log("Checking for admin permission in database for uid:", user.uid);
-          const userRef = doc(db, "permissions", user.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
-            console.log("✅ User has admin permission in database");
-            isUserAdmin = true;
-          } else {
-            console.log("❌ User does not have admin permission");
+          // Try to check if user has admin permission in database
+          try {
+            console.log("Checking for admin permission in database for uid:", user.uid);
+            const userRef = doc(db, "permissions", user.uid);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
+              console.log("✅ User has admin permission in database");
+              isUserAdmin = true;
+            } else {
+              console.log("❌ User does not have admin permission");
+              isUserAdmin = false;
+            }
+          } catch (error) {
+            console.error("Error checking database permissions:", error);
             isUserAdmin = false;
           }
         }
@@ -127,7 +145,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         
       } catch (error) {
         console.error("Error checking admin status:", error);
-        setIsAdmin(false);
+        
+        // FALLBACK: If there was an error but email matches admin email exactly,
+        // still grant admin access
+        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          console.log("⚠️ Error occurred, but email matches admin - granting access");
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
       } finally {
         setLoading(false);
         setAdminCheckComplete(true);
@@ -146,7 +172,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, db]);
 
-  // Fetch all users with permissions
+  // Fetch all users with permissions - with better error handling
   const fetchUsers = async () => {
     if (!user) return;
     
@@ -170,12 +196,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
+      // Return an empty array but don't crash
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Update user permissions
+  // Update user permissions - with better error handling
   const updateUserPermissions = async (uid: string, permissions: UserPermission[]) => {
     try {
       setLoading(true);
@@ -193,13 +221,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       return;
     } catch (error) {
       console.error("Error updating user permissions:", error);
-      throw error;
+      // Show user-friendly error
+      throw new Error("Could not update permissions. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Remove user from permissions
+  // Remove user from permissions - with better error handling
   const removeUser = async (uid: string) => {
     try {
       setLoading(true);
@@ -212,13 +241,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       return;
     } catch (error) {
       console.error("Error removing user:", error);
-      throw error;
+      // Show user-friendly error
+      throw new Error("Could not remove user. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Add new user with permissions
+  // Add new user with permissions - with better error handling
   const addUser = async (email: string, permissions: UserPermission[]) => {
     try {
       setLoading(true);
@@ -270,7 +300,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       return;
     } catch (error) {
       console.error("Error adding user:", error);
-      throw error;
+      // Show user-friendly error based on error type
+      if (error instanceof Error && error.message === "User already has permissions") {
+        throw error;
+      } else {
+        throw new Error("Could not add user. You may not have sufficient access rights.");
+      }
     } finally {
       setLoading(false);
     }

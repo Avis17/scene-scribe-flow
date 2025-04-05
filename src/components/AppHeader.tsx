@@ -20,9 +20,20 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   const { isAdmin, loading } = useAdmin();
   const navigate = useNavigate();
   const { resetScript } = useScript();
+  const [adminReady, setAdminReady] = useState(false);
   
-  // Only show admin button when isAdmin is true and loading is complete
-  const showAdminButton = isAdmin && !loading;
+  // Add a delay to ensure admin status is stable before showing admin features
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setAdminReady(true);
+      }, 500); // Short delay to ensure stability
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+  
+  // Only show admin button when isAdmin is true and loading is complete and adminReady is true
+  const showAdminButton = isAdmin && !loading && adminReady;
   
   useEffect(() => {
     if (user) {
@@ -72,7 +83,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
               size="sm" 
               onClick={handleGoToAdmin} 
               type="button" 
-              className="bg-amber-100 hover:bg-amber-200 border-amber-300"
+              className="bg-amber-100 hover:bg-amber-200 border-amber-300 transition-all animate-in fade-in duration-300"
             >
               <Shield className="h-4 w-4 mr-2 text-amber-600" />
               Admin
