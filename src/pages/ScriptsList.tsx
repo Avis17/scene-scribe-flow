@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -100,12 +99,15 @@ const ScriptsList: React.FC = () => {
     }
   };
 
-  const handleOpenScript = (scriptId: string) => {
+  const handleOpenScript = (scriptId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setCurrentScriptId(scriptId);
     navigate("/");
   };
 
-  const handleCreateNew = () => {
+  const handleCreateNew = (e: React.MouseEvent) => {
+    e.preventDefault();
     setCurrentScriptId(null);
     navigate("/");
   };
@@ -248,7 +250,7 @@ const ScriptsList: React.FC = () => {
               <Card 
                 key={script.id} 
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleOpenScript(script.id)}
+                onClick={(e) => handleOpenScript(script.id, e)}
               >
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -270,7 +272,7 @@ const ScriptsList: React.FC = () => {
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={() => handleOpenScript(script.id)}
+                      onClick={(e) => handleOpenScript(script.id, e)}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -288,6 +290,7 @@ const ScriptsList: React.FC = () => {
                     variant="destructive" 
                     size="sm"
                     onClick={(e) => handleDeleteScript(script.id, e)}
+                    className="ml-2"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
