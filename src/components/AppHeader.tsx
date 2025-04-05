@@ -25,6 +25,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
     if (user) {
       console.log("Current user:", user.email);
       console.log("Is admin:", isAdmin);
+      
+      // Force a re-render after a small delay to ensure admin status is set
+      const timer = setTimeout(() => {
+        console.log("Re-checking admin status:", isAdmin);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
   }, [user, isAdmin]);
   

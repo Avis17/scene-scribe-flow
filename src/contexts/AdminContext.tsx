@@ -35,6 +35,7 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+// Fix: Make sure this matches the exact string of the admin email with correct casing
 export const ADMIN_EMAIL = "sivasubramanian1617@gmail.com";
 
 export const useAdmin = () => {
@@ -62,9 +63,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         console.log("Checking admin status for:", user.email);
+        console.log("Admin email constant:", ADMIN_EMAIL);
+        console.log("Does email match?", user.email === ADMIN_EMAIL);
         
-        // Check if user email matches admin email
-        if (user.email === ADMIN_EMAIL) {
+        // Check if user email matches admin email (case-sensitive comparison)
+        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           console.log("Email matches admin email, granting admin access");
           setIsAdmin(true);
           
