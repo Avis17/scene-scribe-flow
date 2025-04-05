@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ interface ScriptContextType {
   currentScriptId: string | null;
   setCurrentScriptId: (id: string | null) => void;
   loading: boolean;
+  resetScript: () => void;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -73,6 +74,29 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       setAuthor(user.displayName);
     }
   }, [user, author]);
+
+  // Reset script to default values
+  const resetScript = useCallback(() => {
+    setTitle("Untitled Screenplay");
+    setAuthor(user?.displayName || "");
+    setScenes([
+      {
+        id: "scene-1",
+        isCollapsed: false,
+        elements: [
+          {
+            type: "scene-heading",
+            content: "INT. LIVING ROOM - DAY",
+          },
+          {
+            type: "action",
+            content: "The room is empty. Sunlight streams through large windows.",
+          },
+        ],
+      },
+    ]);
+    setCurrentScriptId(null);
+  }, [user]);
 
   // Load script if ID is provided
   useEffect(() => {
@@ -208,6 +232,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         currentScriptId,
         setCurrentScriptId,
         loading,
+        resetScript,
       }}
     >
       {children}

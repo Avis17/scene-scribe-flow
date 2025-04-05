@@ -4,10 +4,11 @@ import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useScript } from "@/contexts/ScriptContext";
+import AppHeader from "@/components/AppHeader";
 
 const Index: React.FC = () => {
   const { user, loading: authLoading } = useFirebase();
-  const { currentScriptId } = useScript();
+  const { currentScriptId, resetScript } = useScript();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -16,16 +17,19 @@ const Index: React.FC = () => {
       // Only redirect if we're not already redirecting or loading auth
       if (!authLoading && location.pathname === "/") {
         if (!currentScriptId) {
-          console.log("No script selected, user should create a new one or select from list");
+          console.log("No script selected, creating a new script");
+          // Reset to a blank script when coming to the editor without a script ID
+          resetScript();
         }
       }
     };
     
     checkScriptAndRedirect();
-  }, [currentScriptId, navigate, authLoading, location.pathname]);
+  }, [currentScriptId, navigate, authLoading, location.pathname, resetScript]);
   
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       <ScriptEditor />
     </div>
   );

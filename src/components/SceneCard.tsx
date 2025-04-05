@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Trash2, Pencil } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2, Pencil, X } from "lucide-react";
 import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
 import SceneEditor from "./SceneEditor";
 
@@ -27,6 +27,10 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
     return action ? action.content.substring(0, 100) + (action.content.length > 100 ? "..." : "") : "";
   };
 
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
   return (
     <Card className="mb-4 border-2 border-border hover:border-primary/50 transition-colors animate-fade-in">
       <CardHeader className="p-4 flex flex-row justify-between items-center">
@@ -39,24 +43,41 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
           )}
         </div>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
+          {isEditing ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelEdit}
+              type="button"
+            >
+              <X className="h-4 w-4" />
+              <span className="ml-1 hidden sm:inline">Cancel</span>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              type="button"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="ml-1 hidden sm:inline">Edit</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => deleteScene(scene.id)}
+            type="button"
           >
             <Trash2 className="h-4 w-4" />
+            <span className="ml-1 hidden sm:inline">Delete</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => toggleSceneCollapse(scene.id)}
+            type="button"
           >
             {scene.isCollapsed ? (
               <ChevronDown className="h-4 w-4" />

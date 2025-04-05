@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -33,7 +32,7 @@ const ScriptsList: React.FC = () => {
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
-  const { setCurrentScriptId } = useScript();
+  const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -99,21 +98,13 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleOpenScript = (scriptId: string) => {
-    // Set the script ID first, then navigate
     setCurrentScriptId(scriptId);
-    // Add a small timeout to ensure the state is updated before navigation
-    setTimeout(() => {
-      navigate("/");
-    }, 50);
+    navigate("/");
   };
 
   const handleCreateNew = () => {
-    // Clear the current script ID first, then navigate
-    setCurrentScriptId(null);
-    // Add a small timeout to ensure the state is updated before navigation
-    setTimeout(() => {
-      navigate("/");
-    }, 50);
+    resetScript();
+    navigate("/");
   };
 
   const handleExportPDF = async (scriptId: string, title: string) => {

@@ -17,7 +17,7 @@ interface AppHeaderProps {
 const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) => {
   const { user, signOut } = useFirebase();
   const navigate = useNavigate();
-  const { setCurrentScriptId } = useScript();
+  const { resetScript } = useScript();
   
   const handleLogin = () => {
     navigate("/login");
@@ -33,8 +33,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   };
   
   const handleCreateNew = () => {
-    // Clear the current script ID first, then navigate
-    setCurrentScriptId(null);
+    // Reset to a new script first, then navigate
+    resetScript();
     navigate("/");
   };
 
