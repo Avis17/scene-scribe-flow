@@ -20,7 +20,14 @@ import NotFound from "./pages/NotFound";
 
 const App = () => {
   // Create a new QueryClient for each rendering - avoids sharing client across renders
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -67,9 +74,7 @@ const App = () => {
                         element={
                           <AuthGuard>
                             <AdminGuard>
-                              <ScriptProvider>
-                                <Admin />
-                              </ScriptProvider>
+                              <Admin />
                             </AdminGuard>
                           </AuthGuard>
                         } 

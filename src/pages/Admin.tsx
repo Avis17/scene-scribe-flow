@@ -78,11 +78,16 @@ const Admin: React.FC = () => {
   const [protectedScripts, setProtectedScripts] = useState<ScriptData[]>([]);
   const [loadingScripts, setLoadingScripts] = useState(false);
   const scriptService = useScriptService();
+  const [dataFetched, setDataFetched] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-    fetchScripts();
-  }, []);
+    // Only fetch data once to prevent infinite loop
+    if (!dataFetched && !loading && isAdmin) {
+      fetchUsers();
+      fetchScripts();
+      setDataFetched(true);
+    }
+  }, [isAdmin, loading, dataFetched]);
 
   const fetchScripts = async () => {
     try {
