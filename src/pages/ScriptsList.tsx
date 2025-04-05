@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -36,6 +35,7 @@ const ScriptsList: React.FC = () => {
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
   const [isViewingAll, setIsViewingAll] = useState<boolean>(false);
   const fetchInProgress = useRef<boolean>(false);
+  const initialLoadComplete = useRef<boolean>(false);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
@@ -50,7 +50,7 @@ const ScriptsList: React.FC = () => {
   
   // Modified fetchScripts to better handle the admin fetch and prevent multiple fetches
   const fetchScripts = useCallback(async (fetchAll = false) => {
-    if (!user) return;
+    if (!user || fetchInProgress.current) return;
     
     try {
       console.log("Fetching scripts for", user.email, "isAdmin:", isAdminUser, "viewingAll:", fetchAll);
@@ -91,6 +91,7 @@ const ScriptsList: React.FC = () => {
       // Set both states at once to avoid multiple renders
       setScripts(userScripts);
       setFilteredScripts(userScripts);
+      initialLoadComplete.current = true;
     } catch (error) {
       console.error("Error fetching scripts:", error);
       toast({
@@ -109,22 +110,15 @@ const ScriptsList: React.FC = () => {
 
   // Use a more stable effect for initial loading with cleanup
   useEffect(() => {
-    let isMounted = true;
-    
-    if (user && isMounted) {
-      // Use a small timeout to avoid immediate state changes 
-      // causing render problems with filtered scripts
-      const timer = setTimeout(() => {
-        if (isMounted) {
-          fetchScripts(isViewingAll);
-        }
-      }, 100);
-      
-      return () => {
-        isMounted = false;
-        clearTimeout(timer);
-      };
+    // Only run this effect once when user is available and initial load is not complete
+    if (user && !initialLoadComplete.current && !fetchInProgress.current) {
+      fetchScripts(isViewingAll);
     }
+    
+    // Cleanup function
+    return () => {
+      // No cleanup needed
+    };
   }, [user, fetchScripts, isViewingAll]);
 
   // Separate effect for search to avoid triggering fetchScripts
@@ -225,27 +219,23 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
-    // Remove the check for fetchInProgress.current that was causing the button to be disabled
     console.log("Viewing all scripts clicked by admin:", user?.email);
-    setIsViewingAll(true);
-    setLoading(true);
     
-    // Execute fetch after a short delay to allow state changes to propagate
-    setTimeout(() => {
+    if (!fetchInProgress.current) {
+      setIsViewingAll(true);
+      setLoading(true);
       fetchScripts(true);
-    }, 100);
+    }
   };
 
   const handleViewMyScripts = () => {
-    // Remove the check for fetchInProgress.current that was causing the button to be disabled
     console.log("Viewing my scripts clicked by admin:", user?.email);
-    setIsViewingAll(false);
-    setLoading(true);
     
-    // Execute fetch after a short delay to allow state changes to propagate
-    setTimeout(() => {
+    if (!fetchInProgress.current) {
+      setIsViewingAll(false);
+      setLoading(true);
       fetchScripts(false);
-    }, 100);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -293,7 +283,7 @@ const ScriptsList: React.FC = () => {
                       onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
                       variant="secondary"
                       className="flex items-center gap-2"
-                      disabled={loading} // Only disable during loading, not based on fetchInProgress
+                      disabled={loading}
                     >
                       <BookOpen className="h-4 w-4" />
                       {isViewingAll ? "View My Scripts" : "View All Screenplays"}
@@ -379,4 +369,3 @@ const ScriptsList: React.FC = () => {
 };
 
 export default ScriptsList;
-

@@ -253,15 +253,18 @@ export const useScriptService = () => {
       scriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          // Ensure all necessary fields are present and properly formatted
+          // Create a standardized object with all required fields
           const processedData = {
-            ...data,
             id: doc.id,
-            createdAt: data.createdAt || Timestamp.now(),
-            updatedAt: data.updatedAt || Timestamp.now(),
             title: data.title || "Untitled",
             author: data.author || "Unknown",
-            scenes: Array.isArray(data.scenes) ? data.scenes : []
+            scenes: Array.isArray(data.scenes) ? data.scenes : [],
+            userId: data.userId || "unknown",
+            visibility: data.visibility || "public",
+            createdAt: data.createdAt || Timestamp.now(),
+            updatedAt: data.updatedAt || Timestamp.now(),
+            lastEditedBy: data.lastEditedBy || "unknown",
+            sharedWith: data.sharedWith || {}
           };
           
           allScripts.push(processedData);
@@ -290,7 +293,19 @@ export const useScriptService = () => {
       
       const userScriptsSnapshot = await getDocs(userScriptsQuery);
       userScriptsSnapshot.forEach((doc) => {
-        scripts.push(doc.data());
+        const data = doc.data();
+        if (data) {
+          // Ensure all scripts have consistent structure
+          scripts.push({
+            ...data,
+            id: doc.id,
+            title: data.title || "Untitled",
+            author: data.author || "Unknown",
+            scenes: Array.isArray(data.scenes) ? data.scenes : [],
+            createdAt: data.createdAt || Timestamp.now(),
+            updatedAt: data.updatedAt || Timestamp.now()
+          });
+        }
       });
       
       console.log("User's own scripts:", scripts.length);
@@ -300,7 +315,18 @@ export const useScriptService = () => {
           const allScriptsSnapshot = await getDocs(collection(db, "scripts"));
           
           const sharedScripts = allScriptsSnapshot.docs
-            .map(doc => doc.data())
+            .map(doc => {
+              const data = doc.data();
+              return {
+                ...data,
+                id: doc.id,
+                title: data.title || "Untitled",
+                author: data.author || "Unknown",
+                scenes: Array.isArray(data.scenes) ? data.scenes : [],
+                createdAt: data.createdAt || Timestamp.now(),
+                updatedAt: data.updatedAt || Timestamp.now()
+              };
+            })
             .filter(script => 
               script.sharedWith && 
               script.sharedWith[user.email] && 

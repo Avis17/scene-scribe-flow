@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { 
   initializeApp, 
@@ -84,17 +83,29 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Auth state changed:", currentUser ? `Logged in as ${currentUser.email}` : "Logged out");
       setUser(currentUser);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("Cleaning up auth state listener");
+      unsubscribe();
+    };
   }, [auth]);
 
   // Authentication functions
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      console.log("Attempting sign in with email:", email);
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log("Sign in successful for:", email);
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
