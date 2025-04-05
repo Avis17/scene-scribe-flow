@@ -128,7 +128,16 @@ const ScriptsList: React.FC = () => {
         throw new Error("Script not found");
       }
       
-      exportScriptToPDF(scriptData);
+      // Convert the scriptData to match the required format before passing to exportScriptToPDF
+      const formattedScriptData = {
+        id: scriptData.id,
+        title: scriptData.title || "Untitled",
+        author: scriptData.author || "Unknown",
+        scenes: scriptData.scenes || [],
+        // Add other required properties
+      };
+      
+      exportScriptToPDF(formattedScriptData);
       
       toast({
         title: "Success",
