@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useScript } from "@/contexts/ScriptContext";
@@ -39,32 +39,7 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      fetchScripts();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredScripts(scripts);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredScripts(
-        scripts.filter(
-          script => 
-            script.title.toLowerCase().includes(query) || 
-            script.author.toLowerCase().includes(query)
-        )
-      );
-    }
-  }, [searchQuery, scripts]);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const fetchScripts = async () => {
+  const fetchScripts = useCallback(async () => {
     try {
       setLoading(true);
       if (user) {
@@ -105,12 +80,54 @@ const ScriptsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, [user, scriptService, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchScripts();
+    }
+  }, [user, fetchScripts]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredScripts(scripts);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredScripts(
+        scripts.filter(
+          script => 
+            script.title.toLowerCase().includes(query) || 
+            script.author.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, scripts]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   const handleDeleteScript = async (scriptId: string) => {
     try {
       await scriptService.deleteScript(scriptId);
-      setScripts(prevScripts => prevScripts.filter(script => script.id !== scriptId));
+      
+      const updatedScripts = scripts.filter(script => script.id !== scriptId);
+      setScripts(updatedScripts);
+      setFilteredScripts(prevFiltered => 
+        prevFiltered.filter(script => script.id !== scriptId)
+      );
+      
+      const ownScripts = updatedScripts.filter(script => script.userId === user?.uid);
+      const sharedScripts = updatedScripts.filter(script => 
+        script.userId !== user?.uid && 
+        script.sharedWith && 
+        user?.email && 
+        script.sharedWith[user?.email]
+      );
+      
+      setOwnScriptsCount(ownScripts.length);
+      setSharedScriptsCount(sharedScripts.length);
+      
       toast({
         title: "Success",
         description: "Script deleted successfully",
@@ -122,6 +139,7 @@ const ScriptsList: React.FC = () => {
         description: "Failed to delete script",
         variant: "destructive",
       });
+      fetchScripts();
     }
   };
 
