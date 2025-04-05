@@ -26,18 +26,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
     navigate("/login");
   };
   
-  const handleViewScripts = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleViewScripts = () => {
     navigate("/scripts");
   };
   
-  const handleCreateNew = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleCreateNew = () => {
     navigate("/");
   };
 
-  const handleGoHome = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleGoHome = () => {
     navigate("/scripts");
   };
   

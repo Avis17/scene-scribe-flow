@@ -99,15 +99,12 @@ const ScriptsList: React.FC = () => {
     }
   };
 
-  const handleOpenScript = (scriptId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleOpenScript = (scriptId: string) => {
     setCurrentScriptId(scriptId);
     navigate("/");
   };
 
-  const handleCreateNew = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleCreateNew = () => {
     setCurrentScriptId(null);
     navigate("/");
   };
@@ -250,7 +247,7 @@ const ScriptsList: React.FC = () => {
               <Card 
                 key={script.id} 
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={(e) => handleOpenScript(script.id, e)}
+                onClick={() => handleOpenScript(script.id)}
               >
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -272,7 +269,10 @@ const ScriptsList: React.FC = () => {
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={(e) => handleOpenScript(script.id, e)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenScript(script.id);
+                      }}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -281,6 +281,7 @@ const ScriptsList: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={(e) => handleExportPDF(script.id, script.title, e)}
+                      className="mr-2"
                     >
                       <FileDown className="h-4 w-4 mr-1" />
                       Export
