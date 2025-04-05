@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -220,7 +221,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       if (currentScriptId) {
-        await scriptService.updateScript(currentScriptId, title, author, scenes, visibility);
+        await scriptService.updateScript(currentScriptId, title, author, scenes, visibility, user.email);
         toast({
           title: "Success",
           description: "Script updated successfully",

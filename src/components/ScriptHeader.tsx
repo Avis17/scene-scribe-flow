@@ -1,123 +1,126 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft } from "lucide-react";
-import AppHeader from "@/components/AppHeader";
-import { ScriptVisibility } from "@/services/ScriptService";
+import { useNavigate } from "react-router-dom";
+import { Save, FileDown, Lock, Unlock, List } from "lucide-react";
+import { exportScriptToPDF } from "@/utils/ScriptsExporter";
+import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
 
 const ScriptHeader: React.FC = () => {
-  const { title, setTitle, author, setAuthor, saveScript, currentScriptId, loading, resetScript } = useScript();
-  const [visibility, setVisibility] = useState<ScriptVisibility>("public");
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { 
+    title, 
+    setTitle, 
+    author, 
+    setAuthor, 
+    saveScript, 
+    scenes, 
+    loading, 
+    currentScriptId,
+    isViewOnly
+  } = useScript();
+
+  const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
 
   const handleSave = async () => {
-    if (!visibility) {
-      toast({
-        title: "Selection Required",
-        description: "Please select script visibility before saving",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      const scriptId = await saveScript(visibility);
-      if (scriptId && !currentScriptId) {
-        navigate("/"); // Stay on the page after first save
-      }
-      
-      if (scriptId) {
-        toast({
-          title: "Success",
-          description: "Script saved successfully",
-        });
-      }
-    } catch (error) {
-      console.error("Error saving script:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save script",
-        variant: "destructive",
-      });
-    }
+    await saveScript(visibility);
   };
 
-  const handleGoBack = () => {
-    if (currentScriptId) {
-      navigate("/scripts");
-    } else {
-      resetScript();
-      navigate("/scripts");
-    }
+  const handleExport = () => {
+    const scriptData = {
+      id: currentScriptId || "temp",
+      title: title || "Untitled",
+      author: author || "Unknown",
+      scenes,
+    };
+    
+    exportScriptToPDF(scriptData);
   };
-  
-  useEffect(() => {
-    document.title = `Scriptly - ${title || "Untitled Screenplay"}`;
-  }, [title]);
-  
+
+  const handleBackToScripts = () => {
+    navigate("/scripts");
+  };
+
   return (
-    <>
-      <AppHeader resetScript={resetScript} />
-      <div className="flex flex-col gap-4 p-6 border-b">
-        <div className="flex items-center gap-4 w-full">
-          <Button variant="outline" size="icon" onClick={handleGoBack} type="button">
-            <ArrowLeft className="h-4 w-4" />
+    <div className="border-b bg-background sticky top-0 z-10">
+      <div className="container mx-auto py-4 px-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleBackToScripts}
+            className="hidden sm:flex items-center gap-1"
+          >
+            <List className="h-4 w-4" />
+            <span>Scripts</span>
           </Button>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Screenplay Title"
-            className="text-lg font-bold focus-visible:ring-1 w-full max-w-md"
-          />
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Author Name"
-            className="focus-visible:ring-1 w-full max-w-md"
-          />
-          
-          <div className="flex items-center gap-4 w-full sm:w-auto">
-            <Select
-              value={visibility}
-              onValueChange={(value: ScriptVisibility) => setVisibility(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select visibility" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="protected">Protected (Admin Only)</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto" type="button">
-              {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
-                </>
-              )}
-            </Button>
+
+          <div className="flex-1 min-w-[200px]">
+            <Label htmlFor="title" className="sr-only">Title</Label>
+            <Input 
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Script Title"
+              className="text-lg font-bold"
+              disabled={isViewOnly}
+            />
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <Label htmlFor="author" className="sr-only">Author</Label>
+            <Input 
+              id="author"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="Author Name"
+              disabled={isViewOnly}
+            />
           </div>
         </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {currentScriptId && (
+            <ScriptVersionHistory scriptId={currentScriptId} />
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExport}
+          >
+            <FileDown className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+          
+          <Button
+            onClick={() => setVisibility(v => v === "protected" ? "public" : "protected")}
+            variant="outline"
+            size="sm"
+            title={visibility === "protected" ? "Protected Script" : "Public Script"}
+            disabled={isViewOnly}
+          >
+            {visibility === "protected" ? (
+              <><Lock className="h-4 w-4 mr-1" /> Protected</>
+            ) : (
+              <><Unlock className="h-4 w-4 mr-1" /> Public</>
+            )}
+          </Button>
+          
+          <Button 
+            onClick={handleSave}
+            disabled={loading || isViewOnly}
+            size="sm"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            Save
+          </Button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

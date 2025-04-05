@@ -8,7 +8,9 @@ import {
   query, 
   where,
   updateDoc,
-  Timestamp
+  Timestamp,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { Scene, SceneElement } from "@/contexts/ScriptContext";
@@ -21,6 +23,15 @@ export interface ScriptSharing {
   accessLevel: ScriptAccessLevel;
   sharedAt: any; // Timestamp
   password?: string; // Optional password for protected scripts
+}
+
+export interface ScriptVersion {
+  timestamp: any; // Timestamp
+  editor: string;
+  title: string;
+  author: string;
+  scenes: Scene[];
+  versionId: string;
 }
 
 export const useScriptService = () => {
@@ -46,8 +57,12 @@ export const useScriptService = () => {
         visibility,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        lastEditedBy: user.email,
         sharedWith: {} // Initialize empty object for shared users
       });
+      
+      // Save the initial version in script_versions collection
+      await saveScriptVersion(scriptId, title, author, scenes, user.email);
       
       return scriptId;
     } catch (error) {
@@ -61,16 +76,20 @@ export const useScriptService = () => {
     title: string,
     author: string,
     scenes: Scene[],
-    visibility?: ScriptVisibility
+    visibility?: ScriptVisibility,
+    editorEmail?: string // Optional parameter to override the editor email
   ) => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      const editorToRecord = editorEmail || user.email;
+      
       const updateData: any = {
         title,
         author,
         scenes,
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
+        lastEditedBy: editorToRecord
       };
       
       if (visibility) {
@@ -78,9 +97,99 @@ export const useScriptService = () => {
       }
       
       await updateDoc(doc(db, "scripts", scriptId), updateData);
+      
+      // Save a new version in script_versions collection
+      await saveScriptVersion(scriptId, title, author, scenes, editorToRecord);
+      
     } catch (error) {
       console.error("Error updating script:", error);
       throw new Error("Failed to update script. Please try again.");
+    }
+  };
+
+  const saveScriptVersion = async (
+    scriptId: string,
+    title: string,
+    author: string,
+    scenes: Scene[],
+    editorEmail: string | null
+  ) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const versionId = `version_${Date.now()}`;
+      
+      await setDoc(doc(db, "script_versions", versionId), {
+        scriptId,
+        versionId,
+        title,
+        author,
+        scenes,
+        timestamp: Timestamp.now(),
+        editor: editorEmail || "Unknown user"
+      });
+      
+      return versionId;
+    } catch (error) {
+      console.error("Error saving script version:", error);
+      // Don't throw here, as we don't want to fail the main save operation
+    }
+  };
+
+  const getScriptVersions = async (scriptId: string) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const versionsQuery = query(
+        collection(db, "script_versions"),
+        where("scriptId", "==", scriptId),
+        orderBy("timestamp", "desc")
+      );
+      
+      const versionsSnapshot = await getDocs(versionsQuery);
+      const versions: ScriptVersion[] = [];
+      
+      versionsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        versions.push({
+          timestamp: data.timestamp,
+          editor: data.editor,
+          title: data.title,
+          author: data.author,
+          scenes: data.scenes,
+          versionId: data.versionId
+        });
+      });
+      
+      return versions;
+    } catch (error) {
+      console.error("Error fetching script versions:", error);
+      throw new Error("Failed to fetch script versions. Please try again.");
+    }
+  };
+
+  const getScriptVersion = async (versionId: string) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const versionDoc = await getDoc(doc(db, "script_versions", versionId));
+      
+      if (versionDoc.exists()) {
+        const data = versionDoc.data();
+        return {
+          timestamp: data.timestamp,
+          editor: data.editor,
+          title: data.title,
+          author: data.author,
+          scenes: data.scenes,
+          versionId: data.versionId
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error fetching script version:", error);
+      throw new Error("Failed to fetch script version. Please try again.");
     }
   };
 
@@ -178,7 +287,6 @@ export const useScriptService = () => {
     }
   };
 
-  // Function to share a script with another user
   const shareScript = async (
     scriptId: string, 
     email: string, 
@@ -225,7 +333,6 @@ export const useScriptService = () => {
     }
   };
 
-  // Remove sharing for a specific user
   const removeScriptSharing = async (scriptId: string, email: string) => {
     if (!user) throw new Error("User not authenticated");
     
@@ -261,7 +368,6 @@ export const useScriptService = () => {
     }
   };
 
-  // Get all users that a script is shared with
   const getScriptSharing = async (scriptId: string) => {
     if (!user) throw new Error("User not authenticated");
     
@@ -303,6 +409,9 @@ export const useScriptService = () => {
     updateScriptVisibility,
     shareScript,
     removeScriptSharing,
-    getScriptSharing
+    getScriptSharing,
+    getScriptVersions,
+    getScriptVersion,
+    saveScriptVersion
   };
 };
