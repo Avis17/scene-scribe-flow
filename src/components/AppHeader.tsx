@@ -5,7 +5,7 @@ import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilePlus, List, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
+import { FilePlus, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import HelpDialog from "./HelpDialog";
 import { useScript } from "@/contexts/ScriptContext";
@@ -28,10 +28,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   const handleLogout = async () => {
     await signOut();
     navigate("/login");
-  };
-  
-  const handleViewScripts = () => {
-    navigate("/scripts");
   };
   
   const handleCreateNew = () => {
@@ -60,10 +56,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
           <Button onClick={handleCreateNew} type="button">
             <FilePlus className="h-4 w-4 mr-2" />
             New Script
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleViewScripts} type="button">
-            <List className="h-4 w-4 mr-2" />
-            My Scripts
           </Button>
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={handleGoToAdmin} type="button">
