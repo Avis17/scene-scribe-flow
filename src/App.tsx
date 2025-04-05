@@ -67,7 +67,9 @@ const App = () => {
                         element={
                           <AuthGuard>
                             <AdminGuard>
-                              <Admin />
+                              <ScriptProvider>
+                                <Admin />
+                              </ScriptProvider>
                             </AdminGuard>
                           </AuthGuard>
                         } 

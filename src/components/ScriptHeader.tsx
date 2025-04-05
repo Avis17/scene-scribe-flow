@@ -69,7 +69,7 @@ const ScriptHeader: React.FC = () => {
   
   return (
     <>
-      <AppHeader />
+      <AppHeader resetScript={resetScript} />
       <div className="flex flex-col gap-4 p-6 border-b">
         <div className="flex items-center gap-4 w-full">
           <Button variant="outline" size="icon" onClick={handleGoBack} type="button">

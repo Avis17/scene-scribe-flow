@@ -8,18 +8,21 @@ import { Input } from "@/components/ui/input";
 import { FilePlus, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import HelpDialog from "./HelpDialog";
-import { useScript } from "@/contexts/ScriptContext";
 
 interface AppHeaderProps {
   showSearch?: boolean;
   onSearch?: (query: string) => void;
+  resetScript?: () => void; // Optional prop for script reset
 }
 
-const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) => {
+const AppHeader: React.FC<AppHeaderProps> = ({ 
+  showSearch = false, 
+  onSearch,
+  resetScript 
+}) => {
   const { user, signOut } = useFirebase();
   const { isAdmin, loading } = useAdmin();
   const navigate = useNavigate();
-  const { resetScript } = useScript();
   const [adminReady, setAdminReady] = useState(false);
   
   // Add a delay to ensure admin status is stable before showing admin features
@@ -52,7 +55,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   };
   
   const handleCreateNew = () => {
-    resetScript();
+    // Use the resetScript prop if provided, otherwise just navigate
+    if (resetScript) {
+      resetScript();
+    }
     navigate("/");
   };
 
