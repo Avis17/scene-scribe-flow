@@ -4,9 +4,11 @@ import { useScript } from "@/contexts/ScriptContext";
 import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { Button } from "./ui/button";
+import { Plus } from "lucide-react";
 
 const ScriptEditor: React.FC = () => {
-  const { scenes, reorderScenes } = useScript();
+  const { scenes, reorderScenes, addScene, isViewOnly } = useScript();
 
   const onDragEnd = (result: any) => {
     // Dropped outside the list
@@ -48,6 +50,19 @@ const ScriptEditor: React.FC = () => {
             )}
           </Droppable>
         </DragDropContext>
+        
+        {/* Add Scene Button */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={addScene} 
+            disabled={isViewOnly}
+            className="flex items-center gap-2"
+            size="lg"
+            variant="outline"
+          >
+            <Plus className="h-5 w-5" /> Add Scene
+          </Button>
+        </div>
       </div>
     </div>
   );
