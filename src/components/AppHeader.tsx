@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useAdmin } from "@/contexts/AdminContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilePlus, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
@@ -23,6 +23,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const { user, signOut } = useFirebase();
   const { isAdmin, loading } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
   const [adminReady, setAdminReady] = useState(false);
   
   // Add a delay to ensure admin status is stable before showing admin features
@@ -67,7 +68,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const handleGoToAdmin = () => {
-    navigate("/admin");
+    // Only navigate if not already on admin page to prevent refresh loop
+    if (location.pathname !== "/admin") {
+      navigate("/admin");
+    }
   };
   
   return (

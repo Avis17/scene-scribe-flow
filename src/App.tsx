@@ -18,17 +18,19 @@ import ScriptsList from "./pages/ScriptsList";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
-const App = () => {
-  // Create a new QueryClient for each rendering - avoids sharing client across renders
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchOnWindowFocus: false,
-      },
+// Create a stable QueryClient instance that won't be recreated on each render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false
     },
-  });
+  },
+});
 
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <FirebaseProvider>

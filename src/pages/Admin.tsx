@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAdmin, UserWithPermissions } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
@@ -58,7 +57,7 @@ interface ScriptData {
 }
 
 const Admin: React.FC = () => {
-  const { isAdmin, loading, users, fetchUsers, updateUserPermissions, removeUser, addUser } = useAdmin();
+  const { isAdmin, loading: adminLoading, users, fetchUsers, updateUserPermissions, removeUser, addUser } = useAdmin();
   const { toast } = useToast();
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPermissions, setNewUserPermissions] = useState<{
@@ -80,17 +79,9 @@ const Admin: React.FC = () => {
   const scriptService = useScriptService();
   const [dataFetched, setDataFetched] = useState(false);
 
-  useEffect(() => {
-    // Only fetch data once to prevent infinite loop
-    if (!dataFetched && !loading && isAdmin) {
-      fetchUsers();
-      fetchScripts();
-      setDataFetched(true);
-    }
-  }, [isAdmin, loading, dataFetched]);
-
-  const fetchScripts = async () => {
+  const fetchScripts = useCallback(async () => {
     try {
+      console.log("Fetching scripts...");
       setLoadingScripts(true);
       const allScripts = await scriptService.getUserScripts(true);
       
@@ -109,7 +100,22 @@ const Admin: React.FC = () => {
     } finally {
       setLoadingScripts(false);
     }
-  };
+  }, [scriptService, toast]);
+
+  useEffect(() => {
+    if (!dataFetched && !adminLoading && isAdmin) {
+      console.log("Initial data fetch triggered");
+      fetchUsers();
+      fetchScripts();
+      setDataFetched(true);
+    }
+  }, [isAdmin, adminLoading, dataFetched, fetchUsers]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setDataFetched(false);
+    }
+  }, [isAdmin]);
 
   const handleAddUser = async () => {
     if (!newUserEmail.trim()) {

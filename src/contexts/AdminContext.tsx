@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { 
   collection, 
@@ -33,7 +32,6 @@ interface AdminContextType {
   addUser: (email: string, permissions: UserPermission[]) => Promise<void>;
 }
 
-// Create a default context value to avoid the "must be used within a Provider" error
 const defaultContextValue: AdminContextType = {
   isAdmin: false,
   loading: true,
@@ -46,7 +44,6 @@ const defaultContextValue: AdminContextType = {
 
 const AdminContext = createContext<AdminContextType>(defaultContextValue);
 
-// Fix: Make sure this matches the exact string of the admin email with correct casing
 export const ADMIN_EMAIL = "sivasubramanian1617@gmail.com";
 
 export const useAdmin = () => {
@@ -65,7 +62,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<UserWithPermissions[]>([]);
   const [adminCheckComplete, setAdminCheckComplete] = useState<boolean>(false);
 
-  // Check if current user is admin - improved with better logging and handling
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -79,7 +75,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         console.log("Starting admin status check for:", user.email);
         console.log("Admin email constant:", ADMIN_EMAIL);
         
-        // IMPORTANT: Force email string comparison to lowercase for both
         const userEmailLower = user.email ? user.email.toLowerCase() : '';
         const adminEmailLower = ADMIN_EMAIL.toLowerCase();
         
@@ -88,14 +83,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         
         let isUserAdmin = false;
         
-        // Check if user email matches admin email (using lowercase comparison)
         if (userEmailLower === adminEmailLower) {
           console.log("✅ Email matches admin email exactly, granting admin access");
           isUserAdmin = true;
           
           try {
-            // Try to create admin record in database if it doesn't exist,
-            // but don't block access if this fails due to permissions
             const adminRef = doc(db, "permissions", user.uid);
             const adminDoc = await getDoc(adminRef);
             
@@ -109,18 +101,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
                 });
                 console.log("Created admin record in database");
               } catch (dbError) {
-                // Just log this error but don't let it affect admin access
                 console.warn("Could not create admin record in database:", dbError);
                 console.log("Administrator access granted based on email match only");
               }
             }
           } catch (error) {
-            // Just log this error but don't let it affect admin access
             console.warn("Error checking database for admin record:", error);
             console.log("Administrator access granted based on email match only");
           }
         } else {
-          // Try to check if user has admin permission in database
           try {
             console.log("Checking for admin permission in database for uid:", user.uid);
             const userRef = doc(db, "permissions", user.uid);
@@ -139,15 +128,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         
-        // Only update state once with final decision to prevent flickering
         console.log("Final admin status determination:", isUserAdmin);
         setIsAdmin(isUserAdmin);
-        
       } catch (error) {
         console.error("Error checking admin status:", error);
         
-        // FALLBACK: If there was an error but email matches admin email exactly,
-        // still grant admin access
         if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           console.log("⚠️ Error occurred, but email matches admin - granting access");
           setIsAdmin(true);
@@ -160,7 +145,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     
-    // Reset states when user changes
     if (user) {
       setLoading(true);
       setAdminCheckComplete(false);
@@ -172,11 +156,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, db]);
 
-  // Fetch all users with permissions - with better error handling
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!user) return;
     
     try {
+      console.log("Fetching users...");
       setLoading(true);
       const permissionsRef = collection(db, "permissions");
       const querySnapshot = await getDocs(permissionsRef);
@@ -196,15 +180,13 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
-      // Return an empty array but don't crash
       setUsers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, db]);
 
-  // Update user permissions - with better error handling
-  const updateUserPermissions = async (uid: string, permissions: UserPermission[]) => {
+  const updateUserPermissions = useCallback(async (uid: string, permissions: UserPermission[]) => {
     try {
       setLoading(true);
       const userRef = doc(db, "permissions", uid);
@@ -213,7 +195,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         lastUpdated: new Date().toISOString()
       });
       
-      // Update local state
       setUsers(prev => prev.map(user => 
         user.uid === uid ? { ...user, permissions } : user
       ));
@@ -221,39 +202,33 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       return;
     } catch (error) {
       console.error("Error updating user permissions:", error);
-      // Show user-friendly error
       throw new Error("Could not update permissions. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [db]);
 
-  // Remove user from permissions - with better error handling
-  const removeUser = async (uid: string) => {
+  const removeUser = useCallback(async (uid: string) => {
     try {
       setLoading(true);
       const userRef = doc(db, "permissions", uid);
       await deleteDoc(userRef);
       
-      // Update local state
       setUsers(prev => prev.filter(user => user.uid !== uid));
       
       return;
     } catch (error) {
       console.error("Error removing user:", error);
-      // Show user-friendly error
       throw new Error("Could not remove user. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [db]);
 
-  // Add new user with permissions - with better error handling
-  const addUser = async (email: string, permissions: UserPermission[]) => {
+  const addUser = useCallback(async (email: string, permissions: UserPermission[]) => {
     try {
       setLoading(true);
       
-      // Check if user already exists in permissions
       const permissionsRef = collection(db, "permissions");
       const q = query(permissionsRef, where("email", "==", email));
       const querySnapshot = await getDocs(q);
@@ -262,7 +237,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User already has permissions");
       }
       
-      // Find user in Firebase Auth
       const usersRef = collection(db, "users");
       const userQuery = query(usersRef, where("email", "==", email));
       const userSnapshot = await getDocs(userQuery);
@@ -271,15 +245,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       let displayName: string | null = null;
       
       if (userSnapshot.empty) {
-        // User doesn't exist in Firebase yet, generate a placeholder ID
         uid = `pending_${Date.now()}`;
       } else {
-        // Get user ID from existing user
         uid = userSnapshot.docs[0].id;
         displayName = userSnapshot.docs[0].data().displayName || null;
       }
       
-      // Add user to permissions collection
       const permissionRef = doc(db, "permissions", uid);
       await setDoc(permissionRef, {
         email,
@@ -288,7 +259,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         lastUpdated: new Date().toISOString()
       });
       
-      // Update local state
       setUsers(prev => [...prev, {
         uid,
         email,
@@ -300,7 +270,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       return;
     } catch (error) {
       console.error("Error adding user:", error);
-      // Show user-friendly error based on error type
+      
       if (error instanceof Error && error.message === "User already has permissions") {
         throw error;
       } else {
@@ -309,7 +279,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [db]);
 
   const contextValue = {
     isAdmin,
