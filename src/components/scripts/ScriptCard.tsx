@@ -58,8 +58,8 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   
   // Only allow editing if the user owns the script or has edit access
   const canEdit = !isSharedWithMe || accessLevel === "edit";
-
-  // Only show edit button if user has edit access
+  
+  // Hide edit button if user only has view access
   const showEditButton = canEdit;
   
   const handleView = () => {
@@ -121,56 +121,58 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
           </p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <div className="grid grid-cols-2 gap-2 w-full">
-            <div className="flex flex-col sm:flex-row gap-2">
-              {showEditButton && (
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onOpen(script.id)}
-                  type="button"
-                  className="w-full sm:w-auto"
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  <span>Edit</span>
-                </Button>
-              )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleView}
+              type="button"
+              className="w-full"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              <span>View</span>
+            </Button>
+            
+            {showEditButton && (
               <Button 
                 variant="outline"
                 size="sm"
-                onClick={handleView}
+                onClick={() => onOpen(script.id)}
                 type="button"
-                className="w-full sm:w-auto"
+                className="w-full"
               >
-                <Eye className="h-4 w-4 mr-1" />
-                <span>View</span>
+                <Edit className="h-4 w-4 mr-1" />
+                <span>Edit</span>
               </Button>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 justify-end">
+            )}
+            
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => onExport(script.id, script.title)}
+              type="button"
+              className="w-full"
+            >
+              <FileDown className="h-4 w-4 mr-1" />
+              <span>Export</span>
+            </Button>
+            
+            {/* Only show delete button for scripts the user owns */}
+            {!isSharedWithMe && (
               <Button 
-                variant="outline"
+                variant="destructive" 
                 size="sm"
-                onClick={() => onExport(script.id, script.title)}
+                onClick={confirmDelete}
                 type="button"
-                className="w-full sm:w-auto"
+                className="w-full"
               >
-                <FileDown className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Export</span>
+                <Trash2 className="h-4 w-4 mr-1" />
+                <span>Delete</span>
               </Button>
-              {canEdit && (
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={confirmDelete}
-                  type="button"
-                  className="w-full sm:w-auto"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Delete</span>
-                </Button>
-              )}
-            </div>
+            )}
           </div>
+          
+          {/* Only show share button for scripts the user owns */}
           {!isSharedWithMe && (
             <div className="w-full">
               <Button
