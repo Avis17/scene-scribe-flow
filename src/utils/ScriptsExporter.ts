@@ -11,26 +11,93 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
       <head>
         <title>${scriptData.title}</title>
         <style>
-          body { font-family: Courier, monospace; margin: 60px; line-height: 1.6; }
-          h1 { text-align: center; margin-bottom: 4px; }
-          .author { text-align: center; margin-bottom: 50px; }
-          .scene-heading { font-weight: bold; text-transform: uppercase; margin-top: 20px; }
+          @media print {
+            @page { margin: 1in; }
+            body { margin: 0; }
+            .page-break { page-break-before: always; }
+          }
+          body { 
+            font-family: Courier, monospace; 
+            line-height: 1.6; 
+            font-size: 12pt;
+            counter-reset: page;
+          }
+          .title-page {
+            height: 11in;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+          }
+          .title-page h1 { 
+            font-size: 24pt; 
+            margin-bottom: 1in;
+          }
+          .scene-page {
+            min-height: 10in;
+            position: relative;
+          }
+          .scene-heading { 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-top: 20px; 
+          }
+          .scene-number {
+            font-size: 12pt;
+            color: #666;
+            margin-bottom: 0.5in;
+            font-weight: bold;
+          }
           .action { margin: 10px 0; }
-          .character { margin-left: 20%; margin-bottom: 0; margin-top: 20px; font-weight: bold; }
+          .character { 
+            margin-left: 20%; 
+            margin-bottom: 0; 
+            margin-top: 20px; 
+            font-weight: bold; 
+          }
           .dialogue { margin-left: 10%; margin-right: 20%; margin-bottom: 20px; }
           .parenthetical { margin-left: 15%; margin-bottom: 0; font-style: italic; }
           .transition { margin-left: 60%; font-weight: bold; margin-top: 20px; }
+          .page-number {
+            position: absolute;
+            bottom: 0.5in;
+            right: 0.5in;
+            font-size: 12pt;
+          }
+          .page-number::after {
+            counter-increment: page;
+            content: counter(page);
+          }
         </style>
       </head>
       <body>
-        <h1>${scriptData.title}</h1>
-        <p class="author">by ${scriptData.author}</p>
+        <div class="title-page">
+          <h1>${scriptData.title}</h1>
+          <p>by</p>
+          <p style="font-weight: bold; font-size: 16pt;">${scriptData.author}</p>
+        </div>
   `;
   
-  scriptData.scenes.forEach((scene: any) => {
+  // Start with a page break after the title
+  content += `<div class="page-break"></div>`;
+  
+  // Each scene gets its own section
+  scriptData.scenes.forEach((scene, sceneIndex) => {
+    content += `
+      <div class="scene-page">
+        <div class="scene-number">SCENE ${sceneIndex + 1}</div>
+    `;
+    
     scene.elements.forEach((element: any) => {
       content += `<div class="${element.type}">${element.content}</div>`;
     });
+    
+    content += `
+        <div class="page-number"></div>
+      </div>
+      ${sceneIndex < scriptData.scenes.length - 1 ? '<div class="page-break"></div>' : ''}
+    `;
   });
   
   content += `

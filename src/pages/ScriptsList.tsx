@@ -10,11 +10,13 @@ import ScriptsGrid from "@/components/scripts/ScriptsGrid";
 import LoadingState from "@/components/scripts/LoadingState";
 import EmptyState from "@/components/scripts/EmptyState";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
+import { ScrollText, Share2, UsersRound } from "lucide-react";
 
 interface ScriptData {
   id: string;
   title: string;
   author: string;
+  lastEditedBy?: string;
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
@@ -27,6 +29,8 @@ const ScriptsList: React.FC = () => {
   const [filteredScripts, setFilteredScripts] = useState<ScriptData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
+  const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
   
   const { user } = useFirebase();
   
@@ -68,11 +72,16 @@ const ScriptsList: React.FC = () => {
         
         console.log("All fetched scripts (including shared):", userScripts.length);
         
+        const ownScripts = userScripts.filter(script => script.userId === user.uid);
         const sharedScripts = userScripts.filter(script => 
           script.userId !== user.uid && 
           script.sharedWith && 
-          Object.keys(script.sharedWith).includes(user.email)
+          user.email && 
+          script.sharedWith[user.email]
         );
+        
+        setOwnScriptsCount(ownScripts.length);
+        setSharedScriptsCount(sharedScripts.length);
         
         console.log("Shared scripts found:", sharedScripts.length);
         if (sharedScripts.length > 0) {
@@ -185,11 +194,48 @@ const ScriptsList: React.FC = () => {
     <div className="min-h-screen bg-background">
       <AppHeader showSearch={true} onSearch={handleSearch} />
       <div className="p-6 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Scriptly - Your Scripts</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage and share your scripts with others
-          </p>
+        <div className="mb-8">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-8 mb-6">
+            <div className="absolute inset-0 bg-grid-slate-200 [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
+            <div className="relative">
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mb-2">Scriptly - Your Scripts</h1>
+              <p className="text-md text-slate-700 dark:text-slate-300 mb-6">
+                Manage and share your scripts with others
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                    <ScrollText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Total Scripts</p>
+                    <p className="text-2xl font-bold">{ownScriptsCount + sharedScriptsCount}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-900">
+                    <ScrollText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">My Scripts</p>
+                    <p className="text-2xl font-bold">{ownScriptsCount}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                    <UsersRound className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Shared With Me</p>
+                    <p className="text-2xl font-bold">{sharedScriptsCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading ? (

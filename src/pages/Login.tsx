@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useNavigate } from "react-router-dom";
@@ -55,7 +54,7 @@ const Login: React.FC = () => {
           description: "Account created successfully",
         });
       }
-      navigate("/");
+      navigate("/scripts");
     } catch (error: any) {
       console.error("Authentication error:", error);
       toast({
@@ -76,7 +75,7 @@ const Login: React.FC = () => {
         title: "Success",
         description: "Logged in successfully with Google",
       });
-      navigate("/");
+      navigate("/scripts");
     } catch (error: any) {
       console.error("Google sign-in error:", error);
       toast({

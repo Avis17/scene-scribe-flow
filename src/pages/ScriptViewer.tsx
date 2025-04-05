@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useScriptService } from "@/services/ScriptService";
@@ -21,11 +20,54 @@ const ScriptViewer: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loadingAuth, setLoadingAuth] = useState<boolean>(false);
   const [expectedPassword, setExpectedPassword] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(0);
 
   const navigate = useNavigate();
   const scriptService = useScriptService();
   const { user } = useFirebase();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const preventCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast({
+        title: "Copy restricted",
+        description: "Copying content is not allowed in view mode",
+        variant: "destructive",
+      });
+    };
+
+    const preventContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
+    const preventPrintScreen = (e: KeyboardEvent) => {
+      if (
+        (e.key === 'PrintScreen') || 
+        (e.ctrlKey && e.key === 'p') || 
+        (e.metaKey && e.key === 'p')
+      ) {
+        e.preventDefault();
+        toast({
+          title: "Print/Screenshot restricted",
+          description: "Taking screenshots is not allowed in view mode",
+          variant: "destructive",
+        });
+        return false;
+      }
+    };
+
+    document.addEventListener('copy', preventCopy);
+    document.addEventListener('contextmenu', preventContextMenu);
+    document.addEventListener('keydown', preventPrintScreen);
+
+    return () => {
+      document.removeEventListener('copy', preventCopy);
+      document.removeEventListener('contextmenu', preventContextMenu);
+      document.removeEventListener('keydown', preventPrintScreen);
+    };
+  }, [toast]);
 
   useEffect(() => {
     const fetchScript = async () => {
@@ -42,14 +84,10 @@ const ScriptViewer: React.FC = () => {
         
         setScript(scriptData);
         
-        // Check if this is a protected script
         const isScriptProtected = scriptData.visibility === "protected";
-        
-        // If the user is the owner, they don't need a password
         const isOwner = scriptData.userId === user.uid;
-        
-        // For a shared protected script, check if there's a password
         let requiredPassword = null;
+        
         if (isScriptProtected && !isOwner && user.email && scriptData.sharedWith?.[user.email]) {
           requiredPassword = scriptData.sharedWith[user.email].password;
         }
@@ -57,10 +95,6 @@ const ScriptViewer: React.FC = () => {
         setExpectedPassword(requiredPassword);
         setIsProtected(isScriptProtected && !isOwner);
         
-        // Auto-authenticate if:
-        // 1. The user is the owner, OR
-        // 2. The script is not protected, OR
-        // 3. The script is shared with the user and no password is required
         if (isOwner || !isScriptProtected || (requiredPassword === undefined)) {
           setIsAuthenticated(true);
         }
@@ -84,10 +118,9 @@ const ScriptViewer: React.FC = () => {
     e.preventDefault();
     setLoadingAuth(true);
     
-    // Check if the password matches the expected password or the fallback password
     const passwordCorrect = 
       (expectedPassword && password === expectedPassword) || 
-      (password === "password123"); // Fallback password for testing
+      (password === "password123");
     
     if (passwordCorrect) {
       setIsAuthenticated(true);
@@ -104,6 +137,10 @@ const ScriptViewer: React.FC = () => {
     }
     
     setLoadingAuth(false);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   if (loading) {
@@ -202,6 +239,76 @@ const ScriptViewer: React.FC = () => {
     );
   }
 
+  const renderScriptPages = () => {
+    if (!script || !script.scenes) return [];
+    
+    const pages = [
+      <div key="titlepage" className="flex flex-col items-center justify-center min-h-[11in]">
+        <h1 className="text-4xl font-bold mb-6 text-center">{script.title || "Untitled Screenplay"}</h1>
+        <p className="text-xl mb-2 text-center">by</p>
+        <p className="text-2xl font-semibold text-center">{script.author || "Unknown Author"}</p>
+      </div>
+    ];
+    
+    script.scenes.forEach((scene: any, index: number) => {
+      pages.push(
+        <div key={`scene-${index}`} className="mb-16">
+          <h2 className="text-lg font-semibold text-gray-500 mb-4">SCENE {index + 1}</h2>
+          {scene.elements.map((element: any, elementIndex: number) => {
+            switch(element.type) {
+              case 'scene-heading':
+                return (
+                  <div key={elementIndex} className="font-bold uppercase mb-4">
+                    {element.content}
+                  </div>
+                );
+              case 'action':
+                return (
+                  <div key={elementIndex} className="mb-4">
+                    {element.content}
+                  </div>
+                );
+              case 'character':
+                return (
+                  <div key={elementIndex} className="ml-[20%] font-bold mt-4 mb-0">
+                    {element.content}
+                  </div>
+                );
+              case 'parenthetical':
+                return (
+                  <div key={elementIndex} className="ml-[15%] italic mb-1">
+                    ({element.content})
+                  </div>
+                );
+              case 'dialogue':
+                return (
+                  <div key={elementIndex} className="ml-[10%] mr-[20%] mb-4">
+                    {element.content}
+                  </div>
+                );
+              case 'transition':
+                return (
+                  <div key={elementIndex} className="ml-[60%] font-bold mb-4">
+                    {element.content}
+                  </div>
+                );
+              default:
+                return (
+                  <div key={elementIndex} className="mb-4">
+                    {element.content}
+                  </div>
+                );
+            }
+          })}
+        </div>
+      );
+    });
+    
+    return pages;
+  };
+  
+  const pages = renderScriptPages();
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -216,63 +323,36 @@ const ScriptViewer: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
-          <h1 className="text-3xl font-bold">{script.title || "Untitled Screenplay"}</h1>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8 mb-8 font-mono">
-          <h1 className="text-center text-3xl font-bold mb-1">{script.title || "Untitled Screenplay"}</h1>
-          <p className="text-center mb-12">by {script.author || "Unknown Author"}</p>
-
-          {script.scenes && script.scenes.map((scene: any, sceneIndex: number) => (
-            <div key={scene.id} className="mb-8">
-              {scene.elements.map((element: any, elementIndex: number) => {
-                switch(element.type) {
-                  case 'scene-heading':
-                    return (
-                      <div key={elementIndex} className="font-bold uppercase mb-4">
-                        {element.content}
-                      </div>
-                    );
-                  case 'action':
-                    return (
-                      <div key={elementIndex} className="mb-4">
-                        {element.content}
-                      </div>
-                    );
-                  case 'character':
-                    return (
-                      <div key={elementIndex} className="ml-[20%] font-bold mt-4 mb-0">
-                        {element.content}
-                      </div>
-                    );
-                  case 'parenthetical':
-                    return (
-                      <div key={elementIndex} className="ml-[15%] italic mb-1">
-                        ({element.content})
-                      </div>
-                    );
-                  case 'dialogue':
-                    return (
-                      <div key={elementIndex} className="ml-[10%] mr-[20%] mb-4">
-                        {element.content}
-                      </div>
-                    );
-                  case 'transition':
-                    return (
-                      <div key={elementIndex} className="ml-[60%] font-bold mb-4">
-                        {element.content}
-                      </div>
-                    );
-                  default:
-                    return (
-                      <div key={elementIndex} className="mb-4">
-                        {element.content}
-                      </div>
-                    );
-                }
-              })}
+          {pages.length > 1 && (
+            <div className="flex items-center justify-center mb-8 space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(Math.max(0, currentPage - 1))} 
+                disabled={currentPage === 0}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage + 1} of {pages.length}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(Math.min(pages.length - 1, currentPage + 1))} 
+                disabled={currentPage === pages.length - 1}
+              >
+                Next
+              </Button>
             </div>
-          ))}
+          )}
+          
+          <div className="select-none">
+            {pages[currentPage]}
+          </div>
         </div>
       </div>
     </div>

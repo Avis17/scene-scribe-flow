@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, FileDown, Eye, Edit, Users } from "lucide-react";
+import { File, FileLock, FileDown, Eye, Edit, Users, Clock, User } from "lucide-react";
 import { ScriptVisibility, ScriptAccessLevel } from "@/services/ScriptService";
 import { useNavigate } from "react-router-dom";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -11,6 +11,7 @@ interface ScriptData {
   id: string;
   title: string;
   author: string;
+  lastEditedBy?: string;
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
@@ -53,6 +54,16 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
     navigate(`/view/${script.id}`);
   };
 
+  // Extract name from email if it's an email address
+  const getDisplayName = (emailOrName: string) => {
+    if (emailOrName?.includes('@')) {
+      return emailOrName.split('@')[0];
+    }
+    return emailOrName || "Unknown";
+  };
+
+  const lastEditedByDisplay = script.lastEditedBy ? getDisplayName(script.lastEditedBy) : getDisplayName(script.author);
+
   return (
     <Card className="hover:shadow-md transition-shadow border-2 border-blue-200">
       <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer">
@@ -83,12 +94,17 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-2 cursor-pointer" onClick={() => onOpen(script.id)}>
-        <p className="text-sm text-muted-foreground">
-          Last updated: {formatDate(script.updatedAt.toDate())}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Created: {formatDate(script.createdAt.toDate())}
-        </p>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3 w-3" /> Last updated: {formatDate(script.updatedAt.toDate())}
+          </p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <User className="h-3 w-3" /> Last edited by: {lastEditedByDisplay}
+          </p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3 w-3" /> Created: {formatDate(script.createdAt.toDate())}
+          </p>
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="grid grid-cols-1 gap-2 w-full">
