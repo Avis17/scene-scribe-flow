@@ -1,5 +1,8 @@
 
-import { createContext, useState, useContext, ReactNode } from "react";
+import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { useFirebase } from "./FirebaseContext";
+import { useScriptService } from "@/services/ScriptService";
+import { useToast } from "@/hooks/use-toast";
 
 export interface SceneElement {
   type: 'scene-heading' | 'action' | 'character' | 'dialogue' | 'parenthetical' | 'transition';
@@ -23,6 +26,10 @@ interface ScriptContextType {
   deleteScene: (id: string) => void;
   reorderScenes: (sourceIndex: number, destinationIndex: number) => void;
   toggleSceneCollapse: (id: string) => void;
+  saveScript: () => Promise<string | undefined>;
+  currentScriptId: string | null;
+  setCurrentScriptId: (id: string | null) => void;
+  loading: boolean;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -54,9 +61,51 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       ],
     },
   ]);
+  const [currentScriptId, setCurrentScriptId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  
+  const { user } = useFirebase();
+  const scriptService = useScriptService();
+  const { toast } = useToast();
+
+  // Initialize with user's name if available
+  useEffect(() => {
+    if (user && user.displayName && author === "") {
+      setAuthor(user.displayName);
+    }
+  }, [user, author]);
+
+  // Load script if ID is provided
+  useEffect(() => {
+    const loadScript = async () => {
+      if (currentScriptId && user) {
+        try {
+          setLoading(true);
+          const scriptData = await scriptService.getScriptById(currentScriptId);
+          
+          if (scriptData) {
+            setTitle(scriptData.title);
+            setAuthor(scriptData.author);
+            setScenes(scriptData.scenes);
+          }
+        } catch (error) {
+          console.error("Error loading script:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load script",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    loadScript();
+  }, [currentScriptId, user]);
 
   const addScene = () => {
-    const newId = `scene-${scenes.length + 1}`;
+    const newId = `scene-${Date.now()}`;
     setScenes([
       ...scenes,
       {
@@ -100,6 +149,46 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       )
     );
   };
+  
+  const saveScript = async (): Promise<string | undefined> => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save your script",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      if (currentScriptId) {
+        await scriptService.updateScript(currentScriptId, title, author, scenes);
+        toast({
+          title: "Success",
+          description: "Script updated successfully",
+        });
+        return currentScriptId;
+      } else {
+        const newScriptId = await scriptService.saveScript(title, author, scenes);
+        setCurrentScriptId(newScriptId);
+        toast({
+          title: "Success",
+          description: "Script saved successfully",
+        });
+        return newScriptId;
+      }
+    } catch (error) {
+      console.error("Error saving script:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save script",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScriptContext.Provider
@@ -114,6 +203,10 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         deleteScene,
         reorderScenes,
         toggleSceneCollapse,
+        saveScript,
+        currentScriptId,
+        setCurrentScriptId,
+        loading,
       }}
     >
       {children}

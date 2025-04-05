@@ -1,16 +1,20 @@
 
-import React from "react";
-import { ScriptProvider } from "@/contexts/ScriptContext";
+import React, { useEffect } from "react";
+import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
-import { ThemeProvider } from "@/hooks/use-theme";
+import { useNavigate } from "react-router-dom";
 
 const Index: React.FC = () => {
+  const { user, loading } = useFirebase();
+  const navigate = useNavigate();
+  
+  // We don't force redirect here since ScriptHeader handles login buttons
+  // This makes the app usable without login (until saving)
+  
   return (
-    <ThemeProvider defaultTheme="light">
-      <ScriptProvider>
-        <ScriptEditor />
-      </ScriptProvider>
-    </ThemeProvider>
+    <>
+      <ScriptEditor />
+    </>
   );
 };
 
