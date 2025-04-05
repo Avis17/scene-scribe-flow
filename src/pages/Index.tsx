@@ -12,9 +12,9 @@ const Index: React.FC = () => {
   // This makes the app usable without login (until saving)
   
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <ScriptEditor />
-    </>
+    </div>
   );
 };
 

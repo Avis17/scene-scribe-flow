@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -84,9 +83,11 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (scriptData) {
-            setTitle(scriptData.title);
-            setAuthor(scriptData.author);
-            setScenes(scriptData.scenes);
+            // Ensure we properly set title and author
+            setTitle(scriptData.title || "Untitled Screenplay");
+            setAuthor(scriptData.author || "");
+            setScenes(scriptData.scenes || []);
+            console.log("Loaded script:", scriptData);
           }
         } catch (error) {
           console.error("Error loading script:", error);

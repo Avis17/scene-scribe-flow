@@ -8,6 +8,7 @@ import { Button } from "./ui/button";
 import { Save, FileDown, Plus, List, LogIn, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast"; 
+import HelpDialog from "./HelpDialog";
 
 const ScriptHeader: React.FC = () => {
   const { title, setTitle, author, setAuthor, addScene, saveScript, loading, scenes } = useScript();
@@ -121,20 +122,12 @@ const ScriptHeader: React.FC = () => {
 
   return (
     <div className="p-4 border-b sticky top-0 bg-background z-10">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex-1">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-bold border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
-            placeholder="Screenplay Title"
-          />
-          <Input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="text-sm text-muted-foreground border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
-            placeholder="Author Name"
-          />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Button onClick={addScene} className="flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Scene
+          </Button>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm" onClick={handleSave} disabled={loading}>
@@ -145,6 +138,7 @@ const ScriptHeader: React.FC = () => {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <HelpDialog />
           {user ? (
             <>
               <Button variant="outline" size="sm" onClick={handleViewScripts}>
@@ -169,11 +163,19 @@ const ScriptHeader: React.FC = () => {
           <ThemeToggle />
         </div>
       </div>
-      <div className="flex justify-between items-center">
-        <Button onClick={addScene} className="flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Scene
-        </Button>
+      <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-xl font-bold border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded text-center"
+          placeholder="Screenplay Title"
+        />
+        <Input
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className="text-sm text-muted-foreground border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded text-center"
+          placeholder="Author Name"
+        />
       </div>
     </div>
   );
