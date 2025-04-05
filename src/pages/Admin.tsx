@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useAdmin, UserWithPermissions } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
@@ -109,7 +110,7 @@ const Admin: React.FC = () => {
       fetchScripts();
       setDataFetched(true);
     }
-  }, [isAdmin, adminLoading, dataFetched, fetchUsers]);
+  }, [isAdmin, adminLoading, dataFetched, fetchUsers, fetchScripts]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -333,7 +334,7 @@ const Admin: React.FC = () => {
                 <CardDescription>Manage user access and permissions</CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
+                {adminLoading ? (
                   <div className="flex justify-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
                   </div>
