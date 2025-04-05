@@ -82,31 +82,20 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      let scriptsQuery;
+      let scripts: any[] = [];
       
-      if (includeProtected) {
-        // For admins, get all scripts that are either owned by user or protected
-        scriptsQuery = query(
-          collection(db, "scripts"),
-          where("userId", "==", user.uid)
-        );
-      } else {
-        // For regular users, just get their own scripts that are not protected
-        scriptsQuery = query(
-          collection(db, "scripts"),
-          where("userId", "==", user.uid),
-          where("visibility", "!=", "protected")
-        );
-      }
+      // First get the user's own scripts (avoid the compound query that requires an index)
+      const userScriptsQuery = query(
+        collection(db, "scripts"),
+        where("userId", "==", user.uid)
+      );
       
-      const querySnapshot = await getDocs(scriptsQuery);
-      const scripts: any[] = [];
-      
-      querySnapshot.forEach((doc) => {
+      const userScriptsSnapshot = await getDocs(userScriptsQuery);
+      userScriptsSnapshot.forEach((doc) => {
         scripts.push(doc.data());
       });
       
-      // If admin, also get all protected scripts
+      // If admin, also get all protected scripts not owned by the user
       if (includeProtected) {
         const protectedQuery = query(
           collection(db, "scripts"),
@@ -115,9 +104,10 @@ export const useScriptService = () => {
         
         const protectedSnapshot = await getDocs(protectedQuery);
         protectedSnapshot.forEach((doc) => {
-          // Don't add duplicates
-          if (!scripts.some(script => script.id === doc.id)) {
-            scripts.push(doc.data());
+          // Don't add duplicates (user's own protected scripts)
+          const data = doc.data();
+          if (data.userId !== user.uid && !scripts.some(script => script.id === doc.id)) {
+            scripts.push(data);
           }
         });
       }
