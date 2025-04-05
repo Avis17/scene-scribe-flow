@@ -1,73 +1,161 @@
-# Welcome to your Lovable project
 
-## Project info
+# Screenplay Writer Application
 
-**URL**: https://lovable.dev/projects/a1664315-b2e6-480b-a445-43467c434ea0
+![Screenplay Writer Logo](https://i.imgur.com/xRv5T3U.png)
 
-## How can I edit this code?
+A modern, intuitive web application for writing and managing film and TV screenplays with real-time voice-to-text capability.
 
-There are several ways of editing your application.
+## Table of Contents
 
-**Use Lovable**
+1. [Introduction](#introduction)
+2. [Getting Started](#getting-started)
+3. [Features](#features)
+4. [Understanding Screenplay Format](#understanding-screenplay-format)
+5. [How to Use the App](#how-to-use-the-app)
+6. [Voice-to-Text Feature](#voice-to-text-feature)
+7. [Keyboard Shortcuts](#keyboard-shortcuts)
+8. [Saving and Exporting](#saving-and-exporting)
+9. [Technical Details](#technical-details)
+10. [Support & Feedback](#support--feedback)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a1664315-b2e6-480b-a445-43467c434ea0) and start prompting.
+## Introduction
 
-Changes made via Lovable will be committed automatically to this repo.
+Screenplay Writer is a powerful tool designed for both amateur and professional screenwriters. It automatically formats your screenplay according to industry standards while providing an intuitive interface and collaborative features to streamline your creative process.
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. **Create an Account**: Sign up or log in to save your work and access it from any device.
+2. **Create a New Script**: Click "New Script" to start a fresh screenplay.
+3. **Start Writing**: Add scenes and begin crafting your story.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Features
 
-Follow these steps:
+- **Real-time formatting**: Automatic industry-standard screenplay formatting
+- **Voice-to-Text**: Dictate your screenplay in English or Tamil
+- **Scene Management**: Easily add, edit, and rearrange scenes
+- **Cloud Saving**: All your work is automatically saved
+- **Export to PDF**: Generate professional-looking PDF documents
+- **Drag & Drop Scenes**: Rearrange scenes by dragging them to new positions
+- **Multi-language Support**: Voice dictation in English and Tamil
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Understanding Screenplay Format
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Script Elements
 
-# Step 3: Install the necessary dependencies.
-npm i
+A screenplay consists of several standard elements:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Scene Heading (Slug Line)**: Describes the location and time of day
+2. **Action**: Describes what happens in the scene
+3. **Character**: The name of the character who speaks
+4. **Dialogue**: The words spoken by a character
+5. **Parenthetical**: Direction for how dialogue should be delivered
+6. **Transition**: Indicates how we move from one scene to another
+
+### Scene Heading Format
+
+Scene headings follow a specific format:
+
+```
+INT./EXT. LOCATION - TIME OF DAY
 ```
 
-**Edit a file directly in GitHub**
+For example:
+- `INT. KITCHEN - DAY` (Interior scene in a kitchen during the day)
+- `EXT. BEACH - SUNSET` (Exterior scene at a beach during sunset)
+- `INT./EXT. CAR - NIGHT` (Scene that includes both inside and outside of a car at night)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+#### Components Explained:
 
-**Use GitHub Codespaces**
+- **INT.** stands for "interior" – a scene that takes place indoors
+- **EXT.** stands for "exterior" – a scene that takes place outdoors
+- **LOCATION** is where the scene takes place (e.g., LIVING ROOM, PARK, OFFICE)
+- **TIME OF DAY** typically includes: DAY, NIGHT, MORNING, EVENING, DUSK, DAWN, etc.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## How to Use the App
 
-## What technologies are used for this project?
+### Creating a New Scene
 
-This project is built with:
+1. Click the "Add Scene" button
+2. Start with a scene heading (e.g., "INT. BEDROOM - NIGHT")
+3. Add action descriptions
+4. Add character names and dialogue
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Editing a Scene
 
-## How can I deploy this project?
+1. Click the pencil icon on any scene card
+2. Modify any element (scene heading, action, character, dialogue)
+3. Click "Done" to save changes
 
-Simply open [Lovable](https://lovable.dev/projects/a1664315-b2e6-480b-a445-43467c434ea0) and click on Share -> Publish.
+### Example Workflow
 
-## Can I connect a custom domain to my Lovable project?
+Here's a simple example of creating a scene:
 
-Yes it is!
+1. Add a scene heading: `INT. COFFEE SHOP - MORNING`
+2. Add an action: `The café is bustling with morning customers. SARAH (30s, professional) sits alone at a corner table, typing intensely on her laptop.`
+3. Add a character: `BARISTA`
+4. Add dialogue: `Your usual today, Sarah?`
+5. Add another character: `SARAH`
+6. Add dialogue: `Yes, please. And maybe something stronger than coffee.`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Scene Types Explained
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Scene Heading**: Establishes where and when the scene takes place
+- **Action**: Describes what happens (visual elements, character movements, etc.)
+- **Character**: Names should be in ALL CAPS when first introduced
+- **Dialogue**: The words spoken by characters
+- **Parenthetical**: Direction for how dialogue is delivered (e.g., `(whispering)`)
+- **Transition**: How we move to the next scene (e.g., CUT TO:, DISSOLVE TO:)
+
+## Voice-to-Text Feature
+
+Our application includes a powerful voice dictation feature that allows you to speak your screenplay rather than typing it:
+
+1. Click the microphone icon next to any text field
+2. Select your preferred language (English or Tamil)
+3. Start speaking clearly
+4. The text will appear in real-time
+5. Click the stop button (microphone with a slash) when finished
+
+### Language Support
+
+- **English (en-US)**: American English
+- **Tamil (ta-IN)**: Tamil language
+
+## Keyboard Shortcuts
+
+- `Tab`: Move between elements
+- `Enter`: Create a new element
+- `Ctrl+S`: Save script
+- `Ctrl+E`: Export to PDF
+- `Ctrl+N`: New scene
+
+## Saving and Exporting
+
+### Saving Your Script
+
+- Scripts are automatically saved to the cloud when logged in
+- Click the "Save" button to manually save your work
+
+### Exporting to PDF
+
+- Click the "Export" button in the header
+- Your screenplay will be formatted according to industry standards
+- The PDF will be generated for download
+
+## Technical Details
+
+This application is built with:
+
+- React for the user interface
+- Firebase for authentication and data storage
+- Web Speech API for voice recognition
+- PDF generation for exports
+- Tailwind CSS and shadcn/ui for styling
+
+## Support & Feedback
+
+For support or to provide feedback, please contact us at support@screenplaywriter.com
+
+---
+
+© 2025 Screenplay Writer. All rights reserved.
