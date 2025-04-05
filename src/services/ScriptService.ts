@@ -246,7 +246,7 @@ export const useScriptService = () => {
     }
   };
 
-  // Modified method to get ALL scripts for admin users
+  // Enhanced getAllScripts method for admin users
   const getAllScripts = async () => {
     if (!user) throw new Error("User not authenticated");
     
@@ -259,17 +259,26 @@ export const useScriptService = () => {
     try {
       console.log("Admin user accessing all scripts:", user.email);
       
+      // Get all scripts from the collection without any filtering
       const scriptsSnapshot = await getDocs(collection(db, "scripts"));
       const allScripts: any[] = [];
       
+      // Process each document
       scriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          allScripts.push(data);
+          allScripts.push({
+            ...data,
+            // Ensure these fields exist for consistency
+            createdAt: data.createdAt || Timestamp.now(),
+            updatedAt: data.updatedAt || Timestamp.now()
+          });
         }
       });
       
       console.log(`Admin user ${user.email} fetched all scripts:`, allScripts.length);
+      
+      // Return processed scripts
       return allScripts;
     } catch (error) {
       console.error("Error fetching all scripts:", error);

@@ -48,6 +48,7 @@ const ScriptsList: React.FC = () => {
 
   console.log("ScriptsList - User email:", user?.email, "isAdmin:", isAdminUser);
   
+  // Modified fetchScripts to better handle the admin fetch
   const fetchScripts = useCallback(async (fetchAll = false) => {
     if (!user) return;
     
@@ -79,10 +80,12 @@ const ScriptsList: React.FC = () => {
         setOwnScriptsCount(ownScripts.length);
         setSharedScriptsCount(sharedScripts.length);
       } else {
+        // When viewing all scripts as admin, there's no need to calculate own/shared counts
         setOwnScriptsCount(0);
         setSharedScriptsCount(0);
       }
       
+      // Set both states at once to avoid multiple renders
       setScripts(userScripts);
       setFilteredScripts(userScripts);
     } catch (error) {
@@ -97,22 +100,24 @@ const ScriptsList: React.FC = () => {
     }
   }, [user, scriptService, toast, isAdminUser]);
 
-  const [hasInitialFetch, setHasInitialFetch] = useState(false);
+  // Add a separate state to track admin view changes
+  const [adminViewChangeCounter, setAdminViewChangeCounter] = useState(0);
 
-  useEffect(() => {
-    if (user && !hasInitialFetch) {
-      // Debug log to verify admin status at fetch time
-      console.log(`Fetching scripts for ${user.email}, isAdmin: ${isAdminUser}, viewingAll: ${isViewingAll}`);
-      fetchScripts(isViewingAll);
-      setHasInitialFetch(true);
-    }
-  }, [user, fetchScripts, hasInitialFetch, isViewingAll, isAdminUser]);
-
+  // Use a more stable effect for initial loading
   useEffect(() => {
     if (user) {
-      setHasInitialFetch(false);
+      // Only set loading to true when the component mounts or view changes
+      setLoading(true);
+      
+      // Use a small timeout to avoid immediate state changes 
+      // causing render problems with filtered scripts
+      const timer = setTimeout(() => {
+        fetchScripts(isViewingAll);
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [user?.uid]);
+  }, [user, fetchScripts, isViewingAll, adminViewChangeCounter]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -208,16 +213,22 @@ const ScriptsList: React.FC = () => {
     }
   };
 
+  // Modified to trigger the admin view counter instead of directly setting isViewingAll
   const handleViewAllScripts = () => {
     console.log("Viewing all scripts clicked by admin:", user?.email);
-    setHasInitialFetch(false);
-    fetchScripts(true);
+    setIsViewingAll(true);
+    // Increment the counter to trigger a re-fetch
+    setAdminViewChangeCounter(prev => prev + 1);
+    setLoading(true);
   };
 
+  // Modified to trigger the admin view counter instead of directly setting isViewingAll
   const handleViewMyScripts = () => {
     console.log("Viewing my scripts clicked by admin:", user?.email);
-    setHasInitialFetch(false);
-    fetchScripts(false);
+    setIsViewingAll(false);
+    // Increment the counter to trigger a re-fetch
+    setAdminViewChangeCounter(prev => prev + 1);
+    setLoading(true);
   };
 
   const formatDate = (date: Date) => {
@@ -265,6 +276,7 @@ const ScriptsList: React.FC = () => {
                       onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
                       variant="secondary"
                       className="flex items-center gap-2"
+                      disabled={loading}
                     >
                       <BookOpen className="h-4 w-4" />
                       {isViewingAll ? "View My Scripts" : "View All Screenplays"}
@@ -315,7 +327,7 @@ const ScriptsList: React.FC = () => {
                 <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-300 dark:border-amber-700 mt-4">
                   <h2 className="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
-                    Viewing All Screenplays ({filteredScripts.length})
+                    Viewing All Screenplays {loading ? '(Loading...)' : `(${filteredScripts.length})`}
                   </h2>
                   <p className="text-amber-700 dark:text-amber-300 text-sm">
                     You are viewing all screenplays in the system. These scripts are read-only.
