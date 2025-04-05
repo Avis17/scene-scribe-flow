@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye } from "lucide-react";
+import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Users } from "lucide-react";
 import { ScriptVisibility } from "@/services/ScriptService";
 import ShareScriptDialog from "./ShareScriptDialog";
 import { useNavigate } from "react-router-dom";
+import { useFirebase } from "@/contexts/FirebaseContext";
 
 interface ScriptData {
   id: string;
@@ -14,6 +15,8 @@ interface ScriptData {
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
+  userId?: string;
+  sharedWith?: Record<string, any>;
 }
 
 interface ScriptCardProps {
@@ -33,6 +36,9 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
 }) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const navigate = useNavigate();
+  const { user } = useFirebase();
+  
+  const isSharedWithMe = user?.uid && script.userId && user.uid !== script.userId;
 
   const handleView = () => {
     navigate(`/view/${script.id}`);
@@ -54,6 +60,11 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <File className="h-5 w-5 mr-2" />
             )}
             {script.title || "Untitled Screenplay"}
+            {isSharedWithMe && (
+              <span className="ml-2 flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 p-1 rounded-sm">
+                <Users className="h-3 w-3 mr-1" /> Shared with me
+              </span>
+            )}
           </CardTitle>
           <CardDescription>
             {script.author || "Unknown Author"}
@@ -109,6 +120,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
                 size="sm"
                 onClick={() => onDelete(script.id)}
                 type="button"
+                disabled={isSharedWithMe}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
               </Button>
@@ -121,6 +133,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               className="w-full"
               onClick={() => setShowShareDialog(true)}
               type="button"
+              disabled={isSharedWithMe}
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share Script

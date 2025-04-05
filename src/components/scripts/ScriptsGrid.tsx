@@ -10,6 +10,8 @@ interface ScriptData {
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
+  userId?: string;
+  sharedWith?: Record<string, any>;
 }
 
 interface ScriptsGridProps {

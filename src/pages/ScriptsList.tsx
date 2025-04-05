@@ -67,6 +67,23 @@ const ScriptsList: React.FC = () => {
         // Get all scripts the user has access to (own scripts and shared scripts)
         const userScripts = await scriptService.getUserScripts(false);
         
+        console.log("All fetched scripts (including shared):", userScripts.length);
+        
+        // Check for shared scripts specifically
+        const sharedScripts = userScripts.filter(script => 
+          script.userId !== user.uid && 
+          script.sharedWith && 
+          script.sharedWith[user.email]
+        );
+        console.log("Shared scripts found:", sharedScripts.length);
+        if (sharedScripts.length > 0) {
+          console.log("Shared script details:", sharedScripts.map(s => ({
+            id: s.id,
+            title: s.title,
+            sharedWith: Object.keys(s.sharedWith || {})
+          })));
+        }
+        
         // Properly transform and validate script data before setting state
         const validScripts = userScripts
           .filter(script => 
@@ -82,8 +99,6 @@ const ScriptsList: React.FC = () => {
             createdAt: script.createdAt,
             updatedAt: script.updatedAt
           }));
-        
-        console.log("Fetched scripts:", validScripts);
         
         setScripts(validScripts);
         setFilteredScripts(validScripts);

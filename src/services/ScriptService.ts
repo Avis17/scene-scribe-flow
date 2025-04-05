@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   doc, 
@@ -103,25 +102,30 @@ export const useScriptService = () => {
       
       console.log("User's own scripts:", scripts.length);
       
-      // Get scripts shared with the user
-      const sharedScriptsQuery = query(
-        collection(db, "scripts"),
-        where(`sharedWith.${user.email}`, "!=", null)
-      );
-      
-      try {
-        const sharedScriptsSnapshot = await getDocs(sharedScriptsQuery);
-        sharedScriptsSnapshot.forEach((doc) => {
-          // Don't add duplicates
-          if (!scripts.some(script => script.id === doc.id)) {
-            scripts.push(doc.data());
-          }
-        });
-        
-        console.log("Scripts shared with user:", sharedScriptsSnapshot.size);
-      } catch (error) {
-        console.error("Error fetching shared scripts:", error);
-        // This might fail if the index doesn't exist, but we continue with user's own scripts
+      // Get scripts shared with the user by email
+      if (user.email) {
+        try {
+          // This query looks for documents where the user's email exists
+          // in the sharedWith object's keys
+          const allScriptsSnapshot = await getDocs(collection(db, "scripts"));
+          
+          const sharedScripts = allScriptsSnapshot.docs
+            .map(doc => doc.data())
+            .filter(script => 
+              script.sharedWith && 
+              script.sharedWith[user.email] && 
+              // Don't include scripts the user already owns
+              script.userId !== user.uid
+            );
+          
+          console.log("Scripts shared with user:", sharedScripts.length);
+          
+          // Add the shared scripts to the scripts array
+          scripts = [...scripts, ...sharedScripts];
+        } catch (error) {
+          console.error("Error fetching shared scripts:", error);
+          // Continue with user's own scripts
+        }
       }
       
       return scripts;
