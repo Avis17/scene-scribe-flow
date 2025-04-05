@@ -14,7 +14,6 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
           @media print {
             @page { margin: 1in; }
             body { margin: 0; }
-            .page-break { page-break-before: always; }
           }
           body { 
             font-family: Courier, monospace; 
@@ -34,8 +33,7 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
             font-size: 24pt; 
             margin-bottom: 1in;
           }
-          .scene-page {
-            min-height: 10in;
+          .scene-content {
             position: relative;
           }
           .scene-heading { 
@@ -79,28 +77,22 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
         </div>
   `;
   
-  // Start with a page break after the title
-  content += `<div class="page-break"></div>`;
+  // Add script content, starting with scene 1
+  content += `<div class="scene-content">`;
   
-  // Each scene gets its own section
   scriptData.scenes.forEach((scene, sceneIndex) => {
     content += `
-      <div class="scene-page">
-        <div class="scene-number">SCENE ${sceneIndex + 1}</div>
+      <div class="scene-number">SCENE ${sceneIndex + 1}</div>
     `;
     
     scene.elements.forEach((element: any) => {
       content += `<div class="${element.type}">${element.content}</div>`;
     });
-    
-    content += `
-        <div class="page-number"></div>
-      </div>
-      ${sceneIndex < scriptData.scenes.length - 1 ? '<div class="page-break"></div>' : ''}
-    `;
   });
   
   content += `
+        <div class="page-number"></div>
+      </div>
       </body>
     </html>
   `;

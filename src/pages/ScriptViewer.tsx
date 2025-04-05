@@ -253,7 +253,7 @@ const ScriptViewer: React.FC = () => {
     script.scenes.forEach((scene: any, index: number) => {
       pages.push(
         <div key={`scene-${index}`} className="mb-16">
-          <h2 className="text-lg font-semibold text-gray-500 mb-4">SCENE {index + 1}</h2>
+          <h2 className="text-lg font-semibold text-muted-foreground mb-4">SCENE {index + 1}</h2>
           {scene.elements.map((element: any, elementIndex: number) => {
             switch(element.type) {
               case 'scene-heading':
@@ -325,7 +325,7 @@ const ScriptViewer: React.FC = () => {
           </Button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8 font-mono">
+        <div className="bg-card rounded-lg shadow-md p-8 mb-8 font-mono text-foreground">
           {pages.length > 1 && (
             <div className="flex items-center justify-center mb-8 space-x-2">
               <Button 

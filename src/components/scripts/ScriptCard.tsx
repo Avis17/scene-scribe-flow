@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Clock, User } from "lucide-react";
+import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Clock, User, History } from "lucide-react";
 import { ScriptVisibility } from "@/services/ScriptService";
 import ShareScriptDialog from "./ShareScriptDialog";
 import { useNavigate } from "react-router-dom";
+import ScriptVersionHistory from "./ScriptVersionHistory";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -161,7 +162,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
             </Button>
           </div>
           
-          <div className="w-full">
+          <div className="grid grid-cols-2 gap-2 w-full">
             <Button
               variant="secondary"
               size="sm"
@@ -170,8 +171,10 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               type="button"
             >
               <Share2 className="h-4 w-4 mr-2" />
-              <span>Share Script</span>
+              <span>Share</span>
             </Button>
+
+            <ScriptVersionHistory scriptId={script.id} />
           </div>
         </CardFooter>
       </Card>
