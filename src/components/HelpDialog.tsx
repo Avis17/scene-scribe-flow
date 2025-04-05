@@ -11,9 +11,11 @@ import { HelpCircle, Book, Search, Mic, Keyboard, Save, FileDown, Code, MessageS
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const HelpDialog = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const isMobile = useIsMobile();
 
   return (
     <Dialog>
@@ -23,61 +25,61 @@ const HelpDialog = () => {
           Help
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] md:max-w-4xl h-[85vh] max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-xl md:text-2xl flex items-center gap-2">
-            <Book className="h-5 md:h-6 w-5 md:w-6 text-primary" /> 
+      <DialogContent className={`w-[95vw] ${isMobile ? 'max-w-[95vw]' : 'max-w-4xl'} h-[85vh] max-h-[90vh] p-2 md:p-4 overflow-hidden`}>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg md:text-2xl flex items-center gap-2">
+            <Book className="h-5 w-5 md:h-6 md:w-6 text-primary" /> 
             Screenplay Writer Help Guide
           </DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-          <div className="overflow-x-auto">
-            <TabsList className="w-full justify-start mb-4 flex-nowrap min-w-max">
-              <TabsTrigger value="overview" className="flex items-center gap-1 whitespace-nowrap">
-                <ScrollText className="h-4 w-4" /> Overview
+          <div className="overflow-x-auto pb-1">
+            <TabsList className="w-full justify-start mb-2 md:mb-4 flex-nowrap min-w-max">
+              <TabsTrigger value="overview" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <ScrollText className="h-3 w-3 md:h-4 md:w-4" /> Overview
               </TabsTrigger>
-              <TabsTrigger value="format" className="flex items-center gap-1 whitespace-nowrap">
-                <Code className="h-4 w-4" /> Screenplay Format
+              <TabsTrigger value="format" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <Code className="h-3 w-3 md:h-4 md:w-4" /> Format
               </TabsTrigger>
-              <TabsTrigger value="usage" className="flex items-center gap-1 whitespace-nowrap">
-                <Search className="h-4 w-4" /> How to Use
+              <TabsTrigger value="usage" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <Search className="h-3 w-3 md:h-4 md:w-4" /> How to Use
               </TabsTrigger>
-              <TabsTrigger value="voice" className="flex items-center gap-1 whitespace-nowrap">
-                <Mic className="h-4 w-4" /> Voice Tools
+              <TabsTrigger value="voice" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <Mic className="h-3 w-3 md:h-4 md:w-4" /> Voice Tools
               </TabsTrigger>
-              <TabsTrigger value="shortcuts" className="flex items-center gap-1 whitespace-nowrap">
-                <Keyboard className="h-4 w-4" /> Shortcuts
+              <TabsTrigger value="shortcuts" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <Keyboard className="h-3 w-3 md:h-4 md:w-4" /> Shortcuts
               </TabsTrigger>
-              <TabsTrigger value="export" className="flex items-center gap-1 whitespace-nowrap">
-                <FileDown className="h-4 w-4" /> Saving/Exporting
+              <TabsTrigger value="export" className="flex items-center gap-1 whitespace-nowrap text-xs md:text-sm py-1">
+                <FileDown className="h-3 w-3 md:h-4 md:w-4" /> Export
               </TabsTrigger>
             </TabsList>
           </div>
           
           <div className="border rounded-lg p-1">
-            <ScrollArea className="h-[60vh] pr-4">
-              <div className="px-2 py-4">
+            <ScrollArea className="h-[60vh] md:h-[65vh] pr-4">
+              <div className="px-2 py-2 md:py-4">
                 <TabsContent value="overview" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
                   <div className="flex flex-col md:flex-row md:justify-between items-center md:items-start">
                     <div>
-                      <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-bold mb-4 text-primary">
+                      <h1 className="flex items-center gap-2 text-xl md:text-3xl font-bold mb-4 text-primary">
                         Screenplay Writer Application
                       </h1>
-                      <p className="text-base md:text-lg text-muted-foreground mb-6">
+                      <p className="text-sm md:text-lg text-muted-foreground mb-6">
                         A modern, intuitive web application for writing and managing film and TV screenplays with real-time voice-to-text capability.
                       </p>
                     </div>
-                    <img src="https://i.imgur.com/xRv5T3U.png" alt="Logo" className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-0" />
+                    <img src="https://i.imgur.com/xRv5T3U.png" alt="Logo" className="w-12 h-12 md:w-20 md:h-20 mb-4 md:mb-0" />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mt-4 md:mt-8">
                     <Card className="border border-primary/20 shadow-sm">
-                      <CardContent className="pt-6">
-                        <h3 className="text-lg font-medium flex items-center gap-2 mb-2">
-                          <Search className="h-5 w-5 text-primary" /> Features Overview
+                      <CardContent className="pt-4 md:pt-6 px-2 md:px-4 text-sm md:text-base">
+                        <h3 className="text-base md:text-lg font-medium flex items-center gap-2 mb-2">
+                          <Search className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Features Overview
                         </h3>
-                        <ul className="list-disc pl-5 space-y-2">
+                        <ul className="list-disc pl-4 md:pl-5 space-y-1 md:space-y-2">
                           <li><span className="font-medium">Real-time formatting</span>: Automatic industry-standard screenplay formatting</li>
                           <li><span className="font-medium">Voice-to-Text</span>: Dictate your screenplay in English or Tamil</li>
                           <li><span className="font-medium">Scene Management</span>: Easily add, edit, and rearrange scenes</li>
@@ -88,31 +90,31 @@ const HelpDialog = () => {
                       </CardContent>
                     </Card>
                     <Card className="border border-primary/20 shadow-sm">
-                      <CardContent className="pt-6">
-                        <h3 className="text-lg font-medium flex items-center gap-2 mb-2">
-                          <MessageSquare className="h-5 w-5 text-primary" /> Getting Started
+                      <CardContent className="pt-4 md:pt-6 px-2 md:px-4 text-sm md:text-base">
+                        <h3 className="text-base md:text-lg font-medium flex items-center gap-2 mb-2">
+                          <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" /> Getting Started
                         </h3>
-                        <ol className="list-decimal pl-5 space-y-3">
+                        <ol className="list-decimal pl-4 md:pl-5 space-y-1 md:space-y-3">
                           <li>
                             <span className="font-medium">Create an Account</span>
-                            <p className="text-sm text-muted-foreground mt-1">Sign up or log in to save your work and access it from any device.</p>
+                            <p className="text-xs md:text-sm text-muted-foreground mt-1">Sign up or log in to save your work and access it from any device.</p>
                           </li>
                           <li>
                             <span className="font-medium">Create a New Script</span>
-                            <p className="text-sm text-muted-foreground mt-1">Click "New Script" to start a fresh screenplay.</p>
+                            <p className="text-xs md:text-sm text-muted-foreground mt-1">Click "New Script" to start a fresh screenplay.</p>
                           </li>
                           <li>
                             <span className="font-medium">Start Writing</span>
-                            <p className="text-sm text-muted-foreground mt-1">Add scenes and begin crafting your story.</p>
+                            <p className="text-xs md:text-sm text-muted-foreground mt-1">Add scenes and begin crafting your story.</p>
                           </li>
                         </ol>
                       </CardContent>
                     </Card>
                   </div>
 
-                  <div className="mt-6 bg-muted/40 p-4 rounded-lg border border-muted">
-                    <h3 className="text-lg font-medium mb-2">About This Guide</h3>
-                    <p>
+                  <div className="mt-4 md:mt-6 bg-muted/40 p-3 md:p-4 rounded-lg border border-muted">
+                    <h3 className="text-base md:text-lg font-medium mb-2">About This Guide</h3>
+                    <p className="text-sm md:text-base">
                       This guide provides comprehensive information about the Screenplay Writer application. 
                       Use the tabs above to navigate to specific sections about screenplay formatting, 
                       how to use the app, voice-to-text features, keyboard shortcuts, and more.
@@ -120,7 +122,7 @@ const HelpDialog = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="format" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
+                <TabsContent value="format">
                   <h2 className="text-2xl font-bold text-primary mb-4">Understanding Screenplay Format</h2>
                   
                   <p className="mb-6">
@@ -202,7 +204,7 @@ const HelpDialog = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="usage" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
+                <TabsContent value="usage">
                   <h2 className="text-2xl font-bold text-primary mb-4">How to Use the App</h2>
 
                   <div className="space-y-6">
@@ -261,7 +263,7 @@ const HelpDialog = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="voice" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
+                <TabsContent value="voice">
                   <h2 className="text-2xl font-bold text-primary mb-4">Voice-to-Text Feature</h2>
                   
                   <div className="bg-muted/30 p-4 rounded-lg border mb-6">
@@ -350,7 +352,7 @@ const HelpDialog = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="shortcuts" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
+                <TabsContent value="shortcuts">
                   <h2 className="text-2xl font-bold text-primary mb-4">Keyboard Shortcuts</h2>
                   
                   <p className="mb-6">
@@ -401,7 +403,7 @@ const HelpDialog = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="export" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
+                <TabsContent value="export">
                   <h2 className="text-2xl font-bold text-primary mb-4">Saving and Exporting</h2>
                   
                   <div className="space-y-6">
@@ -464,7 +466,7 @@ const HelpDialog = () => {
           </div>
         </Tabs>
         
-        <div className="mt-4 text-xs text-muted-foreground text-center border-t pt-2">
+        <div className="mt-2 md:mt-4 text-xs text-muted-foreground text-center border-t pt-1 md:pt-2">
           © 2025 Screenplay Writer. All rights reserved.
         </div>
       </DialogContent>

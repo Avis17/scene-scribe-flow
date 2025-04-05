@@ -1,6 +1,6 @@
-
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SpeechRecognitionContextType {
   isRecording: boolean;
@@ -30,18 +30,17 @@ export const SpeechRecognitionProvider: React.FC<SpeechRecognitionProviderProps>
   const [activeElementIndex, setActiveElementIndex] = useState<number | null>(null);
   const [recognitionLanguage, setRecognitionLanguage] = useState<string>("en-US");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
-  let recognition: SpeechRecognition | null = null;
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
-  // Initialize speech recognition if supported
   const initializeSpeechRecognition = () => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      // Browser supports speech recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = recognitionLanguage;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = recognitionLanguage;
       
       return true;
     }
@@ -57,7 +56,9 @@ export const SpeechRecognitionProvider: React.FC<SpeechRecognitionProviderProps>
     if (!initializeSpeechRecognition()) {
       toast({
         title: "Not Supported",
-        description: "Speech recognition is not supported in your browser.",
+        description: isMobile ? 
+          "Speech recognition may not be fully supported on this mobile device." : 
+          "Speech recognition is not supported in your browser.",
         variant: "destructive",
       });
       return;
@@ -66,17 +67,16 @@ export const SpeechRecognitionProvider: React.FC<SpeechRecognitionProviderProps>
     setIsRecording(true);
     setActiveElementIndex(index);
     
-    if (recognition) {
-      recognition.onresult = (event) => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map(result => result[0].transcript)
           .join('');
           
-        // Update the content through callback
         updateContent(transcript);
       };
       
-      recognition.onerror = (event) => {
+      recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
         toast({
           title: "Error",
@@ -86,15 +86,20 @@ export const SpeechRecognitionProvider: React.FC<SpeechRecognitionProviderProps>
         stopRecording();
       };
       
-      recognition.onend = () => {
+      recognitionRef.current.onend = () => {
         if (isRecording) {
-          // If we're still supposed to be recording, restart
-          recognition?.start();
+          try {
+            recognitionRef.current?.start();
+          } catch (error) {
+            console.error('Failed to restart recognition', error);
+            setIsRecording(false);
+            setActiveElementIndex(null);
+          }
         }
       };
       
       try {
-        recognition.start();
+        recognitionRef.current.start();
         toast({
           title: "Recording Started",
           description: "Speak now. Your speech will be converted to text.",
@@ -103,13 +108,26 @@ export const SpeechRecognitionProvider: React.FC<SpeechRecognitionProviderProps>
         console.error('Speech recognition start error', error);
         setIsRecording(false);
         setActiveElementIndex(null);
+        toast({
+          title: "Error Starting Recording",
+          description: "Please try again or use text input instead.",
+          variant: "destructive",
+        });
       }
     }
   };
   
   const stopRecording = () => {
-    if (recognition) {
-      recognition.stop();
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        toast({
+          title: "Recording Stopped",
+          description: "Voice input has been stopped.",
+        });
+      } catch (error) {
+        console.error('Error stopping recognition', error);
+      }
     }
     setIsRecording(false);
     setActiveElementIndex(null);
