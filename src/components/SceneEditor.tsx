@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
-import { PlusCircle, Check, Mic, MicOff } from "lucide-react";
+import { PlusCircle, Check, Mic, MicOff, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SceneEditorProps {
@@ -17,6 +17,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const [elements, setElements] = useState<SceneElement[]>(scene.elements);
   const [isRecording, setIsRecording] = useState(false);
   const [activeElementIndex, setActiveElementIndex] = useState<number | null>(null);
+  const [recognitionLanguage, setRecognitionLanguage] = useState<string>("en-US");
   const { toast } = useToast();
   
   let recognition: SpeechRecognition | null = null;
@@ -29,7 +30,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = recognitionLanguage;
       
       return true;
     }
@@ -139,6 +140,21 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center space-x-2 mb-4">
+        <Globe className="h-4 w-4 text-muted-foreground" />
+        <Select
+          value={recognitionLanguage}
+          onValueChange={(value) => setRecognitionLanguage(value)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en-US">English</SelectItem>
+            <SelectItem value="ta-IN">Tamil</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       {elements.map((element, index) => (
         <div key={index} className="flex flex-col space-y-2">
           <div className="flex items-center space-x-2">
