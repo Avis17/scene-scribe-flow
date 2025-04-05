@@ -123,7 +123,7 @@ const ScriptsList: React.FC = () => {
 
   const handleCreateNew = () => {
     resetScript();
-    navigate("/");
+    navigate("/", { state: { forceNew: true } });
   };
 
   const handleExportPDF = async (scriptId: string, title: string) => {

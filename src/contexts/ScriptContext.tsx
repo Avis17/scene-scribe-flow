@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -80,6 +79,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [user, author]);
 
   const resetScript = useCallback(() => {
+    console.log("Resetting script to default state");
     setTitle("Untitled Screenplay");
     setAuthor(user?.displayName || "");
     setScenes([
@@ -100,6 +100,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     ]);
     setCurrentScriptId(null);
     setIsViewOnly(false);
+    setIsEditing(false);
   }, [user]);
 
   useEffect(() => {
@@ -115,7 +116,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             setAuthor(scriptData.author || "");
             setScenes(scriptData.scenes || []);
             
-            // Check if this is a shared script with view-only access
             const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
             let isViewOnlyAccess = false;
             

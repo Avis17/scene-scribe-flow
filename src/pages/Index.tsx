@@ -15,7 +15,16 @@ const Index: React.FC = () => {
     const checkScriptAndRedirect = () => {
       // Only redirect if we're not already redirecting or loading auth
       if (!authLoading && location.pathname === "/") {
-        if (!currentScriptId) {
+        console.log("Index - currentScriptId:", currentScriptId);
+        console.log("Index - state from location:", location.state);
+        
+        // Check if we have forceNew flag from navigation state
+        const isNewScriptRequest = location.state?.forceNew === true;
+        
+        if (isNewScriptRequest) {
+          console.log("Creating new script as requested");
+          resetScript();
+        } else if (!currentScriptId) {
           console.log("No script selected, creating a new script");
           // Reset to a blank script when coming to the editor without a script ID
           resetScript();
@@ -24,7 +33,7 @@ const Index: React.FC = () => {
     };
     
     checkScriptAndRedirect();
-  }, [currentScriptId, navigate, authLoading, location.pathname, resetScript]);
+  }, [currentScriptId, navigate, authLoading, location.pathname, location.state, resetScript]);
   
   // Update document title with app name
   useEffect(() => {

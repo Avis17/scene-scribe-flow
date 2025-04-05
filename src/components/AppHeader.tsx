@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -56,11 +55,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   
   const handleCreateNew = () => {
-    // Use the resetScript prop if provided, otherwise just navigate
-    if (resetScript) {
-      resetScript();
-    }
-    navigate("/");
+    // Force a completely new script by navigating with state
+    navigate("/", { state: { forceNew: true } });
   };
 
   const handleGoHome = () => {

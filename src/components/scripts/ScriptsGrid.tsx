@@ -43,27 +43,29 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
       userId: script.userId,
       currentUserUid: user?.uid,
       sharedWith: script.sharedWith,
+      isOwn: script.userId === user?.uid,
       isShared: script.userId !== user?.uid && script.sharedWith && user?.email && 
-                Object.keys(script.sharedWith).includes(user.email)
+                script.sharedWith[user.email]
     });
   });
 
-  // Fixed filtering logic for own vs shared scripts
+  // Improved filtering logic for own vs shared scripts
   const ownScripts = scripts.filter(script => script.userId === user?.uid);
   
-  // For shared scripts, ensure we're correctly checking if user.email is a key in sharedWith
+  // For shared scripts, check if user.email is a key in sharedWith
   const sharedScripts = scripts.filter(script => {
     if (!script.userId || !user?.email || !script.sharedWith) return false;
-    return script.userId !== user?.uid && Object.keys(script.sharedWith).includes(user.email);
+    return script.userId !== user?.uid && script.sharedWith[user.email] !== undefined;
   });
   
   console.log("ScriptsGrid - Own scripts:", ownScripts.length, "Shared scripts:", sharedScripts.length);
+  
   if (sharedScripts.length > 0) {
     console.log("Example shared script:", {
       title: sharedScripts[0].title,
       userId: sharedScripts[0].userId,
       currentUser: user?.uid,
-      sharedWith: sharedScripts[0].sharedWith
+      sharedWith: Object.keys(sharedScripts[0].sharedWith || {})
     });
   }
 
@@ -101,6 +103,12 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {ownScripts.length === 0 && sharedScripts.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No scripts found.</p>
         </div>
       )}
     </div>
