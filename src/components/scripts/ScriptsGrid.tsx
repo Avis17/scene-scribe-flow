@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import ScriptCard from "./ScriptCard";
 import SharedScriptCard from "./SharedScriptCard";
 import { ScriptVisibility } from "@/services/ScriptService";
 import { useFirebase } from "@/contexts/FirebaseContext";
-import { toast } from "@/hooks/use-toast";
 
 interface ScriptData {
   id: string;
@@ -33,53 +32,17 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   formatDate
 }) => {
   const { user } = useFirebase();
-  // Local state to track scripts after operations like deletion
-  const [localScripts, setLocalScripts] = useState<ScriptData[]>([]);
   
-  // Update local scripts when props change - with proper dependency array
-  useEffect(() => {
-    // Only update if scripts have actually changed
-    setLocalScripts(scripts);
-  }, [scripts]);
-  
-  // This is fine because it only logs once when component renders or props change
-  console.log("ScriptsGrid - Received scripts:", localScripts.length);
+  console.log("ScriptsGrid - Received scripts:", scripts.length);
 
   // Improved filtering logic for own vs shared scripts
-  const ownScripts = localScripts.filter(script => script.userId === user?.uid);
+  const ownScripts = scripts.filter(script => script.userId === user?.uid);
   
   // For shared scripts, check if user.email is a key in sharedWith
-  const sharedScripts = localScripts.filter(script => {
+  const sharedScripts = scripts.filter(script => {
     if (!script.userId || !user?.email || !script.sharedWith) return false;
     return script.userId !== user?.uid && script.sharedWith[user.email] !== undefined;
   });
-
-  // Custom handler for delete that updates local state first before API call
-  const handleDelete = async (scriptId: string) => {
-    try {
-      // Update local state immediately for responsive UI
-      setLocalScripts(prevScripts => prevScripts.filter(script => script.id !== scriptId));
-      
-      // Call the parent handler to perform the actual deletion
-      await onDeleteScript(scriptId);
-      
-      toast({
-        title: "Success",
-        description: "Script deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error during script deletion:", error);
-      
-      // If error occurs, revert the local state change by restoring the scripts from props
-      setLocalScripts(scripts);
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete script. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -92,7 +55,7 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
                 key={script.id}
                 script={script}
                 onOpen={onOpenScript}
-                onDelete={handleDelete}
+                onDelete={onDeleteScript}
                 onExport={onExportScript}
                 formatDate={formatDate}
               />
