@@ -17,6 +17,13 @@ import { useFirebase } from "@/contexts/FirebaseContext";
 import { Scene, SceneElement } from "@/contexts/ScriptContext";
 
 export type ScriptVisibility = "public" | "protected" | "private";
+export type ScriptAccessLevel = "view" | "edit";
+
+export interface ScriptSharing {
+  email: string;
+  accessLevel: ScriptAccessLevel;
+  sharedAt: any; // Timestamp
+}
 
 export const useScriptService = () => {
   const { db, user } = useFirebase();
@@ -40,7 +47,8 @@ export const useScriptService = () => {
         userId: user.uid,
         visibility,
         createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
+        sharedWith: [] // Initialize empty array for shared users
       });
       
       return scriptId;
@@ -84,7 +92,7 @@ export const useScriptService = () => {
     try {
       let scripts: any[] = [];
       
-      // First get the user's own scripts (avoid the compound query that requires an index)
+      // First get the user's own scripts
       const userScriptsQuery = query(
         collection(db, "scripts"),
         where("userId", "==", user.uid)
@@ -96,6 +104,27 @@ export const useScriptService = () => {
       });
       
       console.log("User's own scripts:", scripts.length);
+      
+      // Get scripts shared with the user
+      const sharedScriptsQuery = query(
+        collection(db, "scripts"),
+        where(`sharedWith.${user.email}`, "!=", null)
+      );
+      
+      try {
+        const sharedScriptsSnapshot = await getDocs(sharedScriptsQuery);
+        sharedScriptsSnapshot.forEach((doc) => {
+          // Don't add duplicates
+          if (!scripts.some(script => script.id === doc.id)) {
+            scripts.push(doc.data());
+          }
+        });
+        
+        console.log("Scripts shared with user:", sharedScriptsSnapshot.size);
+      } catch (error) {
+        console.error("Error fetching shared scripts:", error);
+        // This might fail if the index doesn't exist, but we continue with user's own scripts
+      }
       
       // If admin, also get all protected scripts not owned by the user
       if (includeProtected) {
@@ -169,12 +198,120 @@ export const useScriptService = () => {
     }
   };
 
+  // New function to share a script with another user
+  const shareScript = async (scriptId: string, email: string, accessLevel: ScriptAccessLevel) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      
+      if (!scriptDoc.exists()) {
+        throw new Error("Script not found");
+      }
+      
+      const scriptData = scriptDoc.data();
+      
+      // Check if the current user is the owner of the script
+      if (scriptData.userId !== user.uid) {
+        throw new Error("You don't have permission to share this script");
+      }
+      
+      // Create or update the shared user entry
+      const sharedWith = scriptData.sharedWith || {};
+      sharedWith[email] = {
+        accessLevel,
+        sharedAt: Timestamp.now()
+      };
+      
+      await updateDoc(doc(db, "scripts", scriptId), {
+        sharedWith,
+        updatedAt: Timestamp.now()
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error sharing script:", error);
+      throw error;
+    }
+  };
+
+  // Remove sharing for a specific user
+  const removeScriptSharing = async (scriptId: string, email: string) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      
+      if (!scriptDoc.exists()) {
+        throw new Error("Script not found");
+      }
+      
+      const scriptData = scriptDoc.data();
+      
+      // Check if the current user is the owner of the script
+      if (scriptData.userId !== user.uid) {
+        throw new Error("You don't have permission to modify sharing for this script");
+      }
+      
+      // Create a new sharedWith object without the specified email
+      const sharedWith = { ...scriptData.sharedWith };
+      if (sharedWith && sharedWith[email]) {
+        delete sharedWith[email];
+      }
+      
+      await updateDoc(doc(db, "scripts", scriptId), {
+        sharedWith,
+        updatedAt: Timestamp.now()
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error removing script sharing:", error);
+      throw error;
+    }
+  };
+
+  // Get all users that a script is shared with
+  const getScriptSharing = async (scriptId: string) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      
+      if (!scriptDoc.exists()) {
+        throw new Error("Script not found");
+      }
+      
+      const scriptData = scriptDoc.data();
+      
+      // Check if the current user is the owner of the script
+      if (scriptData.userId !== user.uid) {
+        throw new Error("You don't have permission to view sharing for this script");
+      }
+      
+      const sharedWith = scriptData.sharedWith || {};
+      
+      // Convert to array format with email included
+      return Object.keys(sharedWith).map(email => ({
+        email,
+        accessLevel: sharedWith[email].accessLevel,
+        sharedAt: sharedWith[email].sharedAt
+      }));
+    } catch (error) {
+      console.error("Error getting script sharing:", error);
+      throw error;
+    }
+  };
+
   return {
     saveScript,
     updateScript,
     getUserScripts,
     getScriptById,
     deleteScript,
-    updateScriptVisibility
+    updateScriptVisibility,
+    shareScript,
+    removeScriptSharing,
+    getScriptSharing
   };
 };
