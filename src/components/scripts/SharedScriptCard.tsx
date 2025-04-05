@@ -39,10 +39,10 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
     : "view"; // Default to view if not specified
   
-  // Check if user has edit permission
-  const hasEditAccess = accessLevel === "edit";
+  // Check if user has only view permission (not edit permission)
+  const hasViewOnlyAccess = accessLevel === "view";
   
-  console.log("Shared script access level:", accessLevel, "for script:", script.title);
+  console.log("Shared script access level:", accessLevel, "for script:", script.title, "hasViewOnlyAccess:", hasViewOnlyAccess);
   
   const handleView = () => {
     navigate(`/view/${script.id}`);
@@ -100,8 +100,8 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {/* Edit button - only show if user has edit access */}
-            {hasEditAccess && (
+            {/* Edit button - only show if user has edit access (not view-only) */}
+            {!hasViewOnlyAccess && (
               <Button 
                 variant="outline"
                 size="sm"
