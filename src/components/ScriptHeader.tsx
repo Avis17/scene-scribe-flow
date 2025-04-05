@@ -20,7 +20,8 @@ const ScriptHeader: React.FC = () => {
     scenes, 
     loading, 
     currentScriptId,
-    isViewOnly
+    isViewOnly,
+    isModified
   } = useScript();
 
   const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
@@ -112,7 +113,7 @@ const ScriptHeader: React.FC = () => {
           
           <Button 
             onClick={handleSave}
-            disabled={loading || isViewOnly}
+            disabled={loading || isViewOnly || !isModified}
             size="sm"
           >
             <Save className="h-4 w-4 mr-1" />

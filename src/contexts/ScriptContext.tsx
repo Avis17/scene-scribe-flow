@@ -33,6 +33,7 @@ interface ScriptContextType {
   resetScript: () => void;
   isEditing: boolean;
   isViewOnly: boolean;
+  isModified: boolean;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -68,10 +69,27 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isViewOnly, setIsViewOnly] = useState<boolean>(false);
+  const [isModified, setIsModified] = useState<boolean>(false);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
   const { toast } = useToast();
+
+  // Track title changes
+  const handleSetTitle = (newTitle: string) => {
+    if (newTitle !== title) {
+      setIsModified(true);
+      setTitle(newTitle);
+    }
+  };
+
+  // Track author changes
+  const handleSetAuthor = (newAuthor: string) => {
+    if (newAuthor !== author) {
+      setIsModified(true);
+      setAuthor(newAuthor);
+    }
+  };
 
   useEffect(() => {
     if (user && user.displayName && author === "") {
@@ -102,6 +120,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     setCurrentScriptId(null);
     setIsViewOnly(false);
     setIsEditing(false);
+    setIsModified(false);
   }, [user]);
 
   useEffect(() => {
@@ -133,6 +152,9 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
                 description: "You have view-only access to this script and cannot make changes.",
               });
             }
+            
+            // Reset modified state after loading
+            setIsModified(false);
           }
         } catch (error) {
           console.error("Error loading script:", error);
@@ -154,6 +176,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [currentScriptId, user]);
 
   const addScene = () => {
+    setIsModified(true);
     const newId = `scene-${Date.now()}`;
     setScenes([
       ...scenes,
@@ -175,16 +198,19 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateScene = (id: string, elements: SceneElement[]) => {
+    setIsModified(true);
     setScenes(scenes.map((scene) => 
       scene.id === id ? { ...scene, elements } : scene
     ));
   };
 
   const deleteScene = (id: string) => {
+    setIsModified(true);
     setScenes(scenes.filter((scene) => scene.id !== id));
   };
 
   const reorderScenes = (sourceIndex: number, destinationIndex: number) => {
+    setIsModified(true);
     const result = Array.from(scenes);
     const [removed] = result.splice(sourceIndex, 1);
     result.splice(destinationIndex, 0, removed);
@@ -226,6 +252,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           title: "Success",
           description: "Script updated successfully",
         });
+        // Reset modified state after saving
+        setIsModified(false);
         return currentScriptId;
       } else {
         const newScriptId = await scriptService.saveScript(title, author, scenes, visibility);
@@ -234,6 +262,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           title: "Success",
           description: "Script saved successfully",
         });
+        // Reset modified state after saving
+        setIsModified(false);
         return newScriptId;
       }
     } catch (error) {
@@ -252,9 +282,9 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     <ScriptContext.Provider
       value={{
         title,
-        setTitle,
+        setTitle: handleSetTitle,
         author,
-        setAuthor,
+        setAuthor: handleSetAuthor,
         scenes,
         addScene,
         updateScene,
@@ -268,6 +298,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         resetScript,
         isEditing,
         isViewOnly,
+        isModified,
       }}
     >
       {children}
