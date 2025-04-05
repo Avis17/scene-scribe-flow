@@ -13,10 +13,13 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  browserLocalPersistence,
+  setPersistence
 } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { useToast } from "@/hooks/use-toast";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -54,11 +57,26 @@ export const useFirebase = () => {
 export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  
+  // Set persistence to LOCAL (browser persistence)
+  useEffect(() => {
+    const setupPersistence = async () => {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+        console.log("Firebase persistence set to LOCAL");
+      } catch (error) {
+        console.error("Error setting persistence:", error);
+      }
+    };
+    
+    setupPersistence();
+  }, [auth]);
   
   // Initialize Analytics in browser environment
   if (typeof window !== 'undefined') {
@@ -88,8 +106,30 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      // Force authorization even if the user has already granted it
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+      
+      // Check for unauthorized domain error
+      if (error.code === 'auth/unauthorized-domain') {
+        toast({
+          title: "Unauthorized Domain",
+          description: "This domain is not authorized for authentication. Please add it in Firebase console under Authentication > Sign-in method > Authorized domains.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Google Sign-in Failed",
+          description: error.message || "Failed to sign in with Google",
+          variant: "destructive",
+        });
+      }
+      throw error;
+    }
   };
 
   const value = {

@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/card";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, Mail, Lock, Eye, EyeOff, Github } from "lucide-react";
+import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import AppLogo from "@/components/AppLogo";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -58,9 +59,29 @@ const Login: React.FC = () => {
       navigate("/scripts");
     } catch (error: any) {
       console.error("Authentication error:", error);
+      
+      let errorMessage = "Authentication failed";
+      
+      // Handle specific error codes
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = "Incorrect password";
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = "User not found";
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Email is already in use";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email format";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized. Please contact your administrator.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Authentication failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -79,11 +100,7 @@ const Login: React.FC = () => {
       navigate("/scripts");
     } catch (error: any) {
       console.error("Google sign-in error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Google sign-in failed",
-        variant: "destructive",
-      });
+      // Error handling is now centralized in FirebaseContext
     } finally {
       setLoading(false);
     }
@@ -97,7 +114,10 @@ const Login: React.FC = () => {
       
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Semma Clicks Studio - Scriptly</CardTitle>
+          <div className="flex justify-center mb-2">
+            <AppLogo size="lg" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Scriptly</CardTitle>
           <CardDescription>
             {isLogin ? "Sign in to your account" : "Create a new account"}
           </CardDescription>
