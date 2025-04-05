@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAdmin, UserWithPermissions } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
@@ -58,6 +57,7 @@ interface ScriptData {
 }
 
 const Admin: React.FC = () => {
+  console.log("Admin component rendering");
   const { isAdmin, loading: adminLoading, users, fetchUsers, updateUserPermissions, removeUser, addUser } = useAdmin();
   const { toast } = useToast();
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -79,8 +79,12 @@ const Admin: React.FC = () => {
   const [loadingScripts, setLoadingScripts] = useState(false);
   const scriptService = useScriptService();
   const [dataFetched, setDataFetched] = useState(false);
+  
+  const initialRenderComplete = useRef(false);
 
   const fetchScripts = useCallback(async () => {
+    if (loadingScripts) return;
+    
     try {
       console.log("Fetching scripts...");
       setLoadingScripts(true);
@@ -101,20 +105,28 @@ const Admin: React.FC = () => {
     } finally {
       setLoadingScripts(false);
     }
-  }, [scriptService, toast]);
+  }, [scriptService, toast, loadingScripts]);
 
   useEffect(() => {
-    if (!dataFetched && !adminLoading && isAdmin) {
+    if (!initialRenderComplete.current && !adminLoading && isAdmin && !dataFetched) {
       console.log("Initial data fetch triggered");
-      fetchUsers();
-      fetchScripts();
-      setDataFetched(true);
+      
+      initialRenderComplete.current = true;
+      
+      const timer = setTimeout(() => {
+        fetchUsers();
+        fetchScripts();
+        setDataFetched(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [isAdmin, adminLoading, dataFetched, fetchUsers, fetchScripts]);
 
   useEffect(() => {
     if (!isAdmin) {
       setDataFetched(false);
+      initialRenderComplete.current = false;
     }
   }, [isAdmin]);
 
@@ -213,7 +225,7 @@ const Admin: React.FC = () => {
   const handleUpdateScriptVisibility = async (scriptId: string, visibility: ScriptVisibility) => {
     try {
       await scriptService.updateScriptVisibility(scriptId, visibility);
-      await fetchScripts(); // Refresh the script lists
+      await fetchScripts();
       
       toast({
         title: "Success",
@@ -239,7 +251,7 @@ const Admin: React.FC = () => {
   };
 
   if (!isAdmin) {
-    return null; // Should be handled by AdminGuard
+    return null;
   }
 
   return (

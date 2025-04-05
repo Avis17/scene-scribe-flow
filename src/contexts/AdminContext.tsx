@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { 
   collection, 
@@ -61,8 +61,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [users, setUsers] = useState<UserWithPermissions[]>([]);
   const [adminCheckComplete, setAdminCheckComplete] = useState<boolean>(false);
+  
+  const adminCheckInProgress = useRef(false);
 
   useEffect(() => {
+    if (adminCheckInProgress.current) {
+      return;
+    }
+    
     const checkAdminStatus = async () => {
       if (!user) {
         setIsAdmin(false);
@@ -72,14 +78,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
+        adminCheckInProgress.current = true;
         console.log("Starting admin status check for:", user.email);
-        console.log("Admin email constant:", ADMIN_EMAIL);
         
         const userEmailLower = user.email ? user.email.toLowerCase() : '';
         const adminEmailLower = ADMIN_EMAIL.toLowerCase();
-        
-        console.log("User email lowercase:", userEmailLower);
-        console.log("Admin email lowercase:", adminEmailLower);
         
         let isUserAdmin = false;
         
@@ -102,12 +105,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
                 console.log("Created admin record in database");
               } catch (dbError) {
                 console.warn("Could not create admin record in database:", dbError);
-                console.log("Administrator access granted based on email match only");
               }
             }
           } catch (error) {
             console.warn("Error checking database for admin record:", error);
-            console.log("Administrator access granted based on email match only");
           }
         } else {
           try {
@@ -142,6 +143,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setLoading(false);
         setAdminCheckComplete(true);
+        adminCheckInProgress.current = false;
       }
     };
     
@@ -291,7 +293,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     addUser
   };
 
-  console.log("AdminProvider rendering with isAdmin:", isAdmin, "adminCheckComplete:", adminCheckComplete);
+  console.log("AdminProvider rendering with isAdmin:", isAdmin, "adminCheckComplete:", adminCheckComplete, "loading:", loading);
   
   return (
     <AdminContext.Provider value={contextValue}>

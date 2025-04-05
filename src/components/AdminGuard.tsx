@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -14,16 +14,22 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
   const { user, loading: authLoading } = useFirebase();
   const { toast } = useToast();
   
+  // Use useCallback to prevent unnecessary re-renders
+  const showAccessDeniedToast = useCallback(() => {
+    toast({
+      title: "Access Denied",
+      description: "You don't have permission to access this page",
+      variant: "destructive",
+    });
+  }, [toast]);
+  
   useEffect(() => {
     if (!authLoading && !adminLoading && user && !isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this page",
-        variant: "destructive",
-      });
+      showAccessDeniedToast();
     }
-  }, [isAdmin, user, authLoading, adminLoading, toast]);
+  }, [isAdmin, user, authLoading, adminLoading, showAccessDeniedToast]);
   
+  // While loading, show spinner
   if (authLoading || adminLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -32,7 +38,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     );
   }
   
-  // If user is not admin, redirect to home
+  // If user is not admin, redirect to scripts
   if (!isAdmin) {
     return <Navigate to="/scripts" replace />;
   }
