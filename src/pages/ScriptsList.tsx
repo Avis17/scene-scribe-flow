@@ -11,7 +11,7 @@ import ScriptsGrid from "@/components/scripts/ScriptsGrid";
 import LoadingState from "@/components/scripts/LoadingState";
 import EmptyState from "@/components/scripts/EmptyState";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
-import { ScrollText, Share2, UsersRound } from "lucide-react";
+import { ScrollText, Share2, UsersRound, BookOpen } from "lucide-react";
 
 interface ScriptData {
   id: string;
@@ -25,6 +25,8 @@ interface ScriptData {
   sharedWith?: Record<string, any>;
 }
 
+const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
+
 const ScriptsList: React.FC = () => {
   const [scripts, setScripts] = useState<ScriptData[]>([]);
   const [filteredScripts, setFilteredScripts] = useState<ScriptData[]>([]);
@@ -33,6 +35,7 @@ const ScriptsList: React.FC = () => {
   const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
   const [isScriptsFetched, setIsScriptsFetched] = useState<boolean>(false);
+  const [isViewingAll, setIsViewingAll] = useState<boolean>(false);
   
   const { user } = useFirebase();
   
@@ -41,34 +44,40 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const isAdminUser = user?.email === ADMIN_EMAIL;
+
   // Fixed fetchScripts to avoid recursive calls
-  const fetchScripts = useCallback(async () => {
-    if (!user || isScriptsFetched) return;
+  const fetchScripts = useCallback(async (fetchAll = false) => {
+    if (!user) return;
     
     try {
       setLoading(true);
-      const userScripts = await scriptService.getUserScripts(false);
+      let userScripts;
+      
+      if (fetchAll && isAdminUser) {
+        userScripts = await scriptService.getAllScripts();
+        setIsViewingAll(true);
+      } else {
+        userScripts = await scriptService.getUserScripts(false);
+        setIsViewingAll(false);
+      }
       
       console.log("All fetched scripts (including shared):", userScripts.length);
       
-      const ownScripts = userScripts.filter(script => script.userId === user.uid);
-      const sharedScripts = userScripts.filter(script => 
-        script.userId !== user.uid && 
-        script.sharedWith && 
-        user.email && 
-        script.sharedWith[user.email]
-      );
-      
-      setOwnScriptsCount(ownScripts.length);
-      setSharedScriptsCount(sharedScripts.length);
-      
-      console.log("Shared scripts found:", sharedScripts.length);
-      if (sharedScripts.length > 0) {
-        console.log("Shared script details:", sharedScripts.map(s => ({
-          id: s.id,
-          title: s.title,
-          sharedWith: Object.keys(s.sharedWith || {})
-        })));
+      if (!fetchAll) {
+        const ownScripts = userScripts.filter(script => script.userId === user.uid);
+        const sharedScripts = userScripts.filter(script => 
+          script.userId !== user.uid && 
+          script.sharedWith && 
+          user.email && 
+          script.sharedWith[user.email]
+        );
+        
+        setOwnScriptsCount(ownScripts.length);
+        setSharedScriptsCount(sharedScripts.length);
+      } else {
+        setOwnScriptsCount(0);
+        setSharedScriptsCount(0);
       }
       
       setScripts(userScripts);
@@ -84,14 +93,14 @@ const ScriptsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, scriptService, toast, isScriptsFetched]);
+  }, [user, scriptService, toast, isAdminUser]);
 
   useEffect(() => {
     // Only fetch scripts if we haven't already and user is authenticated
     if (user && !isScriptsFetched) {
-      fetchScripts();
+      fetchScripts(isViewingAll);
     }
-  }, [user, fetchScripts, isScriptsFetched]);
+  }, [user, fetchScripts, isScriptsFetched, isViewingAll]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -187,6 +196,16 @@ const ScriptsList: React.FC = () => {
     }
   };
 
+  const handleViewAllScripts = () => {
+    setIsScriptsFetched(false);
+    fetchScripts(true);
+  };
+
+  const handleViewMyScripts = () => {
+    setIsScriptsFetched(false);
+    fetchScripts(false);
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric', 
@@ -230,37 +249,64 @@ const ScriptsList: React.FC = () => {
                 Manage and share your scripts with others
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
-                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                    <ScrollText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Total Scripts</p>
-                    <p className="text-2xl font-bold">{ownScriptsCount + sharedScriptsCount}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
-                  <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-900">
-                    <ScrollText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">My Scripts</p>
-                    <p className="text-2xl font-bold">{ownScriptsCount}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
-                  <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                    <UsersRound className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Shared With Me</p>
-                    <p className="text-2xl font-bold">{sharedScriptsCount}</p>
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-4 mb-6">
+                {isAdminUser && (
+                  <Button 
+                    onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    {isViewingAll ? "View My Scripts" : "View All Screenplays"}
+                  </Button>
+                )}
               </div>
+              
+              {!isViewingAll && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                    <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                      <ScrollText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Total Scripts</p>
+                      <p className="text-2xl font-bold">{ownScriptsCount + sharedScriptsCount}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                    <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-900">
+                      <ScrollText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">My Scripts</p>
+                      <p className="text-2xl font-bold">{ownScriptsCount}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center space-x-3">
+                    <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                      <UsersRound className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Shared With Me</p>
+                      <p className="text-2xl font-bold">{sharedScriptsCount}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {isViewingAll && (
+                <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-300 dark:border-amber-700 mt-4">
+                  <h2 className="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Viewing All Screenplays ({filteredScripts.length})
+                  </h2>
+                  <p className="text-amber-700 dark:text-amber-300 text-sm">
+                    You are viewing all screenplays in the system. These scripts are read-only.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -274,6 +320,7 @@ const ScriptsList: React.FC = () => {
             onDeleteScript={handleDeleteScript}
             onExportScript={handleExportPDF}
             formatDate={formatDate}
+            isViewOnly={isViewingAll}
           />
         ) : (
           <EmptyState 

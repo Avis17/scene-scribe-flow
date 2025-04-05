@@ -35,6 +35,9 @@ export interface ScriptVersion {
   versionId: string;
 }
 
+// Special admin email that can view all scripts
+const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
+
 export const useScriptService = () => {
   const { db, user } = useFirebase();
 
@@ -240,6 +243,31 @@ export const useScriptService = () => {
     } catch (error) {
       console.error("Error fetching script version:", error);
       throw new Error("Failed to fetch script version. Please try again.");
+    }
+  };
+
+  // New method to get ALL scripts for admin users
+  const getAllScripts = async () => {
+    if (!user) throw new Error("User not authenticated");
+    
+    // Only allow this for the special admin email
+    if (user.email !== ADMIN_EMAIL) {
+      throw new Error("Not authorized to view all scripts");
+    }
+    
+    try {
+      const scriptsSnapshot = await getDocs(collection(db, "scripts"));
+      const allScripts: any[] = [];
+      
+      scriptsSnapshot.forEach((doc) => {
+        allScripts.push(doc.data());
+      });
+      
+      console.log(`Admin user ${user.email} fetched all scripts:`, allScripts.length);
+      return allScripts;
+    } catch (error) {
+      console.error("Error fetching all scripts:", error);
+      throw new Error("Failed to fetch all scripts. Please try again.");
     }
   };
 
@@ -462,6 +490,7 @@ export const useScriptService = () => {
     getScriptSharing,
     getScriptVersions,
     getScriptVersion,
-    saveScriptVersion
+    saveScriptVersion,
+    getAllScripts // Add the new method to the return object
   };
 };

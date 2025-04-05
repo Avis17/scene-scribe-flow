@@ -1,16 +1,23 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Save, FileDown, Lock, Unlock, List } from "lucide-react";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
+import { useFirebase } from "@/contexts/FirebaseContext";
+
+// Special admin email that can view all scripts
+const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
 
 const ScriptHeader: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useFirebase();
+  
   const { 
     title, 
     setTitle, 
@@ -25,6 +32,18 @@ const ScriptHeader: React.FC = () => {
   } = useScript();
 
   const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
+  const [isFromViewAll, setIsFromViewAll] = useState(false);
+
+  // Check if we're coming from the view all scripts page
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const viewAll = searchParams.get('viewAll') === 'true';
+    setIsFromViewAll(viewAll);
+  }, [location]);
+
+  // Force view-only mode if user is admin and coming from view all page 
+  // or if script is already in view-only mode
+  const forceViewOnly = (user?.email === ADMIN_EMAIL && isFromViewAll) || isViewOnly;
 
   const handleSave = async () => {
     await saveScript(visibility);
@@ -67,7 +86,7 @@ const ScriptHeader: React.FC = () => {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Script Title"
               className="text-lg font-bold"
-              disabled={isViewOnly}
+              disabled={forceViewOnly}
             />
           </div>
 
@@ -78,12 +97,18 @@ const ScriptHeader: React.FC = () => {
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               placeholder="Author Name"
-              disabled={isViewOnly}
+              disabled={forceViewOnly}
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {isFromViewAll && (
+            <div className="text-xs bg-amber-100 text-amber-800 p-1 px-2 rounded-md flex items-center border border-amber-200">
+              Viewing all scripts (Read only)
+            </div>
+          )}
+          
           {currentScriptId && (
             <ScriptVersionHistory scriptId={currentScriptId} />
           )}
@@ -97,28 +122,31 @@ const ScriptHeader: React.FC = () => {
             Export
           </Button>
           
-          <Button
-            onClick={() => setVisibility(v => v === "protected" ? "public" : "protected")}
-            variant="outline"
-            size="sm"
-            title={visibility === "protected" ? "Protected Script" : "Public Script"}
-            disabled={isViewOnly}
-          >
-            {visibility === "protected" ? (
-              <><Lock className="h-4 w-4 mr-1" /> Protected</>
-            ) : (
-              <><Unlock className="h-4 w-4 mr-1" /> Public</>
-            )}
-          </Button>
+          {!forceViewOnly && (
+            <Button
+              onClick={() => setVisibility(v => v === "protected" ? "public" : "protected")}
+              variant="outline"
+              size="sm"
+              title={visibility === "protected" ? "Protected Script" : "Public Script"}
+            >
+              {visibility === "protected" ? (
+                <><Lock className="h-4 w-4 mr-1" /> Protected</>
+              ) : (
+                <><Unlock className="h-4 w-4 mr-1" /> Public</>
+              )}
+            </Button>
+          )}
           
-          <Button 
-            onClick={handleSave}
-            disabled={loading || isViewOnly || !isModified}
-            size="sm"
-          >
-            <Save className="h-4 w-4 mr-1" />
-            Save
-          </Button>
+          {!forceViewOnly && (
+            <Button 
+              onClick={handleSave}
+              disabled={loading || !isModified}
+              size="sm"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          )}
         </div>
       </div>
     </div>
