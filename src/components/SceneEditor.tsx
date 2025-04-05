@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
-import { PlusCircle, Check } from "lucide-react";
+import { PlusCircle, Check, Mic, MicOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SceneEditorProps {
   scene: Scene;
@@ -14,6 +15,26 @@ interface SceneEditorProps {
 const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const { updateScene } = useScript();
   const [elements, setElements] = useState<SceneElement[]>(scene.elements);
+  const [isRecording, setIsRecording] = useState(false);
+  const [activeElementIndex, setActiveElementIndex] = useState<number | null>(null);
+  const { toast } = useToast();
+  
+  let recognition: SpeechRecognition | null = null;
+  
+  // Initialize speech recognition if supported
+  const initializeSpeechRecognition = () => {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      // Browser supports speech recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      return true;
+    }
+    return false;
+  };
 
   const handleElementTypeChange = (index: number, type: SceneElement["type"]) => {
     const newElements = [...elements];
@@ -38,8 +59,82 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   };
 
   const handleSave = () => {
+    stopRecording();
     updateScene(scene.id, elements);
     onClose();
+  };
+  
+  const toggleRecording = (index: number) => {
+    if (isRecording && activeElementIndex === index) {
+      stopRecording();
+      return;
+    }
+    
+    if (!initializeSpeechRecognition()) {
+      toast({
+        title: "Not Supported",
+        description: "Speech recognition is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsRecording(true);
+    setActiveElementIndex(index);
+    
+    if (recognition) {
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+          
+        // Update the current element with the transcript
+        const newElements = [...elements];
+        const currentContent = newElements[index].content;
+        newElements[index] = { 
+          ...newElements[index], 
+          content: currentContent + ' ' + transcript 
+        };
+        setElements(newElements);
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({
+          title: "Error",
+          description: `Speech recognition error: ${event.error}`,
+          variant: "destructive",
+        });
+        stopRecording();
+      };
+      
+      recognition.onend = () => {
+        if (isRecording) {
+          // If we're still supposed to be recording, restart
+          recognition?.start();
+        }
+      };
+      
+      try {
+        recognition.start();
+        toast({
+          title: "Recording Started",
+          description: "Speak now. Your speech will be converted to text.",
+        });
+      } catch (error) {
+        console.error('Speech recognition start error', error);
+        setIsRecording(false);
+        setActiveElementIndex(null);
+      }
+    }
+  };
+  
+  const stopRecording = () => {
+    if (recognition) {
+      recognition.stop();
+    }
+    setIsRecording(false);
+    setActiveElementIndex(null);
   };
 
   return (
@@ -64,6 +159,19 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
               </SelectContent>
             </Select>
             <Button 
+              variant={isRecording && activeElementIndex === index ? "destructive" : "outline"}
+              size="sm"
+              onClick={() => toggleRecording(index)}
+              className="w-10 p-0 flex justify-center"
+              title={isRecording && activeElementIndex === index ? "Stop Recording" : "Start Voice Input"}
+            >
+              {isRecording && activeElementIndex === index ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+            <Button 
               variant="ghost" 
               size="sm" 
               className="text-destructive"
@@ -75,8 +183,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
           <Textarea
             value={element.content}
             onChange={(e) => handleElementContentChange(index, e.target.value)}
-            placeholder={`Enter ${element.type} text`}
-            className={element.type}
+            placeholder={`Enter ${element.type} text${isRecording && activeElementIndex === index ? ' (Recording...)' : ''}`}
+            className={`${element.type} ${isRecording && activeElementIndex === index ? 'border-red-500 border-2' : ''}`}
             rows={3}
           />
         </div>
