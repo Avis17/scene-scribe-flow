@@ -6,17 +6,19 @@ import { useScript } from "@/contexts/ScriptContext";
 import { useAdmin } from "@/contexts/AdminContext"; 
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import ScriptsGrid from "@/components/scripts/ScriptsGrid";
 import LoadingState from "@/components/scripts/LoadingState";
 import EmptyState from "@/components/scripts/EmptyState";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
+import { ScriptVisibility } from "@/services/ScriptService";
 
 interface ScriptData {
   id: string;
   title: string;
   author: string;
-  visibility?: string;
+  visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
 }
@@ -62,6 +64,7 @@ const ScriptsList: React.FC = () => {
       setLoading(true);
       if (user) {
         const userScripts = await scriptService.getUserScripts(isAdmin);
+        // Type casting to ensure proper type compatibility
         setScripts(userScripts as ScriptData[]);
         setFilteredScripts(userScripts as ScriptData[]);
       }
