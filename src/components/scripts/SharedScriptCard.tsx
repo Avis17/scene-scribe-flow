@@ -34,15 +34,20 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
   const navigate = useNavigate();
   const { user } = useFirebase();
   
-  // Determine access level for the shared script
-  const accessLevel = user?.email && script.sharedWith?.[user.email]
+  // Debug the sharedWith property
+  console.log("SharedScriptCard - script:", script.title);
+  console.log("SharedScriptCard - sharedWith:", script.sharedWith);
+  console.log("SharedScriptCard - user email:", user?.email);
+  
+  // Determine access level for the shared script - ensure we're accessing it correctly
+  const accessLevel = user?.email && script.sharedWith && script.sharedWith[user.email]
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
     : "view"; // Default to view if not specified
   
+  console.log("Shared script access level:", accessLevel, "for script:", script.title);
+  
   // Check if user has edit permission
   const hasEditAccess = accessLevel === "edit";
-  
-  console.log("Shared script access level:", accessLevel, "for script:", script.title, "hasEditAccess:", hasEditAccess);
   
   const handleView = () => {
     navigate(`/view/${script.id}`);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -19,6 +18,8 @@ interface ScriptData {
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
+  userId?: string;
+  sharedWith?: Record<string, any>;
 }
 
 const ScriptsList: React.FC = () => {
@@ -34,7 +35,6 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Effect to fetch scripts when user changes
   useEffect(() => {
     if (user) {
       fetchScripts();
@@ -64,17 +64,16 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
-        // Get all scripts the user has access to (own scripts and shared scripts)
         const userScripts = await scriptService.getUserScripts(false);
         
         console.log("All fetched scripts (including shared):", userScripts.length);
         
-        // Check for shared scripts specifically
         const sharedScripts = userScripts.filter(script => 
           script.userId !== user.uid && 
           script.sharedWith && 
-          script.sharedWith[user.email]
+          Object.keys(script.sharedWith).includes(user.email)
         );
+        
         console.log("Shared scripts found:", sharedScripts.length);
         if (sharedScripts.length > 0) {
           console.log("Shared script details:", sharedScripts.map(s => ({
@@ -84,24 +83,8 @@ const ScriptsList: React.FC = () => {
           })));
         }
         
-        // Properly transform and validate script data before setting state
-        const validScripts = userScripts
-          .filter(script => 
-            script && script.id && script.title && 
-            (script.author !== undefined) && 
-            script.createdAt && script.updatedAt
-          )
-          .map(script => ({
-            id: script.id,
-            title: script.title || "Untitled",
-            author: script.author || "Unknown",
-            visibility: script.visibility as ScriptVisibility,
-            createdAt: script.createdAt,
-            updatedAt: script.updatedAt
-          }));
-        
-        setScripts(validScripts);
-        setFilteredScripts(validScripts);
+        setScripts(userScripts);
+        setFilteredScripts(userScripts);
       }
     } catch (error) {
       console.error("Error fetching scripts:", error);
@@ -150,7 +133,6 @@ const ScriptsList: React.FC = () => {
         throw new Error("Script not found");
       }
       
-      // Convert the scriptData to match the required format before passing to exportScriptToPDF
       const formattedScriptData = {
         id: scriptData.id,
         title: scriptData.title || "Untitled",
