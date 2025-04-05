@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
-import { useScriptService } from "@/services/ScriptService";
+import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useToast } from "@/hooks/use-toast";
 
 export interface SceneElement {
@@ -25,7 +25,7 @@ interface ScriptContextType {
   deleteScene: (id: string) => void;
   reorderScenes: (sourceIndex: number, destinationIndex: number) => void;
   toggleSceneCollapse: (id: string) => void;
-  saveScript: () => Promise<string | undefined>;
+  saveScript: (visibility?: ScriptVisibility) => Promise<string | undefined>;
   currentScriptId: string | null;
   setCurrentScriptId: (id: string | null) => void;
   loading: boolean;
@@ -70,14 +70,12 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const scriptService = useScriptService();
   const { toast } = useToast();
 
-  // Initialize with user's name if available
   useEffect(() => {
     if (user && user.displayName && author === "") {
       setAuthor(user.displayName);
     }
   }, [user, author]);
 
-  // Reset script to default values
   const resetScript = useCallback(() => {
     setTitle("Untitled Screenplay");
     setAuthor(user?.displayName || "");
@@ -100,7 +98,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     setCurrentScriptId(null);
   }, [user]);
 
-  // Load script if ID is provided
   useEffect(() => {
     const loadScript = async () => {
       if (currentScriptId && user) {
@@ -110,7 +107,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (scriptData) {
-            // Ensure we properly set title and author
             setTitle(scriptData.title || "Untitled Screenplay");
             setAuthor(scriptData.author || "");
             setScenes(scriptData.scenes || []);
@@ -179,8 +175,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       )
     );
   };
-  
-  const saveScript = async (): Promise<string | undefined> => {
+
+  const saveScript = async (visibility: ScriptVisibility = "public"): Promise<string | undefined> => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -193,14 +189,14 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       if (currentScriptId) {
-        await scriptService.updateScript(currentScriptId, title, author, scenes);
+        await scriptService.updateScript(currentScriptId, title, author, scenes, visibility);
         toast({
           title: "Success",
           description: "Script updated successfully",
         });
         return currentScriptId;
       } else {
-        const newScriptId = await scriptService.saveScript(title, author, scenes);
+        const newScriptId = await scriptService.saveScript(title, author, scenes, visibility);
         setCurrentScriptId(newScriptId);
         toast({
           title: "Success",

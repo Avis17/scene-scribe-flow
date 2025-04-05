@@ -22,7 +22,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
         variant: "destructive",
       });
     }
-  }, [isAdmin, user, authLoading, adminLoading]);
+  }, [isAdmin, user, authLoading, adminLoading, toast]);
   
   if (authLoading || adminLoading) {
     return (
