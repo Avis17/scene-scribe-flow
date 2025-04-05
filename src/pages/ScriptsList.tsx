@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -16,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { File, FilePlus, Trash2, Edit, FileDown, FileLock } from "lucide-react";
+import { File, Trash2, Edit, FileDown, FileLock } from "lucide-react";
 
 interface ScriptData {
   id: string;
@@ -67,7 +66,6 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
-        // Pass isAdmin to get protected scripts if user is admin
         const userScripts = await scriptService.getUserScripts(isAdmin);
         setScripts(userScripts as ScriptData[]);
         setFilteredScripts(userScripts as ScriptData[]);
@@ -216,12 +214,8 @@ const ScriptsList: React.FC = () => {
     <div className="min-h-screen bg-background">
       <AppHeader showSearch={true} onSearch={handleSearch} />
       <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Scriptly - Your Scripts</h1>
-          <Button onClick={handleCreateNew} type="button">
-            <FilePlus className="mr-2 h-4 w-4" />
-            New Script
-          </Button>
         </div>
 
         {loading ? (
@@ -321,7 +315,7 @@ const ScriptsList: React.FC = () => {
               {searchQuery ? "No scripts match your search criteria." : "You haven't created any scripts yet. Get started by creating your first script."}
             </p>
             <Button onClick={handleCreateNew} type="button">
-              <FilePlus className="mr-2 h-4 w-4" />
+              <File className="mr-2 h-4 w-4" />
               Create New Script
             </Button>
           </div>
