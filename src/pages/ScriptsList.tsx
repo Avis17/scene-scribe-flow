@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useScript } from "@/contexts/ScriptContext";
@@ -35,9 +35,9 @@ const ScriptsList: React.FC = () => {
   const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
   const [isViewingAll, setIsViewingAll] = useState<boolean>(false);
+  const fetchInProgress = useRef<boolean>(false);
   
   const { user } = useFirebase();
-  
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
@@ -48,12 +48,15 @@ const ScriptsList: React.FC = () => {
 
   console.log("ScriptsList - User email:", user?.email, "isAdmin:", isAdminUser);
   
-  // Modified fetchScripts to better handle the admin fetch
+  // Modified fetchScripts to better handle the admin fetch and prevent multiple fetches
   const fetchScripts = useCallback(async (fetchAll = false) => {
-    if (!user) return;
+    if (!user || fetchInProgress.current) return;
     
     try {
+      console.log("Fetching scripts for", user.email, "isAdmin:", isAdminUser, "viewingAll:", fetchAll);
+      fetchInProgress.current = true;
       setLoading(true);
+      
       let userScripts;
       
       if (fetchAll && isAdminUser) {
@@ -97,40 +100,48 @@ const ScriptsList: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      // Add a small delay before allowing new fetches to prevent rapid consecutive calls
+      setTimeout(() => {
+        fetchInProgress.current = false;
+      }, 500);
     }
   }, [user, scriptService, toast, isAdminUser]);
 
-  // Add a separate state to track admin view changes
-  const [adminViewChangeCounter, setAdminViewChangeCounter] = useState(0);
-
-  // Use a more stable effect for initial loading
+  // Use a more stable effect for initial loading with cleanup
   useEffect(() => {
-    if (user) {
-      // Only set loading to true when the component mounts or view changes
-      setLoading(true);
-      
+    let isMounted = true;
+    
+    if (user && isMounted) {
       // Use a small timeout to avoid immediate state changes 
       // causing render problems with filtered scripts
       const timer = setTimeout(() => {
-        fetchScripts(isViewingAll);
+        if (isMounted) {
+          fetchScripts(isViewingAll);
+        }
       }, 100);
       
-      return () => clearTimeout(timer);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
     }
-  }, [user, fetchScripts, isViewingAll, adminViewChangeCounter]);
+  }, [user, fetchScripts, isViewingAll]);
 
+  // Separate effect for search to avoid triggering fetchScripts
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredScripts(scripts);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredScripts(
-        scripts.filter(
-          script => 
-            script.title.toLowerCase().includes(query) || 
-            script.author.toLowerCase().includes(query)
-        )
-      );
+    if (scripts.length > 0) {
+      if (searchQuery.trim() === "") {
+        setFilteredScripts(scripts);
+      } else {
+        const query = searchQuery.toLowerCase();
+        setFilteredScripts(
+          scripts.filter(
+            script => 
+              script.title.toLowerCase().includes(query) || 
+              script.author.toLowerCase().includes(query)
+          )
+        );
+      }
     }
   }, [searchQuery, scripts]);
 
@@ -213,22 +224,28 @@ const ScriptsList: React.FC = () => {
     }
   };
 
-  // Modified to trigger the admin view counter instead of directly setting isViewingAll
   const handleViewAllScripts = () => {
+    if (fetchInProgress.current) return;
+    
     console.log("Viewing all scripts clicked by admin:", user?.email);
     setIsViewingAll(true);
-    // Increment the counter to trigger a re-fetch
-    setAdminViewChangeCounter(prev => prev + 1);
     setLoading(true);
+    
+    setTimeout(() => {
+      fetchScripts(true);
+    }, 100);
   };
 
-  // Modified to trigger the admin view counter instead of directly setting isViewingAll
   const handleViewMyScripts = () => {
+    if (fetchInProgress.current) return;
+    
     console.log("Viewing my scripts clicked by admin:", user?.email);
     setIsViewingAll(false);
-    // Increment the counter to trigger a re-fetch
-    setAdminViewChangeCounter(prev => prev + 1);
     setLoading(true);
+    
+    setTimeout(() => {
+      fetchScripts(false);
+    }, 100);
   };
 
   const formatDate = (date: Date) => {
@@ -276,10 +293,11 @@ const ScriptsList: React.FC = () => {
                       onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
                       variant="secondary"
                       className="flex items-center gap-2"
-                      disabled={loading}
+                      disabled={loading || fetchInProgress.current}
                     >
                       <BookOpen className="h-4 w-4" />
                       {isViewingAll ? "View My Scripts" : "View All Screenplays"}
+                      {loading && <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>}
                     </Button>
                     {/* Add debug information for admin user */}
                     <p className="bg-amber-100 text-amber-800 p-2 rounded text-sm">

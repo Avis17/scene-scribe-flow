@@ -22,12 +22,12 @@ export type ScriptAccessLevel = "view" | "edit";
 export interface ScriptSharing {
   email: string;
   accessLevel: ScriptAccessLevel;
-  sharedAt: any; // Timestamp
-  password?: string; // Optional password for protected scripts
+  sharedAt: any;
+  password?: string;
 }
 
 export interface ScriptVersion {
-  timestamp: any; // Timestamp
+  timestamp: any;
   editor: string;
   title: string;
   author: string;
@@ -35,7 +35,6 @@ export interface ScriptVersion {
   versionId: string;
 }
 
-// Special admin email that can view all scripts
 const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
 
 export const useScriptService = () => {
@@ -62,10 +61,9 @@ export const useScriptService = () => {
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         lastEditedBy: user.email,
-        sharedWith: {} // Initialize empty object for shared users
+        sharedWith: {}
       });
       
-      // Save the initial version in script_versions collection
       await saveScriptVersion(scriptId, title, author, scenes, user.email);
       
       return scriptId;
@@ -81,7 +79,7 @@ export const useScriptService = () => {
     author: string,
     scenes: Scene[],
     visibility?: ScriptVisibility,
-    editorEmail?: string // Optional parameter to override the editor email
+    editorEmail?: string
   ) => {
     if (!user) throw new Error("User not authenticated");
     
@@ -102,7 +100,6 @@ export const useScriptService = () => {
       
       await updateDoc(doc(db, "scripts", scriptId), updateData);
       
-      // Always save a new version when updating a script
       await saveScriptVersion(scriptId, title, author, scenes, editorToRecord);
       
     } catch (error) {
@@ -121,17 +118,15 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      // Create a new version ID that includes timestamp for better sorting
       const timestamp = Date.now();
       const versionId = `version_${timestamp}`;
       
-      // Store a complete copy of the script at this point in time
       await setDoc(doc(db, "script_versions", versionId), {
         scriptId,
         versionId,
         title,
         author,
-        scenes: JSON.parse(JSON.stringify(scenes)), // Deep copy to ensure complete snapshot
+        scenes: JSON.parse(JSON.stringify(scenes)),
         timestamp: Timestamp.now(),
         editor: editorEmail || "Unknown user"
       });
@@ -140,8 +135,6 @@ export const useScriptService = () => {
       return versionId;
     } catch (error) {
       console.error("Error saving script version:", error);
-      // Don't throw here, as we don't want to fail the main save operation
-      // but log it for debugging purposes
     }
   };
 
@@ -149,7 +142,6 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      // First, try with the compound query using orderBy
       try {
         const versionsQuery = query(
           collection(db, "script_versions"),
@@ -176,7 +168,6 @@ export const useScriptService = () => {
       } catch (indexError) {
         console.warn("Index error, falling back to simple query:", indexError);
         
-        // Fallback to a simpler query without ordering
         const simpleQuery = query(
           collection(db, "script_versions"),
           where("scriptId", "==", scriptId)
@@ -197,11 +188,10 @@ export const useScriptService = () => {
           });
         });
         
-        // Sort manually in memory
         versions.sort((a, b) => {
           const timeA = a.timestamp?.toDate?.() ? a.timestamp.toDate().getTime() : 0;
           const timeB = b.timestamp?.toDate?.() ? b.timestamp.toDate().getTime() : 0;
-          return timeB - timeA; // Descending order
+          return timeB - timeA;
         });
         
         return versions;
@@ -209,7 +199,6 @@ export const useScriptService = () => {
     } catch (error) {
       console.error("Error fetching script versions:", error);
       
-      // Provide a helpful message about creating the index
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("index")) {
         throw new Error(
@@ -246,11 +235,9 @@ export const useScriptService = () => {
     }
   };
 
-  // Enhanced getAllScripts method for admin users
   const getAllScripts = async () => {
     if (!user) throw new Error("User not authenticated");
     
-    // Only allow this for the special admin email
     if (user.email !== ADMIN_EMAIL) {
       console.error("Access denied: Only admin users can view all scripts", user.email);
       throw new Error("Not authorized to view all scripts");
@@ -259,26 +246,28 @@ export const useScriptService = () => {
     try {
       console.log("Admin user accessing all scripts:", user.email);
       
-      // Get all scripts from the collection without any filtering
       const scriptsSnapshot = await getDocs(collection(db, "scripts"));
       const allScripts: any[] = [];
       
-      // Process each document
       scriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          allScripts.push({
+          const processedData = {
             ...data,
-            // Ensure these fields exist for consistency
+            id: doc.id,
             createdAt: data.createdAt || Timestamp.now(),
-            updatedAt: data.updatedAt || Timestamp.now()
-          });
+            updatedAt: data.updatedAt || Timestamp.now(),
+            title: data.title || "Untitled",
+            author: data.author || "Unknown",
+            scenes: Array.isArray(data.scenes) ? data.scenes : []
+          };
+          
+          allScripts.push(processedData);
         }
       });
       
       console.log(`Admin user ${user.email} fetched all scripts:`, allScripts.length);
       
-      // Return processed scripts
       return allScripts;
     } catch (error) {
       console.error("Error fetching all scripts:", error);
@@ -292,7 +281,6 @@ export const useScriptService = () => {
     try {
       let scripts: any[] = [];
       
-      // First get the user's own scripts
       const userScriptsQuery = query(
         collection(db, "scripts"),
         where("userId", "==", user.uid)
@@ -305,11 +293,8 @@ export const useScriptService = () => {
       
       console.log("User's own scripts:", scripts.length);
       
-      // Get scripts shared with the user by email
       if (user.email) {
         try {
-          // This query looks for documents where the user's email exists
-          // in the sharedWith object's keys
           const allScriptsSnapshot = await getDocs(collection(db, "scripts"));
           
           const sharedScripts = allScriptsSnapshot.docs
@@ -317,17 +302,14 @@ export const useScriptService = () => {
             .filter(script => 
               script.sharedWith && 
               script.sharedWith[user.email] && 
-              // Don't include scripts the user already owns
               script.userId !== user.uid
             );
           
           console.log("Scripts shared with user:", sharedScripts.length);
           
-          // Add the shared scripts to the scripts array
           scripts = [...scripts, ...sharedScripts];
         } catch (error) {
           console.error("Error fetching shared scripts:", error);
-          // Continue with user's own scripts
         }
       }
       
@@ -384,7 +366,7 @@ export const useScriptService = () => {
     scriptId: string, 
     email: string, 
     accessLevel: ScriptAccessLevel,
-    password?: string // Optional password for protected scripts
+    password?: string
   ) => {
     if (!user) throw new Error("User not authenticated");
     
@@ -397,19 +379,16 @@ export const useScriptService = () => {
       
       const scriptData = scriptDoc.data();
       
-      // Check if the current user is the owner of the script
       if (scriptData.userId !== user.uid) {
         throw new Error("You don't have permission to share this script");
       }
       
-      // Create or update the shared user entry
       const sharedWith = scriptData.sharedWith || {};
       sharedWith[email] = {
         accessLevel,
         sharedAt: Timestamp.now()
       };
       
-      // If this is a protected script and a password is provided, store it
       if (scriptData.visibility === "protected" && password) {
         sharedWith[email].password = password;
       }
@@ -438,12 +417,10 @@ export const useScriptService = () => {
       
       const scriptData = scriptDoc.data();
       
-      // Check if the current user is the owner of the script
       if (scriptData.userId !== user.uid) {
         throw new Error("You don't have permission to modify sharing for this script");
       }
       
-      // Create a new sharedWith object without the specified email
       const sharedWith = { ...scriptData.sharedWith };
       if (sharedWith && sharedWith[email]) {
         delete sharedWith[email];
@@ -473,19 +450,17 @@ export const useScriptService = () => {
       
       const scriptData = scriptDoc.data();
       
-      // Check if the current user is the owner of the script
       if (scriptData.userId !== user.uid) {
         throw new Error("You don't have permission to view sharing for this script");
       }
       
       const sharedWith = scriptData.sharedWith || {};
       
-      // Convert to array format with email included and include password if available
       return Object.keys(sharedWith).map(email => ({
         email,
         accessLevel: sharedWith[email].accessLevel,
         sharedAt: sharedWith[email].sharedAt,
-        password: sharedWith[email].password // Include the password field
+        password: sharedWith[email].password
       }));
     } catch (error) {
       console.error("Error getting script sharing:", error);
@@ -506,6 +481,6 @@ export const useScriptService = () => {
     getScriptVersions,
     getScriptVersion,
     saveScriptVersion,
-    getAllScripts // Added the getAllScripts method to the return object
+    getAllScripts
   };
 };

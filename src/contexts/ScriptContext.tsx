@@ -1,5 +1,4 @@
-
-import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
+import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +73,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useFirebase();
   const scriptService = useScriptService();
   const { toast } = useToast();
+  const loadingRef = useRef<boolean>(false);
 
   // Track title changes
   const handleSetTitle = (newTitle: string) => {
@@ -124,14 +124,19 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadScript = async () => {
-      if (currentScriptId && user) {
+      if (currentScriptId && user && !loadingRef.current) {
         try {
+          loadingRef.current = true;
           setLoading(true);
           setIsEditing(true);
+          
+          console.log(`Loading script ${currentScriptId} for user ${user.email}`);
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
-          if (scriptData) {
+          if (scriptData && isMounted) {
             setTitle(scriptData.title || "Untitled Screenplay");
             setAuthor(scriptData.author || "");
             setScenes(scriptData.scenes || []);
@@ -157,23 +162,37 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             setIsModified(false);
           }
         } catch (error) {
-          console.error("Error loading script:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load script",
-            variant: "destructive",
-          });
+          if (isMounted) {
+            console.error("Error loading script:", error);
+            toast({
+              title: "Error",
+              description: "Failed to load script",
+              variant: "destructive",
+            });
+          }
         } finally {
-          setLoading(false);
+          if (isMounted) {
+            setLoading(false);
+            // Small delay before allowing new loads
+            setTimeout(() => {
+              loadingRef.current = false;
+            }, 500);
+          }
         }
       } else {
-        setIsEditing(false);
-        setIsViewOnly(false);
+        if (isMounted) {
+          setIsEditing(false);
+          setIsViewOnly(false);
+        }
       }
     };
     
     loadScript();
-  }, [currentScriptId, user]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [currentScriptId, user, toast, scriptService]);
 
   const addScene = () => {
     setIsModified(true);
