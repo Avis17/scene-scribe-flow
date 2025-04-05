@@ -14,51 +14,55 @@ import Login from "./pages/Login";
 import ScriptsList from "./pages/ScriptsList";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create a client
+const App = () => {
+  // Create a new QueryClient for each rendering - avoids sharing client across renders
+  const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <FirebaseProvider>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  <ScriptProvider>
-                    <Index />
-                  </ScriptProvider>
-                } 
-              />
-              <Route 
-                path="/login" 
-                element={
-                  <AuthGuard requireAuth={false}>
-                    <Login />
-                  </AuthGuard>
-                } 
-              />
-              <Route 
-                path="/scripts" 
-                element={
-                  <AuthGuard>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <FirebaseProvider>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={
                     <ScriptProvider>
-                      <ScriptsList />
+                      <Index />
                     </ScriptProvider>
-                  </AuthGuard>
-                } 
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </FirebaseProvider>
-  </QueryClientProvider>
-);
+                  } 
+                />
+                <Route 
+                  path="/login" 
+                  element={
+                    <AuthGuard requireAuth={false}>
+                      <Login />
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/scripts" 
+                  element={
+                    <AuthGuard>
+                      <ScriptProvider>
+                        <ScriptsList />
+                      </ScriptProvider>
+                    </AuthGuard>
+                  } 
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </FirebaseProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
