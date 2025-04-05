@@ -2,11 +2,10 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Users } from "lucide-react";
-import { ScriptVisibility, ScriptAccessLevel } from "@/services/ScriptService";
+import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye } from "lucide-react";
+import { ScriptVisibility } from "@/services/ScriptService";
 import ShareScriptDialog from "./ShareScriptDialog";
 import { useNavigate } from "react-router-dom";
-import { useFirebase } from "@/contexts/FirebaseContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +24,6 @@ interface ScriptData {
   visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
-  userId?: string;
-  sharedWith?: Record<string, any>;
 }
 
 interface ScriptCardProps {
@@ -47,17 +44,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
-  const { user } = useFirebase();
-  
-  const isSharedWithMe = user?.uid && script.userId && user.uid !== script.userId;
-  
-  // Determine access level if this is a shared script
-  const accessLevel = isSharedWithMe && user?.email && script.sharedWith?.[user.email]
-    ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
-    : undefined;
-  
-  // Only allow editing if the user owns the script or has edit access
-  const canEdit = !isSharedWithMe || accessLevel === "edit";
   
   const handleView = () => {
     navigate(`/view/${script.id}`);
@@ -88,15 +74,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <File className="h-5 w-5 mr-1 flex-shrink-0" />
             )}
             <span className="truncate">{script.title || "Untitled Screenplay"}</span>
-            {isSharedWithMe && (
-              <span className="flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 p-1 px-2 rounded-sm whitespace-nowrap">
-                <Users className="h-3 w-3 mr-1" /> 
-                Shared 
-                {accessLevel && (
-                  <span className="ml-1">({accessLevel === "edit" ? "Edit" : "View"})</span>
-                )}
-              </span>
-            )}
           </CardTitle>
           <CardDescription>
             <div className="flex flex-wrap items-center gap-2">
@@ -118,8 +95,8 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
           </p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-            {/* View button - always show for all scripts */}
+          <div className="grid grid-cols-2 gap-2 w-full">
+            {/* View button */}
             <Button 
               variant="outline"
               size="sm"
@@ -131,21 +108,19 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {/* Edit button - only show if user owns script or has edit access */}
-            {canEdit && (
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => onOpen(script.id)}
-                type="button"
-                className="w-full"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                <span>Edit</span>
-              </Button>
-            )}
+            {/* Edit button */}
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => onOpen(script.id)}
+              type="button"
+              className="w-full"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              <span>Edit</span>
+            </Button>
             
-            {/* Export button - always show for all scripts */}
+            {/* Export button */}
             <Button 
               variant="outline"
               size="sm"
@@ -157,36 +132,31 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>Export</span>
             </Button>
             
-            {/* Delete button - only show for scripts the user owns (not shared scripts) */}
-            {!isSharedWithMe && (
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={confirmDelete}
-                type="button"
-                className="w-full"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                <span>Delete</span>
-              </Button>
-            )}
+            {/* Delete button */}
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={confirmDelete}
+              type="button"
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              <span>Delete</span>
+            </Button>
           </div>
           
-          {/* Only show share button for scripts the user owns */}
-          {!isSharedWithMe && (
-            <div className="w-full">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full"
-                onClick={() => setShowShareDialog(true)}
-                type="button"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                <span>Share Script</span>
-              </Button>
-            </div>
-          )}
+          <div className="w-full">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowShareDialog(true)}
+              type="button"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              <span>Share Script</span>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
 
