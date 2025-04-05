@@ -57,11 +57,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
             <FilePlus className="h-4 w-4 mr-2" />
             New Script
           </Button>
-          {/* Admin button is now always visible to all users */}
-          <Button variant="outline" size="sm" onClick={handleGoToAdmin} type="button">
-            <Shield className="h-4 w-4 mr-2" />
-            Admin
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={handleGoToAdmin} type="button">
+              <Shield className="h-4 w-4 mr-2" />
+              Admin
+            </Button>
+          )}
         </div>
         
         <div className="flex items-center space-x-2 w-full sm:w-auto">
