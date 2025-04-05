@@ -28,26 +28,35 @@ const ScriptsList: React.FC = () => {
   const [filteredScripts, setFilteredScripts] = useState<ScriptData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [adminStatusChecked, setAdminStatusChecked] = useState<boolean>(false);
   
   const { user } = useFirebase();
-  // Use a try-catch block to handle potential context issues
-  let isAdmin = false;
-  try {
-    const adminContext = useAdmin();
-    isAdmin = adminContext.isAdmin;
-    console.log("Admin context successfully loaded in ScriptsList:", isAdmin);
-  } catch (error) {
-    console.error("Failed to load admin context:", error);
-  }
+  const { isAdmin } = useAdmin();
   
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Effect to check admin status
   useEffect(() => {
-    fetchScripts();
-  }, [user, isAdmin]);
+    console.log("Initial admin status check:", isAdmin);
+    // Set a small delay to ensure admin context is fully loaded
+    const timer = setTimeout(() => {
+      console.log("Delayed admin status check:", isAdmin);
+      setAdminStatusChecked(true);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [isAdmin]);
+
+  // Fetch scripts when user or admin status changes
+  useEffect(() => {
+    if (adminStatusChecked) {
+      console.log("Admin status checked, fetching scripts now");
+      fetchScripts();
+    }
+  }, [user, isAdmin, adminStatusChecked]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {

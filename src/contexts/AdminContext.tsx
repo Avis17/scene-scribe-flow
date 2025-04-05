@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { 
@@ -63,7 +64,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [users, setUsers] = useState<UserWithPermissions[]>([]);
 
-  // Check if current user is admin
+  // Check if current user is admin - improved with better logging
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
@@ -75,11 +76,18 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log("Checking admin status for:", user.email);
         console.log("Admin email constant:", ADMIN_EMAIL);
-        console.log("Does email match?", user.email === ADMIN_EMAIL);
         
-        // Check if user email matches admin email (case-insensitive comparison)
-        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          console.log("Email matches admin email, granting admin access");
+        // IMPORTANT: Force email string comparison to lowercase for both
+        const userEmailLower = user.email ? user.email.toLowerCase() : '';
+        const adminEmailLower = ADMIN_EMAIL.toLowerCase();
+        
+        console.log("User email lowercase:", userEmailLower);
+        console.log("Admin email lowercase:", adminEmailLower);
+        console.log("Does email match?", userEmailLower === adminEmailLower);
+        
+        // Check if user email matches admin email (using lowercase comparison)
+        if (userEmailLower === adminEmailLower) {
+          console.log("✅ Email matches admin email exactly, granting admin access");
           setIsAdmin(true);
           
           // Create admin record in database if it doesn't exist
@@ -93,17 +101,19 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
               permissions: ["read", "write", "delete", "admin"],
               lastUpdated: new Date().toISOString()
             });
+            console.log("Created admin record in database");
           }
         } else {
-          // Check if user has admin permission
+          // Check if user has admin permission in database
+          console.log("Checking for admin permission in database for uid:", user.uid);
           const userRef = doc(db, "permissions", user.uid);
           const userDoc = await getDoc(userRef);
           
           if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
-            console.log("User has admin permission in database");
+            console.log("✅ User has admin permission in database");
             setIsAdmin(true);
           } else {
-            console.log("User does not have admin permission");
+            console.log("❌ User does not have admin permission");
             setIsAdmin(false);
           }
         }
@@ -112,6 +122,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         setIsAdmin(false);
       } finally {
         setLoading(false);
+        // Force a re-check after a delay
+        setTimeout(() => {
+          console.log("Final admin status check result:", isAdmin);
+        }, 500);
       }
     };
     
