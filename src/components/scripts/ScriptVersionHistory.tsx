@@ -52,6 +52,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
   
   const { toast } = useToast();
   const scriptService = useScriptService();
@@ -116,9 +117,9 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
     return formatDistanceToNow(timestamp.toDate(), { addSuffix: true });
   };
   
-  const restoreVersion = (version: ScriptVersion) => {
+  const restoreVersion = async (version: ScriptVersion) => {
     try {
-      setCurrentScriptId(scriptId);
+      setRestoring(true);
       // We need to manually recreate the scenes to ensure they have the same structure
       const restoredScenes = version.scenes.map(scene => ({
         id: scene.id,
@@ -126,8 +127,8 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
         isCollapsed: false, // Default to not collapsed
       }));
       
-      // Update the script with the version data
-      scriptService.updateScript(
+      // Update the script with the version data, but preserve original script ID
+      await scriptService.updateScript(
         scriptId,
         version.title,
         version.author,
@@ -141,8 +142,8 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
       
       setIsDialogOpen(false);
       
-      // Reload the page to show the restored version
-      window.location.href = `/`;
+      // Redirect to the script editor with the restored version
+      window.location.href = `/script/${scriptId}`;
     } catch (error) {
       console.error("Error restoring version:", error);
       toast({
@@ -150,6 +151,8 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
         description: "Failed to restore version",
         variant: "destructive",
       });
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -181,12 +184,12 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
             Script Version History
           </DialogTitle>
           <DialogDescription>
-            View and restore previous versions of your script.
+            View, compare and restore previous versions of your script.
           </DialogDescription>
         </DialogHeader>
         
         {error && error.includes("index") && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="warning" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Index Required</AlertTitle>
             <AlertDescription>
@@ -355,7 +358,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
                     
                     <div>
                       <h4 className="text-sm font-medium mb-2">Content Preview</h4>
-                      <div className="border rounded-md p-3 bg-muted/50 max-h-40 overflow-y-auto">
+                      <div className="border rounded-md p-3 bg-muted/50 dark:bg-gray-800 max-h-40 overflow-y-auto">
                         {selectedVersion.scenes.map((scene, sceneIndex) => (
                           <div key={scene.id} className="mb-3">
                             {scene.elements.slice(0, 2).map((element, elementIndex) => (
@@ -384,9 +387,10 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
                     variant="outline"
                     size="sm"
                     onClick={() => restoreVersion(selectedVersion)}
+                    disabled={restoring}
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
-                    Restore This Version
+                    {restoring ? "Restoring..." : "Restore This Version"}
                   </Button>
                 )}
               </div>

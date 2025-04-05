@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   doc, 
@@ -100,7 +99,7 @@ export const useScriptService = () => {
       
       await updateDoc(doc(db, "scripts", scriptId), updateData);
       
-      // Save a new version in script_versions collection
+      // Always save a new version when updating a script
       await saveScriptVersion(scriptId, title, author, scenes, editorToRecord);
       
     } catch (error) {
@@ -119,22 +118,27 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      const versionId = `version_${Date.now()}`;
+      // Create a new version ID that includes timestamp for better sorting
+      const timestamp = Date.now();
+      const versionId = `version_${timestamp}`;
       
+      // Store a complete copy of the script at this point in time
       await setDoc(doc(db, "script_versions", versionId), {
         scriptId,
         versionId,
         title,
         author,
-        scenes,
+        scenes: JSON.parse(JSON.stringify(scenes)), // Deep copy to ensure complete snapshot
         timestamp: Timestamp.now(),
         editor: editorEmail || "Unknown user"
       });
       
+      console.log(`Version ${versionId} saved successfully for script ${scriptId}`);
       return versionId;
     } catch (error) {
       console.error("Error saving script version:", error);
       // Don't throw here, as we don't want to fail the main save operation
+      // but log it for debugging purposes
     }
   };
 
