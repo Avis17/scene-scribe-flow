@@ -99,31 +99,62 @@
 
 @layer components {
   .screenplay-page {
-    @apply max-w-[8.5in] mx-auto my-8 p-8 bg-white shadow-lg rounded-md;
+    @apply max-w-[8.5in] mx-auto my-8 p-8 bg-white dark:bg-slate-900 shadow-lg rounded-md;
     min-height: 11in;
   }
   
   .scene-heading {
-    @apply font-courier font-bold uppercase mb-3;
+    @apply font-courier font-bold uppercase mb-3 dark:text-white;
   }
   
   .action {
-    @apply font-courier mb-4;
+    @apply font-courier mb-4 dark:text-slate-100;
   }
   
   .character {
-    @apply font-courier font-bold mb-1 pl-16;
+    @apply font-courier font-bold mb-1 pl-16 dark:text-white;
   }
   
   .dialogue {
-    @apply font-courier mb-4 pl-8 pr-16;
+    @apply font-courier mb-4 pl-8 pr-16 dark:text-slate-100;
   }
   
   .parenthetical {
-    @apply font-courier italic mb-1 pl-12 pr-16;
+    @apply font-courier italic mb-1 pl-12 pr-16 dark:text-slate-300;
   }
   
   .transition {
-    @apply font-courier font-bold uppercase text-right mb-3;
+    @apply font-courier font-bold uppercase text-right mb-3 dark:text-white;
+  }
+  
+  /* Card hover effects */
+  .card-hover-effect {
+    @apply transition-all duration-200 hover:shadow-lg hover:translate-y-[-2px];
+  }
+  
+  /* Glassmorphism effects */
+  .glass {
+    @apply backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border border-white/20 dark:border-slate-700/30;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400;
   }
 }

@@ -53,12 +53,17 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
 
   return (
     <>
-      <Card className="mb-4 border-2 border-border hover:border-primary/50 transition-colors animate-fade-in">
-        <CardHeader className="p-4 flex flex-row justify-between items-center flex-wrap gap-2">
+      <Card className={`mb-4 border-l-4 ${scene.isCollapsed ? 'border-l-slate-300 dark:border-l-slate-700' : 'border-l-primary'} hover:shadow-md transition-all duration-200 animate-fade-in group`}>
+        <CardHeader className="p-4 flex flex-row justify-between items-center flex-wrap gap-2 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20">
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-lg truncate">{`Scene ${index + 1}: ${getSceneTitle()}`}</div>
+            <div className="font-bold text-lg truncate flex items-center">
+              <span className="bg-primary/10 dark:bg-primary/20 text-primary px-2 py-0.5 rounded-md text-sm mr-2 font-mono">
+                {index + 1}
+              </span>
+              {getSceneTitle()}
+            </div>
             {scene.isCollapsed && (
-              <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              <div className="text-sm text-muted-foreground mt-1 line-clamp-2 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
                 {getScenePreview()}
               </div>
             )}
@@ -90,6 +95,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               size="sm"
               onClick={confirmDelete}
               type="button"
+              className="hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
               <span className="ml-1 hidden sm:inline">Delete</span>
@@ -99,6 +105,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               size="sm"
               onClick={() => toggleSceneCollapse(scene.id)}
               type="button"
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               {scene.isCollapsed ? (
                 <ChevronDown className="h-4 w-4" />
@@ -109,13 +116,13 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
           </div>
         </CardHeader>
         {!scene.isCollapsed && (
-          <CardContent className="p-4 pt-0">
+          <CardContent className="p-4 pt-0 bg-white/50 dark:bg-slate-900/50">
             {isEditing ? (
               <SceneEditor scene={scene} onClose={() => setIsEditing(false)} />
             ) : (
-              <div className="space-y-2 prose max-w-none">
+              <div className="space-y-2 prose max-w-none pt-4">
                 {scene.elements.map((element, i) => (
-                  <div key={i} className={element.type}>
+                  <div key={i} className={`${element.type} bg-white/80 dark:bg-slate-800/50 p-2 rounded-md border border-slate-100 dark:border-slate-700`}>
                     {element.content}
                   </div>
                 ))}

@@ -70,28 +70,32 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
 
   const lastEditedByDisplay = script.lastEditedBy ? getDisplayName(script.lastEditedBy) : "you";
 
+  const isProtected = script.visibility === "protected";
+
   return (
     <>
       <Card 
         key={script.id} 
-        className={`hover:shadow-md transition-shadow ${
-          script.visibility === "protected" ? "border-2 border-primary" : ""
+        className={`group hover:border-primary/50 ${
+          isProtected 
+            ? "border-2 border-primary bg-gradient-to-r from-primary/5 to-transparent" 
+            : "border-slate-200 dark:border-slate-800"
         }`}
       >
-        <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer">
+        <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20 rounded-t-lg transition-colors">
           <CardTitle className="flex items-center flex-wrap gap-2">
-            {script.visibility === "protected" ? (
+            {isProtected ? (
               <FileLock className="h-5 w-5 mr-1 text-primary flex-shrink-0" />
             ) : (
-              <File className="h-5 w-5 mr-1 flex-shrink-0" />
+              <File className="h-5 w-5 mr-1 flex-shrink-0 text-slate-500 group-hover:text-primary transition-colors" />
             )}
             <span className="truncate">{script.title || "Untitled Screenplay"}</span>
           </CardTitle>
           <CardDescription>
             <div className="flex flex-wrap items-center gap-2">
               <span className="truncate">{script.author || "Unknown Author"}</span>
-              {script.visibility === "protected" && (
-                <span className="text-xs bg-primary/20 p-1 px-2 rounded-sm text-primary whitespace-nowrap">
+              {isProtected && (
+                <span className="text-xs bg-primary/10 p-1 px-2 rounded-sm text-primary font-medium whitespace-nowrap">
                   Protected
                 </span>
               )}
@@ -99,7 +103,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-2 cursor-pointer" onClick={() => onOpen(script.id)}>
-          <div className="space-y-1">
+          <div className="space-y-2 pt-2">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" /> Last updated: {formatDate(script.updatedAt.toDate())}
             </p>
@@ -111,7 +115,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
             </p>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        <CardFooter className="flex flex-col space-y-2 pt-4 border-t dark:border-slate-800">
           <div className="grid grid-cols-2 gap-2 w-full">
             {/* View button */}
             <Button 
@@ -119,7 +123,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               size="sm"
               onClick={handleView}
               type="button"
-              className="w-full"
+              className="w-full group-hover:border-primary/30 transition-colors"
             >
               <Eye className="h-4 w-4 mr-1" />
               <span>View</span>
@@ -131,7 +135,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               size="sm"
               onClick={() => onOpen(script.id)}
               type="button"
-              className="w-full"
+              className="w-full group-hover:border-primary/30 transition-colors"
             >
               <Edit className="h-4 w-4 mr-1" />
               <span>Edit</span>
@@ -143,7 +147,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               size="sm"
               onClick={() => onExport(script.id, script.title)}
               type="button"
-              className="w-full"
+              className="w-full group-hover:border-primary/30 transition-colors"
             >
               <FileDown className="h-4 w-4 mr-1" />
               <span>Export</span>

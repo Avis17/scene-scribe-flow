@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import { useScriptService, ScriptVersion } from "@/services/ScriptService";
@@ -189,7 +188,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
         </DialogHeader>
         
         {error && error.includes("index") && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant="default" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Index Required</AlertTitle>
             <AlertDescription>
