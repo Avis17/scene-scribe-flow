@@ -42,15 +42,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
     <div className="p-4 border-b sticky top-0 bg-background z-10">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={handleGoHome}>
+          <Button variant="outline" size="sm" onClick={handleGoHome} type="button">
             <Home className="h-4 w-4 mr-2" />
             Home
           </Button>
-          <Button onClick={handleCreateNew}>
+          <Button onClick={handleCreateNew} type="button">
             <FilePlus className="h-4 w-4 mr-2" />
             New Script
           </Button>
-          <Button variant="outline" size="sm" onClick={handleViewScripts}>
+          <Button variant="outline" size="sm" onClick={handleViewScripts} type="button">
             <List className="h-4 w-4 mr-2" />
             My Scripts
           </Button>
@@ -77,13 +77,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
                 <User className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">{user.displayName || user.email}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <Button variant="ghost" size="sm" onClick={handleLogout} type="button">
                 <LogOut className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
             </>
           ) : (
-            <Button variant="default" size="sm" onClick={handleLogin}>
+            <Button variant="default" size="sm" onClick={handleLogin} type="button">
               <LogIn className="h-4 w-4 mr-2" />
               Login
             </Button>

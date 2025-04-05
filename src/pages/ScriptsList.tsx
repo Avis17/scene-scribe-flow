@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -80,7 +81,10 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleDeleteScript = async (scriptId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     try {
       await scriptService.deleteScript(scriptId);
@@ -110,7 +114,10 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleExportPDF = async (scriptId: string, title: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     try {
       const scriptData = await scriptService.getScriptById(scriptId);
@@ -217,7 +224,7 @@ const ScriptsList: React.FC = () => {
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Your Scripts</h1>
-          <Button onClick={handleCreateNew}>
+          <Button onClick={handleCreateNew} type="button">
             <FilePlus className="mr-2 h-4 w-4" />
             New Script
           </Button>
@@ -247,16 +254,15 @@ const ScriptsList: React.FC = () => {
               <Card 
                 key={script.id} 
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleOpenScript(script.id)}
               >
-                <CardHeader>
+                <CardHeader onClick={() => handleOpenScript(script.id)}>
                   <CardTitle className="flex items-center">
                     <File className="h-5 w-5 mr-2" />
                     {script.title || "Untitled Screenplay"}
                   </CardTitle>
                   <CardDescription>{script.author || "Unknown Author"}</CardDescription>
                 </CardHeader>
-                <CardContent className="pb-2">
+                <CardContent className="pb-2" onClick={() => handleOpenScript(script.id)}>
                   <p className="text-sm text-muted-foreground">
                     Last updated: {formatDate(script.updatedAt.toDate())}
                   </p>
@@ -270,9 +276,11 @@ const ScriptsList: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         handleOpenScript(script.id);
                       }}
+                      type="button"
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -282,6 +290,7 @@ const ScriptsList: React.FC = () => {
                       size="sm"
                       onClick={(e) => handleExportPDF(script.id, script.title, e)}
                       className="mr-2"
+                      type="button"
                     >
                       <FileDown className="h-4 w-4 mr-1" />
                       Export
@@ -292,6 +301,7 @@ const ScriptsList: React.FC = () => {
                     size="sm"
                     onClick={(e) => handleDeleteScript(script.id, e)}
                     className="ml-2"
+                    type="button"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
@@ -307,7 +317,7 @@ const ScriptsList: React.FC = () => {
             <p className="text-muted-foreground mb-6">
               {searchQuery ? "No scripts match your search criteria." : "You haven't created any scripts yet. Get started by creating your first script."}
             </p>
-            <Button onClick={handleCreateNew}>
+            <Button onClick={handleCreateNew} type="button">
               <FilePlus className="mr-2 h-4 w-4" />
               Create New Script
             </Button>

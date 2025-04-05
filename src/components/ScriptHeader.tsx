@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import { Input } from "@/components/ui/input";
@@ -106,7 +107,7 @@ const ScriptHeader: React.FC = () => {
       <div className="p-4 border-b bg-background z-5">
         <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <Button onClick={addScene} variant="outline">
+            <Button onClick={addScene} variant="outline" type="button">
               Add Scene
             </Button>
             <div className="flex items-center space-x-2">
@@ -115,11 +116,12 @@ const ScriptHeader: React.FC = () => {
                 size="sm" 
                 onClick={handleSave} 
                 disabled={loading}
+                type="button"
               >
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport}>
+              <Button variant="outline" size="sm" onClick={handleExport} type="button">
                 <FileDown className="h-4 w-4 mr-2" />
                 Export
               </Button>
