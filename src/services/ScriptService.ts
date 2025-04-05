@@ -16,13 +16,16 @@ import {
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { Scene, SceneElement } from "@/contexts/ScriptContext";
 
+export type ScriptVisibility = "public" | "protected" | "private";
+
 export const useScriptService = () => {
   const { db, user } = useFirebase();
 
   const saveScript = async (
     title: string,
     author: string,
-    scenes: Scene[]
+    scenes: Scene[],
+    visibility: ScriptVisibility = "public"
   ) => {
     if (!user) throw new Error("User not authenticated");
     
@@ -35,6 +38,7 @@ export const useScriptService = () => {
         author,
         scenes,
         userId: user.uid,
+        visibility,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       });
@@ -50,31 +54,50 @@ export const useScriptService = () => {
     scriptId: string,
     title: string,
     author: string,
-    scenes: Scene[]
+    scenes: Scene[],
+    visibility?: ScriptVisibility
   ) => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      await updateDoc(doc(db, "scripts", scriptId), {
+      const updateData: any = {
         title,
         author,
         scenes,
         updatedAt: Timestamp.now()
-      });
+      };
+      
+      if (visibility) {
+        updateData.visibility = visibility;
+      }
+      
+      await updateDoc(doc(db, "scripts", scriptId), updateData);
     } catch (error) {
       console.error("Error updating script:", error);
       throw new Error("Firebase permission error: Please check your Firebase security rules to allow write access for authenticated users.");
     }
   };
 
-  const getUserScripts = async () => {
+  const getUserScripts = async (includeProtected: boolean = false) => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      const scriptsQuery = query(
-        collection(db, "scripts"),
-        where("userId", "==", user.uid)
-      );
+      let scriptsQuery;
+      
+      if (includeProtected) {
+        // For admins, get all scripts that are either owned by user or protected
+        scriptsQuery = query(
+          collection(db, "scripts"),
+          where("userId", "==", user.uid)
+        );
+      } else {
+        // For regular users, just get their own scripts that are not protected
+        scriptsQuery = query(
+          collection(db, "scripts"),
+          where("userId", "==", user.uid),
+          where("visibility", "!=", "protected")
+        );
+      }
       
       const querySnapshot = await getDocs(scriptsQuery);
       const scripts: any[] = [];
@@ -82,6 +105,22 @@ export const useScriptService = () => {
       querySnapshot.forEach((doc) => {
         scripts.push(doc.data());
       });
+      
+      // If admin, also get all protected scripts
+      if (includeProtected) {
+        const protectedQuery = query(
+          collection(db, "scripts"),
+          where("visibility", "==", "protected")
+        );
+        
+        const protectedSnapshot = await getDocs(protectedQuery);
+        protectedSnapshot.forEach((doc) => {
+          // Don't add duplicates
+          if (!scripts.some(script => script.id === doc.id)) {
+            scripts.push(doc.data());
+          }
+        });
+      }
       
       return scripts;
     } catch (error) {
@@ -118,11 +157,26 @@ export const useScriptService = () => {
     }
   };
 
+  const updateScriptVisibility = async (scriptId: string, visibility: ScriptVisibility) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      await updateDoc(doc(db, "scripts", scriptId), {
+        visibility,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error("Error updating script visibility:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow update access for authenticated users.");
+    }
+  };
+
   return {
     saveScript,
     updateScript,
     getUserScripts,
     getScriptById,
-    deleteScript
+    deleteScript,
+    updateScriptVisibility
   };
 };

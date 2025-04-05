@@ -1,10 +1,11 @@
 
 import React from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilePlus, List, LogIn, LogOut, User, Search, Home } from "lucide-react";
+import { FilePlus, List, LogIn, LogOut, User, Search, Home, Shield } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import HelpDialog from "./HelpDialog";
 import { useScript } from "@/contexts/ScriptContext";
@@ -16,6 +17,7 @@ interface AppHeaderProps {
 
 const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) => {
   const { user, signOut } = useFirebase();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const { resetScript } = useScript();
   
@@ -41,6 +43,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   const handleGoHome = () => {
     navigate("/scripts");
   };
+
+  const handleGoToAdmin = () => {
+    navigate("/admin");
+  };
   
   return (
     <div className="p-4 border-b sticky top-0 bg-background z-10">
@@ -59,6 +65,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
             <List className="h-4 w-4 mr-2" />
             My Scripts
           </Button>
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={handleGoToAdmin} type="button">
+              <Shield className="h-4 w-4 mr-2" />
+              Admin
+            </Button>
+          )}
         </div>
         
         <div className="flex items-center space-x-2 w-full sm:w-auto">

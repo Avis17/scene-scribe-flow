@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
-import { useScriptService } from "@/services/ScriptService";
+import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useScript } from "@/contexts/ScriptContext";
+import { useAdmin } from "@/contexts/AdminContext"; 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
@@ -15,12 +16,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { File, FilePlus, Trash2, Edit, FileDown } from "lucide-react";
+import { File, FilePlus, Trash2, Edit, FileDown, FileLock } from "lucide-react";
 
 interface ScriptData {
   id: string;
   title: string;
   author: string;
+  visibility?: ScriptVisibility;
   createdAt: { toDate: () => Date };
   updatedAt: { toDate: () => Date };
 }
@@ -32,6 +34,7 @@ const ScriptsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const { user } = useFirebase();
+  const { isAdmin } = useAdmin();
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
@@ -39,7 +42,7 @@ const ScriptsList: React.FC = () => {
 
   useEffect(() => {
     fetchScripts();
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -64,7 +67,8 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
-        const userScripts = await scriptService.getUserScripts();
+        // Pass isAdmin to get protected scripts if user is admin
+        const userScripts = await scriptService.getUserScripts(isAdmin);
         setScripts(userScripts as ScriptData[]);
         setFilteredScripts(userScripts as ScriptData[]);
       }
@@ -243,14 +247,27 @@ const ScriptsList: React.FC = () => {
             {filteredScripts.map((script) => (
               <Card 
                 key={script.id} 
-                className="hover:shadow-md transition-shadow"
+                className={`hover:shadow-md transition-shadow ${
+                  script.visibility === "protected" ? "border-2 border-primary" : ""
+                }`}
               >
                 <CardHeader onClick={() => handleOpenScript(script.id)} className="cursor-pointer">
                   <CardTitle className="flex items-center">
-                    <File className="h-5 w-5 mr-2" />
+                    {script.visibility === "protected" ? (
+                      <FileLock className="h-5 w-5 mr-2 text-primary" />
+                    ) : (
+                      <File className="h-5 w-5 mr-2" />
+                    )}
                     {script.title || "Untitled Screenplay"}
                   </CardTitle>
-                  <CardDescription>{script.author || "Unknown Author"}</CardDescription>
+                  <CardDescription>
+                    {script.author || "Unknown Author"}
+                    {script.visibility === "protected" && (
+                      <span className="ml-2 text-xs bg-primary/20 p-1 rounded-sm text-primary">
+                        Protected
+                      </span>
+                    )}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-2 cursor-pointer" onClick={() => handleOpenScript(script.id)}>
                   <p className="text-sm text-muted-foreground">
