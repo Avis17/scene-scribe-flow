@@ -246,21 +246,27 @@ export const useScriptService = () => {
     }
   };
 
-  // New method to get ALL scripts for admin users
+  // Modified method to get ALL scripts for admin users
   const getAllScripts = async () => {
     if (!user) throw new Error("User not authenticated");
     
     // Only allow this for the special admin email
     if (user.email !== ADMIN_EMAIL) {
+      console.error("Access denied: Only admin users can view all scripts", user.email);
       throw new Error("Not authorized to view all scripts");
     }
     
     try {
+      console.log("Admin user accessing all scripts:", user.email);
+      
       const scriptsSnapshot = await getDocs(collection(db, "scripts"));
       const allScripts: any[] = [];
       
       scriptsSnapshot.forEach((doc) => {
-        allScripts.push(doc.data());
+        const data = doc.data();
+        if (data) {
+          allScripts.push(data);
+        }
       });
       
       console.log(`Admin user ${user.email} fetched all scripts:`, allScripts.length);
@@ -491,6 +497,6 @@ export const useScriptService = () => {
     getScriptVersions,
     getScriptVersion,
     saveScriptVersion,
-    getAllScripts // Add the new method to the return object
+    getAllScripts // Added the getAllScripts method to the return object
   };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -42,8 +43,11 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Direct admin check without relying on AdminContext
   const isAdminUser = user?.email === ADMIN_EMAIL;
 
+  console.log("ScriptsList - User email:", user?.email, "isAdmin:", isAdminUser);
+  
   const fetchScripts = useCallback(async (fetchAll = false) => {
     if (!user) return;
     
@@ -52,7 +56,9 @@ const ScriptsList: React.FC = () => {
       let userScripts;
       
       if (fetchAll && isAdminUser) {
+        console.log("Attempting to fetch ALL scripts as admin user:", user.email);
         userScripts = await scriptService.getAllScripts();
+        console.log("Admin fetch returned scripts:", userScripts.length);
         setIsViewingAll(true);
       } else {
         userScripts = await scriptService.getUserScripts(false);
@@ -95,10 +101,12 @@ const ScriptsList: React.FC = () => {
 
   useEffect(() => {
     if (user && !hasInitialFetch) {
+      // Debug log to verify admin status at fetch time
+      console.log(`Fetching scripts for ${user.email}, isAdmin: ${isAdminUser}, viewingAll: ${isViewingAll}`);
       fetchScripts(isViewingAll);
       setHasInitialFetch(true);
     }
-  }, [user, fetchScripts, hasInitialFetch, isViewingAll]);
+  }, [user, fetchScripts, hasInitialFetch, isViewingAll, isAdminUser]);
 
   useEffect(() => {
     if (user) {
@@ -201,11 +209,13 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
+    console.log("Viewing all scripts clicked by admin:", user?.email);
     setHasInitialFetch(false);
     fetchScripts(true);
   };
 
   const handleViewMyScripts = () => {
+    console.log("Viewing my scripts clicked by admin:", user?.email);
     setHasInitialFetch(false);
     fetchScripts(false);
   };
@@ -250,14 +260,20 @@ const ScriptsList: React.FC = () => {
               
               <div className="flex flex-wrap gap-4 mb-6">
                 {isAdminUser && (
-                  <Button 
-                    onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
-                    variant="secondary"
-                    className="flex items-center gap-2"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    {isViewingAll ? "View My Scripts" : "View All Screenplays"}
-                  </Button>
+                  <>
+                    <Button 
+                      onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
+                      variant="secondary"
+                      className="flex items-center gap-2"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      {isViewingAll ? "View My Scripts" : "View All Screenplays"}
+                    </Button>
+                    {/* Add debug information for admin user */}
+                    <p className="bg-amber-100 text-amber-800 p-2 rounded text-sm">
+                      Admin user detected: {user?.email}
+                    </p>
+                  </>
                 )}
               </div>
               

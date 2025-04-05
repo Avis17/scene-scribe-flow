@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,34 +15,23 @@ interface AppHeaderProps {
   resetScript?: () => void; // Optional prop for script reset
 }
 
+// Define the admin email constant
+const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
+
 const AppHeader: React.FC<AppHeaderProps> = ({ 
   showSearch = false, 
   onSearch,
   resetScript 
 }) => {
   const { user, signOut } = useFirebase();
-  const { isAdmin, loading } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
-  const [adminReady, setAdminReady] = useState(false);
   
-  useEffect(() => {
-    if (!loading) {
-      const timer = setTimeout(() => {
-        setAdminReady(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [loading]);
+  // Direct admin check without relying on AdminContext
+  const isAdmin = user?.email === ADMIN_EMAIL;
   
-  const showAdminButton = isAdmin && !loading && adminReady;
-  
-  useEffect(() => {
-    if (user) {
-      console.log("AppHeader - Current user:", user.email);
-      console.log("AppHeader - Is admin:", isAdmin, "loading:", loading);
-    }
-  }, [user, isAdmin, loading]);
+  console.log("AppHeader - Current user:", user?.email);
+  console.log("AppHeader - Is admin:", isAdmin);
   
   const handleLogin = () => {
     navigate("/login");
@@ -80,7 +69,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <FilePlus className="h-4 w-4 mr-2" />
             New Script
           </Button>
-          {showAdminButton && (
+          {isAdmin && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -114,7 +103,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <div className="flex items-center text-sm">
                 <User className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">{user.displayName || user.email}</span>
-                {showAdminButton && <span className="ml-1 text-xs bg-amber-200 p-1 rounded text-amber-700">Admin</span>}
+                {isAdmin && <span className="ml-1 text-xs bg-amber-200 p-1 rounded text-amber-700">Admin</span>}
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout} type="button">
                 <LogOut className="h-4 w-4 mr-2" />
