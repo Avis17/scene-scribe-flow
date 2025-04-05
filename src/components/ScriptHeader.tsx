@@ -17,7 +17,7 @@ import AppHeader from "@/components/AppHeader";
 import { ScriptVisibility } from "@/services/ScriptService";
 
 const ScriptHeader: React.FC = () => {
-  const { title, setTitle, saveScript, currentScriptId, loading, resetScript } = useScript();
+  const { title, setTitle, author, setAuthor, saveScript, currentScriptId, loading, resetScript } = useScript();
   const [visibility, setVisibility] = useState<ScriptVisibility>("public");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,7 +70,7 @@ const ScriptHeader: React.FC = () => {
   return (
     <>
       <AppHeader />
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b">
+      <div className="flex flex-col gap-4 p-6 border-b">
         <div className="flex items-center gap-4 w-full">
           <Button variant="outline" size="icon" onClick={handleGoBack} type="button">
             <ArrowLeft className="h-4 w-4" />
@@ -82,29 +82,39 @@ const ScriptHeader: React.FC = () => {
             className="text-lg font-bold focus-visible:ring-1 w-full max-w-md"
           />
         </div>
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <Select
-            value={visibility}
-            onValueChange={(value: ScriptVisibility) => setVisibility(value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select visibility" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="public">Public</SelectItem>
-              <SelectItem value="protected">Protected (Admin Only)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto" type="button">
-            {loading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </>
-            )}
-          </Button>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Input
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="Author Name"
+            className="focus-visible:ring-1 w-full max-w-md"
+          />
+          
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <Select
+              value={visibility}
+              onValueChange={(value: ScriptVisibility) => setVisibility(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select visibility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="protected">Protected (Admin Only)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto" type="button">
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </>
