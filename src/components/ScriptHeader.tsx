@@ -7,18 +7,29 @@ import ThemeToggle from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Save, FileDown, Plus, List, LogIn, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast"; 
 
 const ScriptHeader: React.FC = () => {
   const { title, setTitle, author, setAuthor, addScene, saveScript, loading } = useScript();
   const { user, signOut } = useFirebase();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSave = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
-    await saveScript();
+    try {
+      await saveScript();
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save script",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleViewScripts = () => {

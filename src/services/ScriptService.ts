@@ -26,19 +26,24 @@ export const useScriptService = () => {
   ) => {
     if (!user) throw new Error("User not authenticated");
     
-    const scriptId = `script_${Date.now()}`;
-    
-    await setDoc(doc(db, "scripts", scriptId), {
-      id: scriptId,
-      title,
-      author,
-      scenes,
-      userId: user.uid,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    });
-    
-    return scriptId;
+    try {
+      const scriptId = `script_${Date.now()}`;
+      
+      await setDoc(doc(db, "scripts", scriptId), {
+        id: scriptId,
+        title,
+        author,
+        scenes,
+        userId: user.uid,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+      
+      return scriptId;
+    } catch (error) {
+      console.error("Error saving script:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow write access for authenticated users.");
+    }
   };
 
   const updateScript = async (
@@ -49,48 +54,68 @@ export const useScriptService = () => {
   ) => {
     if (!user) throw new Error("User not authenticated");
     
-    await updateDoc(doc(db, "scripts", scriptId), {
-      title,
-      author,
-      scenes,
-      updatedAt: Timestamp.now()
-    });
+    try {
+      await updateDoc(doc(db, "scripts", scriptId), {
+        title,
+        author,
+        scenes,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error("Error updating script:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow write access for authenticated users.");
+    }
   };
 
   const getUserScripts = async () => {
     if (!user) throw new Error("User not authenticated");
     
-    const scriptsQuery = query(
-      collection(db, "scripts"),
-      where("userId", "==", user.uid)
-    );
-    
-    const querySnapshot = await getDocs(scriptsQuery);
-    const scripts: any[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      scripts.push(doc.data());
-    });
-    
-    return scripts;
+    try {
+      const scriptsQuery = query(
+        collection(db, "scripts"),
+        where("userId", "==", user.uid)
+      );
+      
+      const querySnapshot = await getDocs(scriptsQuery);
+      const scripts: any[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        scripts.push(doc.data());
+      });
+      
+      return scripts;
+    } catch (error) {
+      console.error("Error fetching scripts:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow read access for authenticated users.");
+    }
   };
 
   const getScriptById = async (scriptId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
-    
-    if (scriptDoc.exists()) {
-      return scriptDoc.data();
+    try {
+      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      
+      if (scriptDoc.exists()) {
+        return scriptDoc.data();
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error getting script:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow read access for authenticated users.");
     }
-    
-    return null;
   };
 
   const deleteScript = async (scriptId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    await deleteDoc(doc(db, "scripts", scriptId));
+    try {
+      await deleteDoc(doc(db, "scripts", scriptId));
+    } catch (error) {
+      console.error("Error deleting script:", error);
+      throw new Error("Firebase permission error: Please check your Firebase security rules to allow delete access for authenticated users.");
+    }
   };
 
   return {
