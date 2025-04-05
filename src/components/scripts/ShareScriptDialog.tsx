@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Share2, FileLock, Eye, EyeOff } from "lucide-react";
+import { Trash2, Share2, FileLock, Eye, EyeOff, Copy } from "lucide-react";
 import { useScriptService, ScriptAccessLevel, ScriptVisibility } from "@/services/ScriptService";
 
 interface ShareScriptDialogProps {
@@ -22,6 +22,7 @@ interface SharedUser {
   email: string;
   accessLevel: ScriptAccessLevel;
   sharedAt: { toDate: () => Date };
+  password?: string;
 }
 
 const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
@@ -180,6 +181,14 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
       minute: '2-digit'
     }).format(date);
   };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: "Password copied to clipboard",
+    });
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -290,6 +299,7 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
                     <TableHead>Email</TableHead>
                     <TableHead>Access Level</TableHead>
                     <TableHead>Shared At</TableHead>
+                    {isProtected && <TableHead>Password</TableHead>}
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -301,6 +311,23 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
                         {user.accessLevel === "view" ? "View only" : "Edit"}
                       </TableCell>
                       <TableCell>{formatDate(user.sharedAt.toDate())}</TableCell>
+                      {isProtected && (
+                        <TableCell>
+                          <div className="flex items-center">
+                            <span className="mr-2">{user.password || "Not available"}</span>
+                            {user.password && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(user.password || "")}
+                                type="button"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Button
                           variant="ghost"
