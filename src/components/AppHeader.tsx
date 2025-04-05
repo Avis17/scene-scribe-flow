@@ -25,17 +25,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const location = useLocation();
   const [adminReady, setAdminReady] = useState(false);
   
-  // Add a delay to ensure admin status is stable before showing admin features
   useEffect(() => {
     if (!loading) {
       const timer = setTimeout(() => {
         setAdminReady(true);
-      }, 500); // Short delay to ensure stability
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [loading]);
   
-  // Only show admin button when isAdmin is true and loading is complete and adminReady is true
   const showAdminButton = isAdmin && !loading && adminReady;
   
   useEffect(() => {
@@ -55,7 +53,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   
   const handleCreateNew = () => {
-    // Force a completely new script by navigating with state
     navigate("/", { state: { forceNew: true } });
   };
 
@@ -64,7 +61,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const handleGoToAdmin = () => {
-    // Only navigate if not already on admin page to prevent refresh loop
     if (location.pathname !== "/admin") {
       navigate("/admin");
     }
@@ -74,7 +70,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     <div className="p-4 border-b sticky top-0 bg-background z-10">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="font-bold text-primary text-lg mr-4">Scriptly</div>
+          <div className="font-bold text-primary text-lg mr-4">Semma Clicks Studio - Scriptly</div>
           <Button variant="outline" size="sm" onClick={handleGoHome} type="button">
             <Home className="h-4 w-4 mr-2" />
             Home

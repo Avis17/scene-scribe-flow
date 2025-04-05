@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useNavigate } from "react-router-dom";
@@ -96,7 +97,7 @@ const Login: React.FC = () => {
       
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold">Scene Scribe Flow</CardTitle>
+          <CardTitle className="text-2xl font-bold">Semma Clicks Studio - Scriptly</CardTitle>
           <CardDescription>
             {isLogin ? "Sign in to your account" : "Create a new account"}
           </CardDescription>
