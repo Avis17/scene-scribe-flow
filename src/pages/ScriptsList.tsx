@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -212,7 +213,7 @@ const ScriptsList: React.FC = () => {
       <AppHeader showSearch={true} onSearch={handleSearch} />
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Your Scripts</h1>
+          <h1 className="text-3xl font-bold">Scriptly - Your Scripts</h1>
           <Button onClick={handleCreateNew} type="button">
             <FilePlus className="mr-2 h-4 w-4" />
             New Script

@@ -8,6 +8,7 @@ import { FirebaseProvider } from "./contexts/FirebaseContext";
 import { ScriptProvider } from "./contexts/ScriptContext";
 import { ThemeProvider } from "@/hooks/use-theme";
 import AuthGuard from "./components/AuthGuard";
+import Footer from "./components/Footer";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -26,38 +27,43 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route 
-                  path="/" 
-                  element={
-                    <AuthGuard>
-                      <ScriptProvider>
-                        <Index />
-                      </ScriptProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/login" 
-                  element={
-                    <AuthGuard requireAuth={false}>
-                      <Login />
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/scripts" 
-                  element={
-                    <AuthGuard>
-                      <ScriptProvider>
-                        <ScriptsList />
-                      </ScriptProvider>
-                    </AuthGuard>
-                  } 
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <div className="flex flex-col min-h-screen">
+                <div className="flex-grow">
+                  <Routes>
+                    <Route 
+                      path="/" 
+                      element={
+                        <AuthGuard>
+                          <ScriptProvider>
+                            <Index />
+                          </ScriptProvider>
+                        </AuthGuard>
+                      } 
+                    />
+                    <Route 
+                      path="/login" 
+                      element={
+                        <AuthGuard requireAuth={false}>
+                          <Login />
+                        </AuthGuard>
+                      } 
+                    />
+                    <Route 
+                      path="/scripts" 
+                      element={
+                        <AuthGuard>
+                          <ScriptProvider>
+                            <ScriptsList />
+                          </ScriptProvider>
+                        </AuthGuard>
+                      } 
+                    />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
+                <Footer />
+              </div>
             </BrowserRouter>
           </TooltipProvider>
         </ThemeProvider>

@@ -26,6 +26,11 @@ const Index: React.FC = () => {
     checkScriptAndRedirect();
   }, [currentScriptId, navigate, authLoading, location.pathname, resetScript]);
   
+  // Update document title with app name
+  useEffect(() => {
+    document.title = "Scriptly - Screenplay Editor";
+  }, []);
+  
   return (
     <div className="min-h-screen bg-background">
       <ScriptEditor />
