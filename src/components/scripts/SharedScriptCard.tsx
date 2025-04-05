@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { File, FileLock, FileDown, Eye, Edit, Users } from "lucide-react";
@@ -39,17 +39,17 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
     : "view"; // Default to view if not specified
   
-  // Check if user has only view permission (not edit permission)
-  const hasViewOnlyAccess = accessLevel === "view";
+  // Check if user has edit permission (not view-only permission)
+  const hasEditAccess = accessLevel === "edit";
   
-  console.log("Shared script access level:", accessLevel, "for script:", script.title, "hasViewOnlyAccess:", hasViewOnlyAccess);
+  console.log("Shared script access level:", accessLevel, "for script:", script.title, "hasEditAccess:", hasEditAccess);
   
   const handleView = () => {
     navigate(`/view/${script.id}`);
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow border-2 border-blue-200">
       <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer">
         <CardTitle className="flex items-center flex-wrap gap-2">
           {script.visibility === "protected" ? (
@@ -100,8 +100,8 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {/* Edit button - only show if user has edit access (not view-only) */}
-            {!hasViewOnlyAccess && (
+            {/* Edit button - only show if user has edit access */}
+            {hasEditAccess && (
               <Button 
                 variant="outline"
                 size="sm"
