@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { 
@@ -33,7 +32,18 @@ interface AdminContextType {
   addUser: (email: string, permissions: UserPermission[]) => Promise<void>;
 }
 
-const AdminContext = createContext<AdminContextType | undefined>(undefined);
+// Create a default context value to avoid the "must be used within a Provider" error
+const defaultContextValue: AdminContextType = {
+  isAdmin: false,
+  loading: true,
+  users: [],
+  fetchUsers: async () => {},
+  updateUserPermissions: async () => {},
+  removeUser: async () => {},
+  addUser: async () => {}
+};
+
+const AdminContext = createContext<AdminContextType>(defaultContextValue);
 
 // Fix: Make sure this matches the exact string of the admin email with correct casing
 export const ADMIN_EMAIL = "sivasubramanian1617@gmail.com";
@@ -41,7 +51,8 @@ export const ADMIN_EMAIL = "sivasubramanian1617@gmail.com";
 export const useAdmin = () => {
   const context = useContext(AdminContext);
   if (context === undefined) {
-    throw new Error("useAdmin must be used within an AdminProvider");
+    console.error("useAdmin must be used within an AdminProvider");
+    return defaultContextValue;
   }
   return context;
 };
@@ -66,7 +77,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         console.log("Admin email constant:", ADMIN_EMAIL);
         console.log("Does email match?", user.email === ADMIN_EMAIL);
         
-        // Check if user email matches admin email (case-sensitive comparison)
+        // Check if user email matches admin email (case-insensitive comparison)
         if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           console.log("Email matches admin email, granting admin access");
           setIsAdmin(true);
@@ -237,18 +248,20 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const contextValue = {
+    isAdmin,
+    loading,
+    users,
+    fetchUsers,
+    updateUserPermissions,
+    removeUser,
+    addUser
+  };
+
+  console.log("AdminProvider rendering with isAdmin:", isAdmin);
+  
   return (
-    <AdminContext.Provider
-      value={{
-        isAdmin,
-        loading,
-        users,
-        fetchUsers,
-        updateUserPermissions,
-        removeUser,
-        addUser
-      }}
-    >
+    <AdminContext.Provider value={contextValue}>
       {children}
     </AdminContext.Provider>
   );

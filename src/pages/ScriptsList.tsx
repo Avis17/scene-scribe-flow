@@ -30,7 +30,16 @@ const ScriptsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const { user } = useFirebase();
-  const { isAdmin } = useAdmin();
+  // Use a try-catch block to handle potential context issues
+  let isAdmin = false;
+  try {
+    const adminContext = useAdmin();
+    isAdmin = adminContext.isAdmin;
+    console.log("Admin context successfully loaded in ScriptsList:", isAdmin);
+  } catch (error) {
+    console.error("Failed to load admin context:", error);
+  }
+  
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
@@ -63,6 +72,7 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
+        console.log("Fetching scripts with isAdmin:", isAdmin);
         // Pass isAdmin to getUserScripts to ensure protected scripts are fetched for admins
         const userScripts = await scriptService.getUserScripts(isAdmin);
         
