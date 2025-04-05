@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
-import { useScriptService } from "@/services/ScriptService";
+import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
 import { useScript } from "@/contexts/ScriptContext";
-import { useAdmin } from "@/contexts/AdminContext"; 
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import ScriptsGrid from "@/components/scripts/ScriptsGrid";
 import LoadingState from "@/components/scripts/LoadingState";
 import EmptyState from "@/components/scripts/EmptyState";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
-import { ScriptVisibility } from "@/services/ScriptService";
 
 interface ScriptData {
   id: string;
@@ -29,26 +28,18 @@ const ScriptsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const { user } = useFirebase();
-  const { isAdmin, loading: adminLoading } = useAdmin();
   
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Effect to fetch scripts when user or admin status changes
+  // Effect to fetch scripts when user changes
   useEffect(() => {
-    // Only proceed when admin status is fully loaded
-    if (!adminLoading && user) {
-      console.log("Admin status loaded, fetching scripts with isAdmin:", isAdmin);
+    if (user) {
       fetchScripts();
     }
-  }, [user, isAdmin, adminLoading]);
-
-  useEffect(() => {
-    // Log admin context status for debugging
-    console.log("Admin context in ScriptsList:", isAdmin, "loading:", adminLoading);
-  }, [isAdmin, adminLoading]);
+  }, [user]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -73,9 +64,8 @@ const ScriptsList: React.FC = () => {
     try {
       setLoading(true);
       if (user) {
-        console.log("Fetching scripts with isAdmin:", isAdmin);
-        // Pass isAdmin to getUserScripts to ensure protected scripts are fetched for admins
-        const userScripts = await scriptService.getUserScripts(isAdmin);
+        // Get all scripts the user has access to (own scripts and shared scripts)
+        const userScripts = await scriptService.getUserScripts(false);
         
         // Properly transform and validate script data before setting state
         const validScripts = userScripts
@@ -151,7 +141,6 @@ const ScriptsList: React.FC = () => {
         title: scriptData.title || "Untitled",
         author: scriptData.author || "Unknown",
         scenes: scriptData.scenes || [],
-        // Add other required properties
       };
       
       exportScriptToPDF(formattedScriptData);
@@ -201,14 +190,12 @@ const ScriptsList: React.FC = () => {
       <div className="p-6 max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Scriptly - Your Scripts</h1>
-          {isAdmin && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Admin mode: You can see both your scripts and protected scripts
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage and share your scripts with others
+          </p>
         </div>
 
-        {loading || adminLoading ? (
+        {loading ? (
           <LoadingState />
         ) : filteredScripts.length > 0 ? (
           <ScriptsGrid 

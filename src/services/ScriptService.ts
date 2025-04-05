@@ -9,8 +9,6 @@ import {
   query, 
   where,
   updateDoc,
-  arrayRemove,
-  arrayUnion,
   Timestamp
 } from "firebase/firestore";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -48,13 +46,13 @@ export const useScriptService = () => {
         visibility,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        sharedWith: [] // Initialize empty array for shared users
+        sharedWith: {} // Initialize empty object for shared users
       });
       
       return scriptId;
     } catch (error) {
       console.error("Error saving script:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow write access for authenticated users.");
+      throw new Error("Failed to save script. Please try again.");
     }
   };
 
@@ -82,7 +80,7 @@ export const useScriptService = () => {
       await updateDoc(doc(db, "scripts", scriptId), updateData);
     } catch (error) {
       console.error("Error updating script:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow write access for authenticated users.");
+      throw new Error("Failed to update script. Please try again.");
     }
   };
 
@@ -126,33 +124,10 @@ export const useScriptService = () => {
         // This might fail if the index doesn't exist, but we continue with user's own scripts
       }
       
-      // If admin, also get all protected scripts not owned by the user
-      if (includeProtected) {
-        console.log("Admin user - fetching protected scripts");
-        const protectedQuery = query(
-          collection(db, "scripts"),
-          where("visibility", "==", "protected")
-        );
-        
-        const protectedSnapshot = await getDocs(protectedQuery);
-        let protectedCount = 0;
-        
-        protectedSnapshot.forEach((doc) => {
-          // Don't add duplicates (user's own protected scripts)
-          const data = doc.data();
-          if (data.userId !== user.uid && !scripts.some(script => script.id === doc.id)) {
-            scripts.push(data);
-            protectedCount++;
-          }
-        });
-        
-        console.log(`Added ${protectedCount} protected scripts from other users`);
-      }
-      
       return scripts;
     } catch (error) {
       console.error("Error fetching scripts:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow read access for authenticated users.");
+      throw new Error("Failed to fetch scripts. Please try again.");
     }
   };
 
@@ -169,7 +144,7 @@ export const useScriptService = () => {
       return null;
     } catch (error) {
       console.error("Error getting script:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow read access for authenticated users.");
+      throw new Error("Failed to get script. Please try again.");
     }
   };
 
@@ -180,7 +155,7 @@ export const useScriptService = () => {
       await deleteDoc(doc(db, "scripts", scriptId));
     } catch (error) {
       console.error("Error deleting script:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow delete access for authenticated users.");
+      throw new Error("Failed to delete script. Please try again.");
     }
   };
 
@@ -194,11 +169,11 @@ export const useScriptService = () => {
       });
     } catch (error) {
       console.error("Error updating script visibility:", error);
-      throw new Error("Firebase permission error: Please check your Firebase security rules to allow update access for authenticated users.");
+      throw new Error("Failed to update script visibility. Please try again.");
     }
   };
 
-  // New function to share a script with another user
+  // Function to share a script with another user
   const shareScript = async (scriptId: string, email: string, accessLevel: ScriptAccessLevel) => {
     if (!user) throw new Error("User not authenticated");
     
