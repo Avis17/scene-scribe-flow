@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
@@ -17,18 +17,19 @@ interface AppHeaderProps {
 
 const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) => {
   const { user, signOut } = useFirebase();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, loading } = useAdmin();
   const navigate = useNavigate();
   const { resetScript } = useScript();
-  const [adminChecked, setAdminChecked] = useState(false);
+  
+  // Only show admin button when isAdmin is true and loading is complete
+  const showAdminButton = isAdmin && !loading;
   
   useEffect(() => {
     if (user) {
       console.log("AppHeader - Current user:", user.email);
-      console.log("AppHeader - Is admin:", isAdmin);
-      setAdminChecked(true);
+      console.log("AppHeader - Is admin:", isAdmin, "loading:", loading);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, loading]);
   
   const handleLogin = () => {
     navigate("/login");
@@ -52,9 +53,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
     navigate("/admin");
   };
   
-  // Delay admin button rendering slightly to ensure admin status loads
-  const showAdminButton = adminChecked && isAdmin;
-  
   return (
     <div className="p-4 border-b sticky top-0 bg-background z-10">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -69,7 +67,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
             New Script
           </Button>
           {showAdminButton && (
-            <Button variant="outline" size="sm" onClick={handleGoToAdmin} type="button" className="bg-amber-100 hover:bg-amber-200 border-amber-300">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleGoToAdmin} 
+              type="button" 
+              className="bg-amber-100 hover:bg-amber-200 border-amber-300"
+            >
               <Shield className="h-4 w-4 mr-2 text-amber-600" />
               Admin
             </Button>

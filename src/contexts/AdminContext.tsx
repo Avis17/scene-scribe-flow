@@ -63,18 +63,20 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [users, setUsers] = useState<UserWithPermissions[]>([]);
+  const [adminCheckComplete, setAdminCheckComplete] = useState<boolean>(false);
 
-  // Check if current user is admin - improved with better logging
+  // Check if current user is admin - improved with better logging and stability
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
         setIsAdmin(false);
         setLoading(false);
+        setAdminCheckComplete(true);
         return;
       }
 
       try {
-        console.log("Checking admin status for:", user.email);
+        console.log("Starting admin status check for:", user.email);
         console.log("Admin email constant:", ADMIN_EMAIL);
         
         // IMPORTANT: Force email string comparison to lowercase for both
@@ -83,12 +85,13 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         
         console.log("User email lowercase:", userEmailLower);
         console.log("Admin email lowercase:", adminEmailLower);
-        console.log("Does email match?", userEmailLower === adminEmailLower);
+        
+        let isUserAdmin = false;
         
         // Check if user email matches admin email (using lowercase comparison)
         if (userEmailLower === adminEmailLower) {
           console.log("✅ Email matches admin email exactly, granting admin access");
-          setIsAdmin(true);
+          isUserAdmin = true;
           
           // Create admin record in database if it doesn't exist
           const adminRef = doc(db, "permissions", user.uid);
@@ -111,25 +114,36 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           
           if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
             console.log("✅ User has admin permission in database");
-            setIsAdmin(true);
+            isUserAdmin = true;
           } else {
             console.log("❌ User does not have admin permission");
-            setIsAdmin(false);
+            isUserAdmin = false;
           }
         }
+        
+        // Only update state once with final decision to prevent flickering
+        console.log("Final admin status determination:", isUserAdmin);
+        setIsAdmin(isUserAdmin);
+        
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
       } finally {
         setLoading(false);
-        // Force a re-check after a delay
-        setTimeout(() => {
-          console.log("Final admin status check result:", isAdmin);
-        }, 500);
+        setAdminCheckComplete(true);
       }
     };
     
-    checkAdminStatus();
+    // Reset states when user changes
+    if (user) {
+      setLoading(true);
+      setAdminCheckComplete(false);
+      checkAdminStatus();
+    } else {
+      setIsAdmin(false);
+      setLoading(false);
+      setAdminCheckComplete(true);
+    }
   }, [user, db]);
 
   // Fetch all users with permissions
@@ -272,7 +286,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     addUser
   };
 
-  console.log("AdminProvider rendering with isAdmin:", isAdmin);
+  console.log("AdminProvider rendering with isAdmin:", isAdmin, "adminCheckComplete:", adminCheckComplete);
   
   return (
     <AdminContext.Provider value={contextValue}>

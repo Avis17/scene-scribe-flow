@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -28,35 +27,28 @@ const ScriptsList: React.FC = () => {
   const [filteredScripts, setFilteredScripts] = useState<ScriptData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [adminStatusChecked, setAdminStatusChecked] = useState<boolean>(false);
   
   const { user } = useFirebase();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   
   const scriptService = useScriptService();
   const { setCurrentScriptId, resetScript } = useScript();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Effect to check admin status
+  // Effect to fetch scripts when user or admin status changes
   useEffect(() => {
-    console.log("Initial admin status check:", isAdmin);
-    // Set a small delay to ensure admin context is fully loaded
-    const timer = setTimeout(() => {
-      console.log("Delayed admin status check:", isAdmin);
-      setAdminStatusChecked(true);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [isAdmin]);
-
-  // Fetch scripts when user or admin status changes
-  useEffect(() => {
-    if (adminStatusChecked) {
-      console.log("Admin status checked, fetching scripts now");
+    // Only proceed when admin status is fully loaded
+    if (!adminLoading && user) {
+      console.log("Admin status loaded, fetching scripts with isAdmin:", isAdmin);
       fetchScripts();
     }
-  }, [user, isAdmin, adminStatusChecked]);
+  }, [user, isAdmin, adminLoading]);
+
+  useEffect(() => {
+    // Log admin context status for debugging
+    console.log("Admin context in ScriptsList:", isAdmin, "loading:", adminLoading);
+  }, [isAdmin, adminLoading]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -102,7 +94,6 @@ const ScriptsList: React.FC = () => {
           }));
         
         console.log("Fetched scripts:", validScripts);
-        console.log("Is admin:", isAdmin);
         
         setScripts(validScripts);
         setFilteredScripts(validScripts);
@@ -217,7 +208,7 @@ const ScriptsList: React.FC = () => {
           )}
         </div>
 
-        {loading ? (
+        {loading || adminLoading ? (
           <LoadingState />
         ) : filteredScripts.length > 0 ? (
           <ScriptsGrid 
