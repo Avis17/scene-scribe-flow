@@ -12,10 +12,16 @@ const Index: React.FC = () => {
   const location = useLocation();
   
   useEffect(() => {
-    // If we have no script ID selected, redirect to scripts list
-    if (!authLoading && !currentScriptId && location.pathname === "/") {
-      navigate("/scripts");
-    }
+    const checkScriptAndRedirect = () => {
+      // Only redirect if we're not already redirecting or loading auth
+      if (!authLoading && location.pathname === "/") {
+        if (!currentScriptId) {
+          console.log("No script selected, user should create a new one or select from list");
+        }
+      }
+    };
+    
+    checkScriptAndRedirect();
   }, [currentScriptId, navigate, authLoading, location.pathname]);
   
   return (

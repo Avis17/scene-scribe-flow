@@ -14,7 +14,6 @@ import Login from "./pages/Login";
 import ScriptsList from "./pages/ScriptsList";
 import NotFound from "./pages/NotFound";
 
-// Create a client
 const App = () => {
   // Create a new QueryClient for each rendering - avoids sharing client across renders
   const queryClient = new QueryClient();
@@ -31,9 +30,11 @@ const App = () => {
                 <Route 
                   path="/" 
                   element={
-                    <ScriptProvider>
-                      <Index />
-                    </ScriptProvider>
+                    <AuthGuard>
+                      <ScriptProvider>
+                        <Index />
+                      </ScriptProvider>
+                    </AuthGuard>
                   } 
                 />
                 <Route 

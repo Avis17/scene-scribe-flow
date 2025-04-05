@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FilePlus, List, LogIn, LogOut, User, Search, Home } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import HelpDialog from "./HelpDialog";
+import { useScript } from "@/contexts/ScriptContext";
 
 interface AppHeaderProps {
   showSearch?: boolean;
@@ -16,6 +17,7 @@ interface AppHeaderProps {
 const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) => {
   const { user, signOut } = useFirebase();
   const navigate = useNavigate();
+  const { setCurrentScriptId } = useScript();
   
   const handleLogin = () => {
     navigate("/login");
@@ -31,6 +33,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ showSearch = false, onSearch }) =
   };
   
   const handleCreateNew = () => {
+    // Clear the current script ID first, then navigate
+    setCurrentScriptId(null);
     navigate("/");
   };
 

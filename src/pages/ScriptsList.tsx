@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -98,13 +99,21 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleOpenScript = (scriptId: string) => {
+    // Set the script ID first, then navigate
     setCurrentScriptId(scriptId);
-    navigate("/");
+    // Add a small timeout to ensure the state is updated before navigation
+    setTimeout(() => {
+      navigate("/");
+    }, 50);
   };
 
   const handleCreateNew = () => {
+    // Clear the current script ID first, then navigate
     setCurrentScriptId(null);
-    navigate("/");
+    // Add a small timeout to ensure the state is updated before navigation
+    setTimeout(() => {
+      navigate("/");
+    }, 50);
   };
 
   const handleExportPDF = async (scriptId: string, title: string) => {

@@ -20,8 +20,15 @@ const ScriptHeader: React.FC = () => {
       navigate("/login");
       return;
     }
+    
     try {
-      await saveScript();
+      const scriptId = await saveScript();
+      if (scriptId) {
+        toast({
+          title: "Success",
+          description: "Script saved successfully",
+        });
+      }
     } catch (error: any) {
       console.error("Save error:", error);
       toast({
@@ -30,6 +37,17 @@ const ScriptHeader: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+  
+  const handleAddScene = () => {
+    addScene();
+    // Optionally scroll to the new scene
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+      });
+    }, 100);
   };
   
   const handleExport = () => {
@@ -107,7 +125,7 @@ const ScriptHeader: React.FC = () => {
       <div className="p-4 border-b bg-background z-5">
         <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <Button onClick={addScene} variant="outline" type="button">
+            <Button onClick={handleAddScene} variant="outline" type="button">
               Add Scene
             </Button>
             <div className="flex items-center space-x-2">
@@ -121,7 +139,12 @@ const ScriptHeader: React.FC = () => {
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport} type="button">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExport}
+                type="button"
+              >
                 <FileDown className="h-4 w-4 mr-2" />
                 Export
               </Button>
