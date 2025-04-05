@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -31,6 +32,7 @@ const ScriptsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
+  const [isScriptsFetched, setIsScriptsFetched] = useState<boolean>(false);
   
   const { user } = useFirebase();
   
@@ -39,37 +41,39 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Fixed fetchScripts to avoid recursive calls
   const fetchScripts = useCallback(async () => {
+    if (!user || isScriptsFetched) return;
+    
     try {
       setLoading(true);
-      if (user) {
-        const userScripts = await scriptService.getUserScripts(false);
-        
-        console.log("All fetched scripts (including shared):", userScripts.length);
-        
-        const ownScripts = userScripts.filter(script => script.userId === user.uid);
-        const sharedScripts = userScripts.filter(script => 
-          script.userId !== user.uid && 
-          script.sharedWith && 
-          user.email && 
-          script.sharedWith[user.email]
-        );
-        
-        setOwnScriptsCount(ownScripts.length);
-        setSharedScriptsCount(sharedScripts.length);
-        
-        console.log("Shared scripts found:", sharedScripts.length);
-        if (sharedScripts.length > 0) {
-          console.log("Shared script details:", sharedScripts.map(s => ({
-            id: s.id,
-            title: s.title,
-            sharedWith: Object.keys(s.sharedWith || {})
-          })));
-        }
-        
-        setScripts(userScripts);
-        setFilteredScripts(userScripts);
+      const userScripts = await scriptService.getUserScripts(false);
+      
+      console.log("All fetched scripts (including shared):", userScripts.length);
+      
+      const ownScripts = userScripts.filter(script => script.userId === user.uid);
+      const sharedScripts = userScripts.filter(script => 
+        script.userId !== user.uid && 
+        script.sharedWith && 
+        user.email && 
+        script.sharedWith[user.email]
+      );
+      
+      setOwnScriptsCount(ownScripts.length);
+      setSharedScriptsCount(sharedScripts.length);
+      
+      console.log("Shared scripts found:", sharedScripts.length);
+      if (sharedScripts.length > 0) {
+        console.log("Shared script details:", sharedScripts.map(s => ({
+          id: s.id,
+          title: s.title,
+          sharedWith: Object.keys(s.sharedWith || {})
+        })));
       }
+      
+      setScripts(userScripts);
+      setFilteredScripts(userScripts);
+      setIsScriptsFetched(true);
     } catch (error) {
       console.error("Error fetching scripts:", error);
       toast({
@@ -80,13 +84,14 @@ const ScriptsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, scriptService, toast]);
+  }, [user, scriptService, toast, isScriptsFetched]);
 
   useEffect(() => {
-    if (user) {
+    // Only fetch scripts if we haven't already and user is authenticated
+    if (user && !isScriptsFetched) {
       fetchScripts();
     }
-  }, [user, fetchScripts]);
+  }, [user, fetchScripts, isScriptsFetched]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -139,7 +144,6 @@ const ScriptsList: React.FC = () => {
         description: "Failed to delete script",
         variant: "destructive",
       });
-      fetchScripts();
     }
   };
 
@@ -207,6 +211,11 @@ const ScriptsList: React.FC = () => {
       </div>
     );
   }
+
+  // Reset the flag if user changes - this allows fetching scripts again for a new user
+  useEffect(() => {
+    setIsScriptsFetched(false);
+  }, [user?.uid]);
 
   return (
     <div className="min-h-screen bg-background">
