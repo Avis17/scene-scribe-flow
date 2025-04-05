@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, FileDown, Eye, Edit } from "lucide-react";
+import { File, FileLock, FileDown, Eye, Edit, Users } from "lucide-react";
 import { ScriptVisibility, ScriptAccessLevel } from "@/services/ScriptService";
 import { useNavigate } from "react-router-dom";
 import { useFirebase } from "@/contexts/FirebaseContext";
