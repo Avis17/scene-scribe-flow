@@ -24,7 +24,6 @@ const AppLogo: React.FC<AppLogoProps> = ({
         alt="Scriptly Logo" 
         className={`${dimensions[size]} mr-2`}
       />
-      <span className="font-bold text-primary">Scriptly</span>
     </div>
   );
 };
