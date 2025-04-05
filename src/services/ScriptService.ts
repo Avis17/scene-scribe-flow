@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   doc, 
@@ -252,6 +253,7 @@ export const useScriptService = () => {
       scriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
+          // Ensure all necessary fields are present and properly formatted
           const processedData = {
             ...data,
             id: doc.id,

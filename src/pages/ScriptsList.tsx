@@ -50,7 +50,7 @@ const ScriptsList: React.FC = () => {
   
   // Modified fetchScripts to better handle the admin fetch and prevent multiple fetches
   const fetchScripts = useCallback(async (fetchAll = false) => {
-    if (!user || fetchInProgress.current) return;
+    if (!user) return;
     
     try {
       console.log("Fetching scripts for", user.email, "isAdmin:", isAdminUser, "viewingAll:", fetchAll);
@@ -225,24 +225,24 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
-    if (fetchInProgress.current) return;
-    
+    // Remove the check for fetchInProgress.current that was causing the button to be disabled
     console.log("Viewing all scripts clicked by admin:", user?.email);
     setIsViewingAll(true);
     setLoading(true);
     
+    // Execute fetch after a short delay to allow state changes to propagate
     setTimeout(() => {
       fetchScripts(true);
     }, 100);
   };
 
   const handleViewMyScripts = () => {
-    if (fetchInProgress.current) return;
-    
+    // Remove the check for fetchInProgress.current that was causing the button to be disabled
     console.log("Viewing my scripts clicked by admin:", user?.email);
     setIsViewingAll(false);
     setLoading(true);
     
+    // Execute fetch after a short delay to allow state changes to propagate
     setTimeout(() => {
       fetchScripts(false);
     }, 100);
@@ -293,7 +293,7 @@ const ScriptsList: React.FC = () => {
                       onClick={isViewingAll ? handleViewMyScripts : handleViewAllScripts}
                       variant="secondary"
                       className="flex items-center gap-2"
-                      disabled={loading || fetchInProgress.current}
+                      disabled={loading} // Only disable during loading, not based on fetchInProgress
                     >
                       <BookOpen className="h-4 w-4" />
                       {isViewingAll ? "View My Scripts" : "View All Screenplays"}
@@ -379,3 +379,4 @@ const ScriptsList: React.FC = () => {
 };
 
 export default ScriptsList;
+
