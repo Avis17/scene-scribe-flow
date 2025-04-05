@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -45,7 +44,6 @@ const ScriptsList: React.FC = () => {
 
   const isAdminUser = user?.email === ADMIN_EMAIL;
 
-  // Fixed fetchScripts to avoid recursive calls
   const fetchScripts = useCallback(async (fetchAll = false) => {
     if (!user) return;
     
@@ -93,18 +91,15 @@ const ScriptsList: React.FC = () => {
     }
   }, [user, scriptService, toast, isAdminUser]);
 
-  // Use a dedicated state to track whether initial fetch has happened
   const [hasInitialFetch, setHasInitialFetch] = useState(false);
 
   useEffect(() => {
-    // Only fetch scripts if user is authenticated and we haven't done the initial fetch yet
     if (user && !hasInitialFetch) {
       fetchScripts(isViewingAll);
       setHasInitialFetch(true);
     }
   }, [user, fetchScripts, hasInitialFetch, isViewingAll]);
 
-  // Reset the flag if user changes - this allows fetching scripts again for a new user
   useEffect(() => {
     if (user) {
       setHasInitialFetch(false);
@@ -206,16 +201,12 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
-    // Reset the fetch flag so we fetch all scripts
     setHasInitialFetch(false);
-    // isViewingAll will be set inside fetchScripts
     fetchScripts(true);
   };
 
   const handleViewMyScripts = () => {
-    // Reset the fetch flag so we fetch user scripts
     setHasInitialFetch(false);
-    // isViewingAll will be set inside fetchScripts
     fetchScripts(false);
   };
 
@@ -247,7 +238,7 @@ const ScriptsList: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader showSearch={true} onSearch={handleSearch} />
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 pb-20 max-w-6xl mx-auto">
         <div className="mb-8">
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-8 mb-6">
             <div className="absolute inset-0 bg-grid-slate-200 [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
@@ -342,4 +333,3 @@ const ScriptsList: React.FC = () => {
 };
 
 export default ScriptsList;
-

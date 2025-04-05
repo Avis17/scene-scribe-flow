@@ -54,21 +54,22 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
   return (
     <>
       <Card className={`mb-4 border-l-4 ${scene.isCollapsed ? 'border-l-slate-300 dark:border-l-slate-700' : 'border-l-primary'} hover:shadow-md transition-all duration-200 animate-fade-in group`}>
-        <CardHeader className="p-4 flex flex-row justify-between items-center flex-wrap gap-2 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20">
+        <CardHeader className="p-3 md:p-4 flex flex-row justify-between items-center flex-wrap gap-2 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20">
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-lg truncate flex items-center">
+            <div className="font-bold text-base md:text-lg truncate flex items-center">
               <span className="bg-primary/10 dark:bg-primary/20 text-primary px-2 py-0.5 rounded-md text-sm mr-2 font-mono">
                 {index + 1}
               </span>
               {getSceneTitle()}
             </div>
             {scene.isCollapsed && (
-              <div className="text-sm text-muted-foreground mt-1 line-clamp-2 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+              <div className="text-xs md:text-sm text-muted-foreground mt-1 line-clamp-2 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
                 {getScenePreview()}
               </div>
             )}
           </div>
-          <div className="flex items-center flex-wrap gap-2">
+          {/* Modified for better mobile responsiveness - removed hidden classes */}
+          <div className="flex items-center gap-1 md:gap-2 flex-wrap">
             {isEditing ? (
               <Button
                 variant="ghost"
@@ -77,7 +78,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
                 type="button"
               >
                 <X className="h-4 w-4" />
-                <span className="ml-1 hidden sm:inline">Cancel</span>
+                <span className="ml-1 text-xs md:text-sm">Cancel</span>
               </Button>
             ) : (
               <Button
@@ -87,7 +88,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
                 type="button"
               >
                 <Pencil className="h-4 w-4" />
-                <span className="ml-1 hidden sm:inline">Edit</span>
+                <span className="ml-1 text-xs md:text-sm">Edit</span>
               </Button>
             )}
             <Button
@@ -98,7 +99,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               className="hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">Delete</span>
+              <span className="ml-1 text-xs md:text-sm">Delete</span>
             </Button>
             <Button
               variant="ghost"
@@ -116,7 +117,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
           </div>
         </CardHeader>
         {!scene.isCollapsed && (
-          <CardContent className="p-4 pt-0 bg-white/50 dark:bg-slate-900/50">
+          <CardContent className="p-3 md:p-4 pt-0 bg-white/50 dark:bg-slate-900/50">
             {isEditing ? (
               <SceneEditor scene={scene} onClose={() => setIsEditing(false)} />
             ) : (

@@ -38,7 +38,8 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <div className="flex flex-col min-h-screen">
-                <div className="flex-grow overflow-y-auto pb-16">
+                {/* Added pb-20 for consistent bottom padding throughout the app */}
+                <div className="flex-grow overflow-y-auto pb-20">
                   <Routes>
                     <Route 
                       path="/" 

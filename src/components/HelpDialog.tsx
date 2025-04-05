@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -24,50 +23,52 @@ const HelpDialog = () => {
           Help
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl h-[85vh]">
+      <DialogContent className="max-w-[95vw] md:max-w-4xl h-[85vh] max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            <Book className="h-6 w-6 text-primary" /> 
+          <DialogTitle className="text-xl md:text-2xl flex items-center gap-2">
+            <Book className="h-5 md:h-6 w-5 md:w-6 text-primary" /> 
             Screenplay Writer Help Guide
           </DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start mb-4 overflow-x-auto">
-            <TabsTrigger value="overview" className="flex items-center gap-1">
-              <ScrollText className="h-4 w-4" /> Overview
-            </TabsTrigger>
-            <TabsTrigger value="format" className="flex items-center gap-1">
-              <Code className="h-4 w-4" /> Screenplay Format
-            </TabsTrigger>
-            <TabsTrigger value="usage" className="flex items-center gap-1">
-              <Search className="h-4 w-4" /> How to Use
-            </TabsTrigger>
-            <TabsTrigger value="voice" className="flex items-center gap-1">
-              <Mic className="h-4 w-4" /> Voice Tools
-            </TabsTrigger>
-            <TabsTrigger value="shortcuts" className="flex items-center gap-1">
-              <Keyboard className="h-4 w-4" /> Shortcuts
-            </TabsTrigger>
-            <TabsTrigger value="export" className="flex items-center gap-1">
-              <FileDown className="h-4 w-4" /> Saving/Exporting
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="w-full justify-start mb-4 flex-nowrap min-w-max">
+              <TabsTrigger value="overview" className="flex items-center gap-1 whitespace-nowrap">
+                <ScrollText className="h-4 w-4" /> Overview
+              </TabsTrigger>
+              <TabsTrigger value="format" className="flex items-center gap-1 whitespace-nowrap">
+                <Code className="h-4 w-4" /> Screenplay Format
+              </TabsTrigger>
+              <TabsTrigger value="usage" className="flex items-center gap-1 whitespace-nowrap">
+                <Search className="h-4 w-4" /> How to Use
+              </TabsTrigger>
+              <TabsTrigger value="voice" className="flex items-center gap-1 whitespace-nowrap">
+                <Mic className="h-4 w-4" /> Voice Tools
+              </TabsTrigger>
+              <TabsTrigger value="shortcuts" className="flex items-center gap-1 whitespace-nowrap">
+                <Keyboard className="h-4 w-4" /> Shortcuts
+              </TabsTrigger>
+              <TabsTrigger value="export" className="flex items-center gap-1 whitespace-nowrap">
+                <FileDown className="h-4 w-4" /> Saving/Exporting
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
           <div className="border rounded-lg p-1">
-            <ScrollArea className="h-[65vh] pr-4">
+            <ScrollArea className="h-[60vh] pr-4">
               <div className="px-2 py-4">
                 <TabsContent value="overview" className="prose dark:prose-invert prose-headings:mb-2 prose-headings:mt-4 max-w-none">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col md:flex-row md:justify-between items-center md:items-start">
                     <div>
-                      <h1 className="flex items-center gap-2 text-3xl font-bold mb-4 text-primary">
+                      <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-bold mb-4 text-primary">
                         Screenplay Writer Application
                       </h1>
-                      <p className="text-lg text-muted-foreground mb-6">
+                      <p className="text-base md:text-lg text-muted-foreground mb-6">
                         A modern, intuitive web application for writing and managing film and TV screenplays with real-time voice-to-text capability.
                       </p>
                     </div>
-                    <img src="https://i.imgur.com/xRv5T3U.png" alt="Logo" className="w-20 h-20" />
+                    <img src="https://i.imgur.com/xRv5T3U.png" alt="Logo" className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-0" />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -472,4 +473,3 @@ const HelpDialog = () => {
 };
 
 export default HelpDialog;
-
