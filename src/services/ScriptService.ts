@@ -281,11 +281,12 @@ export const useScriptService = () => {
       
       const sharedWith = scriptData.sharedWith || {};
       
-      // Convert to array format with email included
+      // Convert to array format with email included and include password if available
       return Object.keys(sharedWith).map(email => ({
         email,
         accessLevel: sharedWith[email].accessLevel,
-        sharedAt: sharedWith[email].sharedAt
+        sharedAt: sharedWith[email].sharedAt,
+        password: sharedWith[email].password // Include the password field
       }));
     } catch (error) {
       console.error("Error getting script sharing:", error);

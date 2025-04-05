@@ -190,6 +190,9 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
     });
   };
   
+  // Debug shared users to see if password is coming through
+  console.log("Shared users with passwords:", sharedUsers);
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
