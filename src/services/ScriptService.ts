@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   doc, 
@@ -14,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { Scene, SceneElement } from "@/contexts/ScriptContext";
+import { useToast } from "@/hooks/use-toast";
 
 export type ScriptVisibility = "public" | "protected" | "private";
 export type ScriptAccessLevel = "view" | "edit";
@@ -140,30 +142,74 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      const versionsQuery = query(
-        collection(db, "script_versions"),
-        where("scriptId", "==", scriptId),
-        orderBy("timestamp", "desc")
-      );
-      
-      const versionsSnapshot = await getDocs(versionsQuery);
-      const versions: ScriptVersion[] = [];
-      
-      versionsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        versions.push({
-          timestamp: data.timestamp,
-          editor: data.editor,
-          title: data.title,
-          author: data.author,
-          scenes: data.scenes,
-          versionId: data.versionId
+      // First, try with the compound query using orderBy
+      try {
+        const versionsQuery = query(
+          collection(db, "script_versions"),
+          where("scriptId", "==", scriptId),
+          orderBy("timestamp", "desc")
+        );
+        
+        const versionsSnapshot = await getDocs(versionsQuery);
+        const versions: ScriptVersion[] = [];
+        
+        versionsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          versions.push({
+            timestamp: data.timestamp,
+            editor: data.editor,
+            title: data.title,
+            author: data.author,
+            scenes: data.scenes,
+            versionId: data.versionId
+          });
         });
-      });
-      
-      return versions;
+        
+        return versions;
+      } catch (indexError) {
+        console.warn("Index error, falling back to simple query:", indexError);
+        
+        // Fallback to a simpler query without ordering
+        const simpleQuery = query(
+          collection(db, "script_versions"),
+          where("scriptId", "==", scriptId)
+        );
+        
+        const versionsSnapshot = await getDocs(simpleQuery);
+        const versions: ScriptVersion[] = [];
+        
+        versionsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          versions.push({
+            timestamp: data.timestamp,
+            editor: data.editor,
+            title: data.title,
+            author: data.author,
+            scenes: data.scenes,
+            versionId: data.versionId
+          });
+        });
+        
+        // Sort manually in memory
+        versions.sort((a, b) => {
+          const timeA = a.timestamp?.toDate?.() ? a.timestamp.toDate().getTime() : 0;
+          const timeB = b.timestamp?.toDate?.() ? b.timestamp.toDate().getTime() : 0;
+          return timeB - timeA; // Descending order
+        });
+        
+        return versions;
+      }
     } catch (error) {
       console.error("Error fetching script versions:", error);
+      
+      // Provide a helpful message about creating the index
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("index")) {
+        throw new Error(
+          "This feature requires a Firestore index. Please check the console for the link to create it, or contact the administrator."
+        );
+      }
+      
       throw new Error("Failed to fetch script versions. Please try again.");
     }
   };

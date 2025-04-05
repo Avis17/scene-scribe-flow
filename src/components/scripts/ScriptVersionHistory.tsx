@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import { useScriptService, ScriptVersion } from "@/services/ScriptService";
@@ -18,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,10 +29,13 @@ import {
   DiffIcon,
   User,
   Calendar,
-  ArrowUpDown
+  ArrowUpDown,
+  AlertTriangle,
+  ExternalLink
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import ScriptDiffViewer from "./ScriptDiffViewer";
 import { formatDistanceToNow } from "date-fns";
 
@@ -47,6 +50,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
   const [compareVersion, setCompareVersion] = useState<ScriptVersion | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
   const scriptService = useScriptService();
@@ -61,12 +65,13 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
   const fetchVersions = async () => {
     try {
       setLoading(true);
+      setError(null);
       const versionsList = await scriptService.getScriptVersions(scriptId);
       
       // Sort versions based on timestamp
       const sortedVersions = [...versionsList].sort((a, b) => {
-        const timeA = a.timestamp.toDate().getTime();
-        const timeB = b.timestamp.toDate().getTime();
+        const timeA = a.timestamp?.toDate?.() ? a.timestamp.toDate().getTime() : 0;
+        const timeB = b.timestamp?.toDate?.() ? b.timestamp.toDate().getTime() : 0;
         return sortDirection === "desc" ? timeB - timeA : timeA - timeB;
       });
       
@@ -77,9 +82,13 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
       }
     } catch (error) {
       console.error("Error fetching script versions:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load script versions";
+      
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "Failed to load script versions",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -143,7 +152,6 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
     }
   };
 
-  // Extract name from email if it's an email address
   const getDisplayName = (emailOrName: string | null) => {
     if (!emailOrName) return "Unknown";
     if (emailOrName.includes('@')) {
@@ -176,6 +184,17 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
           </DialogDescription>
         </DialogHeader>
         
+        {error && error.includes("index") && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Index Required</AlertTitle>
+            <AlertDescription>
+              This feature requires a Firestore database index. An administrator needs to create this index.
+              <p className="mt-2">Check the browser console for the direct link to create the index in Firebase Console.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col md:flex-row gap-4 flex-1 overflow-hidden">
           {/* Versions list */}
           <div className="w-full md:w-1/3 border rounded-md overflow-hidden flex flex-col">
@@ -196,6 +215,11 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
               {loading ? (
                 <div className="p-8 text-center">
                   <p>Loading versions...</p>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center">
+                  <p className="text-red-500 mb-4">Error loading versions</p>
+                  <Button onClick={fetchVersions} variant="outline">Retry</Button>
                 </div>
               ) : versions.length === 0 ? (
                 <div className="p-8 text-center">
@@ -273,7 +297,12 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
             </div>
             
             <ScrollArea className="flex-1 p-4">
-              {!selectedVersion ? (
+              {error ? (
+                <div className="p-8 text-center flex flex-col items-center">
+                  <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+                  <p className="text-muted-foreground">Version history cannot be displayed</p>
+                </div>
+              ) : !selectedVersion ? (
                 <div className="p-8 text-center">
                   <p>Select a version to view details</p>
                 </div>
@@ -349,7 +378,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
             
             <div className="p-2 border-t bg-muted/50 flex justify-between">
               <div className="flex gap-2">
-                {selectedVersion && (
+                {selectedVersion && !error && (
                   <Button 
                     variant="outline"
                     size="sm"
@@ -362,7 +391,7 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
               </div>
               
               <div className="flex gap-2">
-                {selectedVersion && !compareVersion && versions.length > 1 && (
+                {selectedVersion && !compareVersion && versions.length > 1 && !error && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -391,6 +420,21 @@ const ScriptVersionHistory: React.FC<ScriptVersionHistoryProps> = ({ scriptId })
             </div>
           </div>
         </div>
+        
+        {error && error.includes("index") && (
+          <DialogFooter className="mt-4 border-t pt-4">
+            <div className="text-sm text-muted-foreground flex flex-col w-full">
+              <p className="mb-2">To resolve this issue:</p>
+              <ol className="list-decimal list-inside space-y-1 mb-2">
+                <li>Check the browser console for the direct link to create the Firestore index</li>
+                <li>Follow the link to the Firebase Console</li>
+                <li>Create the required index</li>
+                <li>Wait a few minutes for the index to be created</li>
+                <li>Try again</li>
+              </ol>
+            </div>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
