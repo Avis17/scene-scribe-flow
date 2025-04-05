@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 
 interface AuthGuardProps {
@@ -10,6 +10,7 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAuth = true }) => {
   const { user, loading } = useFirebase();
+  const location = useLocation();
   
   if (loading) {
     return (
@@ -26,7 +27,10 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAuth = true }) =
   
   // If we don't require auth (login page) and there is a user, redirect to home
   if (!requireAuth && user) {
-    return <Navigate to="/" replace />;
+    // Only redirect if we're actually on the login page to prevent infinite redirects
+    if (location.pathname === "/login") {
+      return <Navigate to="/scripts" replace />;
+    }
   }
   
   return <>{children}</>;

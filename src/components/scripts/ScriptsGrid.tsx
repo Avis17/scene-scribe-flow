@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ScriptCard from "./ScriptCard";
 import SharedScriptCard from "./SharedScriptCard";
 import { ScriptVisibility } from "@/services/ScriptService";
@@ -34,28 +34,16 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
 }) => {
   const { user } = useFirebase();
   // Local state to track scripts after operations like deletion
-  const [localScripts, setLocalScripts] = useState<ScriptData[]>(scripts);
+  const [localScripts, setLocalScripts] = useState<ScriptData[]>([]);
   
-  // Update local scripts when props change
-  React.useEffect(() => {
+  // Update local scripts when props change - with proper dependency array
+  useEffect(() => {
+    // Only update if scripts have actually changed
     setLocalScripts(scripts);
   }, [scripts]);
   
+  // This is fine because it only logs once when component renders or props change
   console.log("ScriptsGrid - Received scripts:", localScripts.length);
-  
-  // Debug: Print all scripts to see their structure
-  localScripts.forEach((script, index) => {
-    console.log(`Script ${index}:`, {
-      id: script.id,
-      title: script.title,
-      userId: script.userId,
-      currentUserUid: user?.uid,
-      sharedWith: script.sharedWith,
-      isOwn: script.userId === user?.uid,
-      isShared: script.userId !== user?.uid && script.sharedWith && user?.email && 
-                script.sharedWith[user.email]
-    });
-  });
 
   // Improved filtering logic for own vs shared scripts
   const ownScripts = localScripts.filter(script => script.userId === user?.uid);
@@ -65,17 +53,6 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
     if (!script.userId || !user?.email || !script.sharedWith) return false;
     return script.userId !== user?.uid && script.sharedWith[user.email] !== undefined;
   });
-  
-  console.log("ScriptsGrid - Own scripts:", ownScripts.length, "Shared scripts:", sharedScripts.length);
-  
-  if (sharedScripts.length > 0) {
-    console.log("Example shared script:", {
-      title: sharedScripts[0].title,
-      userId: sharedScripts[0].userId,
-      currentUser: user?.uid,
-      sharedWith: Object.keys(sharedScripts[0].sharedWith || {})
-    });
-  }
 
   // Custom handler for delete that updates local state first before API call
   const handleDelete = async (scriptId: string) => {
