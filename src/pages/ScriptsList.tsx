@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -14,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { File, FilePlus, Trash2, Edit } from "lucide-react";
+import { File, FilePlus, Trash2, Edit, FileDown } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface ScriptData {
@@ -86,6 +85,83 @@ const ScriptsList: React.FC = () => {
   const handleCreateNew = () => {
     setCurrentScriptId(null);
     navigate("/");
+  };
+
+  const handleExportPDF = async (scriptId: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const scriptData = await scriptService.getScriptById(scriptId);
+      if (!scriptData) {
+        throw new Error("Script not found");
+      }
+      
+      exportScriptToPDF(scriptData);
+      
+      toast({
+        title: "Success",
+        description: "Script exported successfully",
+      });
+    } catch (error) {
+      console.error("Error exporting script:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export script",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportScriptToPDF = (scriptData: any) => {
+    let content = `
+      <html>
+        <head>
+          <title>${scriptData.title}</title>
+          <style>
+            body { font-family: Courier, monospace; margin: 60px; line-height: 1.6; }
+            h1 { text-align: center; margin-bottom: 4px; }
+            .author { text-align: center; margin-bottom: 50px; }
+            .scene-heading { font-weight: bold; text-transform: uppercase; margin-top: 20px; }
+            .action { margin: 10px 0; }
+            .character { margin-left: 20%; margin-bottom: 0; margin-top: 20px; font-weight: bold; }
+            .dialogue { margin-left: 10%; margin-right: 20%; margin-bottom: 20px; }
+            .parenthetical { margin-left: 15%; margin-bottom: 0; font-style: italic; }
+            .transition { margin-left: 60%; font-weight: bold; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <h1>${scriptData.title}</h1>
+          <p class="author">by ${scriptData.author}</p>
+    `;
+    
+    scriptData.scenes.forEach((scene: any, sceneIndex: number) => {
+      scene.elements.forEach((element: any) => {
+        content += `<div class="${element.type}">${element.content}</div>`;
+      });
+    });
+    
+    content += `
+        </body>
+      </html>
+    `;
+    
+    const printIframe = document.createElement('iframe');
+    printIframe.style.position = 'absolute';
+    printIframe.style.top = '-9999px';
+    document.body.appendChild(printIframe);
+    
+    const contentWindow = printIframe.contentWindow;
+    if (contentWindow) {
+      contentWindow.document.open();
+      contentWindow.document.write(content);
+      contentWindow.document.close();
+      
+      setTimeout(() => {
+        contentWindow.focus();
+        contentWindow.print();
+        document.body.removeChild(printIframe);
+      }, 250);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -166,14 +242,24 @@ const ScriptsList: React.FC = () => {
                   </p>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleOpenScript(script.id)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Open
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenScript(script.id)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Open
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleExportPDF(script.id, script.title, e)}
+                    >
+                      <FileDown className="h-4 w-4 mr-1" />
+                      Export
+                    </Button>
+                  </div>
                   <Button 
                     variant="destructive" 
                     size="sm"
