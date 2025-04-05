@@ -1,16 +1,14 @@
-
 import React from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
-import { Save, FileDown } from "lucide-react";
+import { Save, FileDown, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast"; 
-import AppHeader from "./AppHeader";
 import { useFirebase } from "@/contexts/FirebaseContext";
 
 const ScriptHeader: React.FC = () => {
-  const { title, setTitle, author, setAuthor, addScene, saveScript, loading, scenes } = useScript();
+  const { title, setTitle, author, setAuthor, addScene, saveScript, loading, scenes, isEditing } = useScript();
   const { user } = useFirebase();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,6 +46,10 @@ const ScriptHeader: React.FC = () => {
         behavior: "smooth"
       });
     }, 100);
+  };
+  
+  const handleCancel = () => {
+    navigate("/scripts");
   };
   
   const handleExport = () => {
@@ -120,52 +122,58 @@ const ScriptHeader: React.FC = () => {
   };
 
   return (
-    <>
-      <AppHeader />
-      <div className="p-4 border-b bg-background z-5">
-        <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <Button onClick={handleAddScene} variant="outline" type="button">
-              Add Scene
+    <div className="p-4 border-b bg-background z-5">
+      <div className="flex flex-col space-y-2 max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <Button onClick={handleAddScene} variant="outline" type="button">
+            Add Scene
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSave} 
+              disabled={loading}
+              type="button"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save
             </Button>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSave} 
-                disabled={loading}
-                type="button"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExport}
-                type="button"
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExport}
+              type="button"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleCancel}
+              type="button"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
           </div>
-          
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-bold text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
-            placeholder="Screenplay Title"
-          />
-          <Input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="text-sm text-muted-foreground text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
-            placeholder="Author Name"
-          />
         </div>
+        
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-xl font-bold text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
+          placeholder="Screenplay Title"
+        />
+        <Input
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className="text-sm text-muted-foreground text-center border-none shadow-none hover:bg-muted focus:bg-muted px-2 rounded"
+          placeholder="Author Name"
+        />
       </div>
-    </>
+    </div>
   );
 };
 

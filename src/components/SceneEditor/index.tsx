@@ -42,6 +42,10 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     onClose();
   };
 
+  const handleCancel = () => {
+    onClose();
+  };
+
   return (
     <SpeechRecognitionProvider>
       <div className="space-y-4">
@@ -58,7 +62,11 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
           />
         ))}
         
-        <ElementButtons onAddElement={addElement} onSave={handleSave} />
+        <ElementButtons 
+          onAddElement={addElement} 
+          onSave={handleSave} 
+          onCancel={handleCancel}
+        />
       </div>
     </SpeechRecognitionProvider>
   );

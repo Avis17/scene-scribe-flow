@@ -30,6 +30,7 @@ interface ScriptContextType {
   setCurrentScriptId: (id: string | null) => void;
   loading: boolean;
   resetScript: () => void;
+  isEditing: boolean;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -63,6 +64,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   ]);
   const [currentScriptId, setCurrentScriptId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
@@ -104,6 +106,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       if (currentScriptId && user) {
         try {
           setLoading(true);
+          setIsEditing(true);
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (scriptData) {
@@ -123,6 +126,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         } finally {
           setLoading(false);
         }
+      } else {
+        setIsEditing(false);
       }
     };
     
@@ -233,6 +238,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         setCurrentScriptId,
         loading,
         resetScript,
+        isEditing,
       }}
     >
       {children}

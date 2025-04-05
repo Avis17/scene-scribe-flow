@@ -4,7 +4,6 @@ import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useScript } from "@/contexts/ScriptContext";
-import AppHeader from "@/components/AppHeader";
 
 const Index: React.FC = () => {
   const { user, loading: authLoading } = useFirebase();
@@ -29,7 +28,6 @@ const Index: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       <ScriptEditor />
     </div>
   );
