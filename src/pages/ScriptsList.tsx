@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService } from "@/services/ScriptService";
@@ -80,12 +79,7 @@ const ScriptsList: React.FC = () => {
     }
   };
 
-  const handleDeleteScript = async (scriptId: string, e: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleDeleteScript = async (scriptId: string) => {
     try {
       await scriptService.deleteScript(scriptId);
       setScripts(prevScripts => prevScripts.filter(script => script.id !== scriptId));
@@ -113,12 +107,7 @@ const ScriptsList: React.FC = () => {
     navigate("/");
   };
 
-  const handleExportPDF = async (scriptId: string, title: string, e: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleExportPDF = async (scriptId: string, title: string) => {
     try {
       const scriptData = await scriptService.getScriptById(scriptId);
       if (!scriptData) {
@@ -211,7 +200,7 @@ const ScriptsList: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
             <p className="mb-4">Please log in to view your scripts</p>
-            <Button onClick={() => navigate("/login")}>Go to Login</Button>
+            <Button onClick={() => navigate("/login")} type="button">Go to Login</Button>
           </div>
         </div>
       </div>
@@ -253,16 +242,16 @@ const ScriptsList: React.FC = () => {
             {filteredScripts.map((script) => (
               <Card 
                 key={script.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="hover:shadow-md transition-shadow"
               >
-                <CardHeader onClick={() => handleOpenScript(script.id)}>
+                <CardHeader onClick={() => handleOpenScript(script.id)} className="cursor-pointer">
                   <CardTitle className="flex items-center">
                     <File className="h-5 w-5 mr-2" />
                     {script.title || "Untitled Screenplay"}
                   </CardTitle>
                   <CardDescription>{script.author || "Unknown Author"}</CardDescription>
                 </CardHeader>
-                <CardContent className="pb-2" onClick={() => handleOpenScript(script.id)}>
+                <CardContent className="pb-2 cursor-pointer" onClick={() => handleOpenScript(script.id)}>
                   <p className="text-sm text-muted-foreground">
                     Last updated: {formatDate(script.updatedAt.toDate())}
                   </p>
@@ -275,11 +264,7 @@ const ScriptsList: React.FC = () => {
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleOpenScript(script.id);
-                      }}
+                      onClick={() => handleOpenScript(script.id)}
                       type="button"
                     >
                       <Edit className="h-4 w-4 mr-1" />
@@ -288,7 +273,7 @@ const ScriptsList: React.FC = () => {
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={(e) => handleExportPDF(script.id, script.title, e)}
+                      onClick={() => handleExportPDF(script.id, script.title)}
                       className="mr-2"
                       type="button"
                     >
@@ -299,7 +284,7 @@ const ScriptsList: React.FC = () => {
                   <Button 
                     variant="destructive" 
                     size="sm"
-                    onClick={(e) => handleDeleteScript(script.id, e)}
+                    onClick={() => handleDeleteScript(script.id)}
                     className="ml-2"
                     type="button"
                   >
