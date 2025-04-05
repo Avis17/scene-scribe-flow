@@ -32,7 +32,7 @@ const Index: React.FC = () => {
   }, []);
   
   return (
-    <div className="bg-background h-full">
+    <div className="bg-background">
       <ScriptEditor />
     </div>
   );
