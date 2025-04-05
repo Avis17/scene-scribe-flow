@@ -85,7 +85,7 @@ const ScriptHeader: React.FC = () => {
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <Select
             value={visibility}
-            onValueChange={setVisibility}
+            onValueChange={(value: ScriptVisibility) => setVisibility(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select visibility" />
