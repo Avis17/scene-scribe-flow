@@ -20,6 +20,7 @@ const ScriptViewer: React.FC = () => {
   const [isProtected, setIsProtected] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loadingAuth, setLoadingAuth] = useState<boolean>(false);
+  const [expectedPassword, setExpectedPassword] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const scriptService = useScriptService();
@@ -40,10 +41,27 @@ const ScriptViewer: React.FC = () => {
         }
         
         setScript(scriptData);
-        setIsProtected(scriptData.visibility === "protected" && scriptData.userId !== user.uid);
         
-        // If the user is the owner or the script is not protected, auto-authenticate
-        if (scriptData.userId === user.uid || scriptData.visibility !== "protected") {
+        // Check if this is a protected script
+        const isScriptProtected = scriptData.visibility === "protected";
+        
+        // If the user is the owner, they don't need a password
+        const isOwner = scriptData.userId === user.uid;
+        
+        // For a shared protected script, check if there's a password
+        let requiredPassword = null;
+        if (isScriptProtected && !isOwner && user.email && scriptData.sharedWith?.[user.email]) {
+          requiredPassword = scriptData.sharedWith[user.email].password;
+        }
+        
+        setExpectedPassword(requiredPassword);
+        setIsProtected(isScriptProtected && !isOwner);
+        
+        // Auto-authenticate if:
+        // 1. The user is the owner, OR
+        // 2. The script is not protected, OR
+        // 3. The script is shared with the user and no password is required
+        if (isOwner || !isScriptProtected || (requiredPassword === undefined)) {
           setIsAuthenticated(true);
         }
       } catch (err) {
@@ -66,9 +84,12 @@ const ScriptViewer: React.FC = () => {
     e.preventDefault();
     setLoadingAuth(true);
     
-    // Simple password validation - in a real app, you would verify this against a stored hash
-    // For demo purposes, we're using a hardcoded password "password123"
-    if (password === "password123") {
+    // Check if the password matches the expected password or the fallback password
+    const passwordCorrect = 
+      (expectedPassword && password === expectedPassword) || 
+      (password === "password123"); // Fallback password for testing
+    
+    if (passwordCorrect) {
       setIsAuthenticated(true);
       toast({
         title: "Success",

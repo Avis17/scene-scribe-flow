@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Share2 } from "lucide-react";
-import { useScriptService, ScriptAccessLevel } from "@/services/ScriptService";
+import { Trash2, Share2, FileLock, Eye, EyeOff } from "lucide-react";
+import { useScriptService, ScriptAccessLevel, ScriptVisibility } from "@/services/ScriptService";
 
 interface ShareScriptDialogProps {
   scriptId: string;
   scriptTitle: string;
+  visibility?: ScriptVisibility;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -26,11 +27,14 @@ interface SharedUser {
 const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
   scriptId,
   scriptTitle,
+  visibility,
   isOpen,
   onClose
 }) => {
   const [email, setEmail] = useState("");
   const [accessLevel, setAccessLevel] = useState<ScriptAccessLevel>("view");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingShares, setLoadingShares] = useState(false);
@@ -38,12 +42,23 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
   const scriptService = useScriptService();
   const { toast } = useToast();
   
+  const isProtected = visibility === "protected";
+  
   // Load existing shares when dialog opens
   useEffect(() => {
     if (isOpen && scriptId) {
       fetchSharedUsers();
+      // Generate a random password for protected scripts
+      if (isProtected) {
+        generateRandomPassword();
+      }
     }
-  }, [isOpen, scriptId]);
+  }, [isOpen, scriptId, isProtected]);
+  
+  const generateRandomPassword = () => {
+    const randomPassword = Math.random().toString(36).slice(2, 10);
+    setPassword(randomPassword);
+  };
   
   const fetchSharedUsers = async () => {
     if (!scriptId) return;
@@ -87,11 +102,29 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
     
     try {
       setLoading(true);
-      await scriptService.shareScript(scriptId, email.trim(), accessLevel);
+      
+      // For protected scripts, we need to include the password
+      if (isProtected && !password) {
+        toast({
+          title: "Error",
+          description: "Please generate or enter a password for this protected script",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      await scriptService.shareScript(
+        scriptId, 
+        email.trim(), 
+        accessLevel, 
+        isProtected ? password : undefined
+      );
       
       toast({
         title: "Success",
-        description: `Script shared with ${email}`,
+        description: isProtected 
+          ? `Script shared with ${email}. Please share the password with them: ${password}`
+          : `Script shared with ${email}`,
       });
       
       // Refresh shared users list
@@ -100,6 +133,11 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
       // Clear form
       setEmail("");
       setAccessLevel("view");
+      
+      // Generate new password for next share if protected
+      if (isProtected) {
+        generateRandomPassword();
+      }
     } catch (error) {
       console.error("Error sharing script:", error);
       toast({
@@ -192,6 +230,48 @@ const ShareScriptDialog: React.FC<ShareScriptDialogProps> = ({
                 </div>
               </RadioGroup>
             </div>
+            
+            {isProtected && (
+              <div className="space-y-2 p-3 border border-primary/40 bg-primary/5 rounded-md">
+                <div className="flex items-center space-x-2">
+                  <FileLock className="w-5 h-5 text-primary" />
+                  <Label className="font-medium">Protected Script Password</Label>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  This script is protected. Users will need this password to view it.
+                </p>
+                <div className="relative">
+                  <Input 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateRandomPassword}
+                    className="mt-2"
+                    type="button"
+                  >
+                    Generate New Password
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">

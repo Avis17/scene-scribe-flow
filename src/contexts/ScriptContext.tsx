@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -31,6 +32,7 @@ interface ScriptContextType {
   loading: boolean;
   resetScript: () => void;
   isEditing: boolean;
+  isViewOnly: boolean;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -65,6 +67,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const [currentScriptId, setCurrentScriptId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isViewOnly, setIsViewOnly] = useState<boolean>(false);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
@@ -96,6 +99,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       },
     ]);
     setCurrentScriptId(null);
+    setIsViewOnly(false);
   }, [user]);
 
   useEffect(() => {
@@ -110,7 +114,24 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             setTitle(scriptData.title || "Untitled Screenplay");
             setAuthor(scriptData.author || "");
             setScenes(scriptData.scenes || []);
-            console.log("Loaded script:", scriptData);
+            
+            // Check if this is a shared script with view-only access
+            const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
+            let isViewOnlyAccess = false;
+            
+            if (isSharedWithMe && user?.email && scriptData.sharedWith?.[user.email]) {
+              isViewOnlyAccess = scriptData.sharedWith[user.email].accessLevel === "view";
+            }
+            
+            setIsViewOnly(isViewOnlyAccess);
+            console.log("Loaded script:", scriptData, "View only:", isViewOnlyAccess);
+            
+            if (isViewOnlyAccess) {
+              toast({
+                title: "View Only Access",
+                description: "You have view-only access to this script and cannot make changes.",
+              });
+            }
           }
         } catch (error) {
           console.error("Error loading script:", error);
@@ -124,6 +145,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         setIsEditing(false);
+        setIsViewOnly(false);
       }
     };
     
@@ -186,6 +208,15 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
+    if (isViewOnly) {
+      toast({
+        title: "Permission Denied",
+        description: "You have view-only access to this script and cannot save changes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       setLoading(true);
       if (currentScriptId) {
@@ -235,6 +266,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         loading,
         resetScript,
         isEditing,
+        isViewOnly,
       }}
     >
       {children}

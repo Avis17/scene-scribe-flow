@@ -20,6 +20,7 @@ export interface ScriptSharing {
   email: string;
   accessLevel: ScriptAccessLevel;
   sharedAt: any; // Timestamp
+  password?: string; // Optional password for protected scripts
 }
 
 export const useScriptService = () => {
@@ -178,7 +179,12 @@ export const useScriptService = () => {
   };
 
   // Function to share a script with another user
-  const shareScript = async (scriptId: string, email: string, accessLevel: ScriptAccessLevel) => {
+  const shareScript = async (
+    scriptId: string, 
+    email: string, 
+    accessLevel: ScriptAccessLevel,
+    password?: string // Optional password for protected scripts
+  ) => {
     if (!user) throw new Error("User not authenticated");
     
     try {
@@ -201,6 +207,11 @@ export const useScriptService = () => {
         accessLevel,
         sharedAt: Timestamp.now()
       };
+      
+      // If this is a protected script and a password is provided, store it
+      if (scriptData.visibility === "protected" && password) {
+        sharedWith[email].password = password;
+      }
       
       await updateDoc(doc(db, "scripts", scriptId), {
         sharedWith,
