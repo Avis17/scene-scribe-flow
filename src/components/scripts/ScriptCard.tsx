@@ -59,9 +59,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   // Only allow editing if the user owns the script or has edit access
   const canEdit = !isSharedWithMe || accessLevel === "edit";
   
-  // Hide edit button if user only has view access
-  const showEditButton = canEdit;
-  
   const handleView = () => {
     navigate(`/view/${script.id}`);
   };
@@ -122,6 +119,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+            {/* View button - always show for all scripts */}
             <Button 
               variant="outline"
               size="sm"
@@ -133,7 +131,8 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {showEditButton && (
+            {/* Edit button - only show if user owns script or has edit access */}
+            {canEdit && (
               <Button 
                 variant="outline"
                 size="sm"
@@ -146,6 +145,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               </Button>
             )}
             
+            {/* Export button - always show for all scripts */}
             <Button 
               variant="outline"
               size="sm"
@@ -157,7 +157,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>Export</span>
             </Button>
             
-            {/* Only show delete button for scripts the user owns */}
+            {/* Delete button - only show for scripts the user owns (not shared scripts) */}
             {!isSharedWithMe && (
               <Button 
                 variant="destructive" 
