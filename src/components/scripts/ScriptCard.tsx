@@ -7,6 +7,16 @@ import { ScriptVisibility, ScriptAccessLevel } from "@/services/ScriptService";
 import ShareScriptDialog from "./ShareScriptDialog";
 import { useNavigate } from "react-router-dom";
 import { useFirebase } from "@/contexts/FirebaseContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ScriptData {
   id: string;
@@ -35,6 +45,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   formatDate 
 }) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
   const { user } = useFirebase();
   
@@ -47,9 +58,21 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   
   // Only allow editing if the user owns the script or has edit access
   const canEdit = !isSharedWithMe || accessLevel === "edit";
+
+  // Only show edit button if user has edit access
+  const showEditButton = canEdit;
   
   const handleView = () => {
     navigate(`/view/${script.id}`);
+  };
+
+  const confirmDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = () => {
+    onDelete(script.id);
+    setShowDeleteDialog(false);
   };
 
   return (
@@ -61,30 +84,32 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
         }`}
       >
         <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer">
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center flex-wrap gap-2">
             {script.visibility === "protected" ? (
-              <FileLock className="h-5 w-5 mr-2 text-primary" />
+              <FileLock className="h-5 w-5 mr-1 text-primary flex-shrink-0" />
             ) : (
-              <File className="h-5 w-5 mr-2" />
+              <File className="h-5 w-5 mr-1 flex-shrink-0" />
             )}
-            {script.title || "Untitled Screenplay"}
+            <span className="truncate">{script.title || "Untitled Screenplay"}</span>
             {isSharedWithMe && (
-              <span className="ml-2 flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 p-1 rounded-sm">
+              <span className="flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 p-1 px-2 rounded-sm whitespace-nowrap">
                 <Users className="h-3 w-3 mr-1" /> 
-                Shared with me 
+                Shared 
                 {accessLevel && (
-                  <span className="ml-1">({accessLevel === "edit" ? "Edit" : "View"} access)</span>
+                  <span className="ml-1">({accessLevel === "edit" ? "Edit" : "View"})</span>
                 )}
               </span>
             )}
           </CardTitle>
           <CardDescription>
-            {script.author || "Unknown Author"}
-            {script.visibility === "protected" && (
-              <span className="ml-2 text-xs bg-primary/20 p-1 rounded-sm text-primary">
-                Protected
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="truncate">{script.author || "Unknown Author"}</span>
+              {script.visibility === "protected" && (
+                <span className="text-xs bg-primary/20 p-1 px-2 rounded-sm text-primary whitespace-nowrap">
+                  Protected
+                </span>
+              )}
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-2 cursor-pointer" onClick={() => onOpen(script.id)}>
@@ -96,62 +121,70 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
           </p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <div className="flex justify-between w-full">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => onOpen(script.id)}
-                type="button"
-                disabled={isSharedWithMe && accessLevel === "view"}
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {showEditButton && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpen(script.id)}
+                  type="button"
+                  className="w-full sm:w-auto"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  <span>Edit</span>
+                </Button>
+              )}
               <Button 
                 variant="outline"
                 size="sm"
                 onClick={handleView}
                 type="button"
+                className="w-full sm:w-auto"
               >
                 <Eye className="h-4 w-4 mr-1" />
-                View
+                <span>View</span>
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 justify-end">
               <Button 
                 variant="outline"
                 size="sm"
                 onClick={() => onExport(script.id, script.title)}
                 type="button"
+                className="w-full sm:w-auto"
               >
                 <FileDown className="h-4 w-4 mr-1" />
-                Export
+                <span className="hidden sm:inline">Export</span>
               </Button>
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={() => onDelete(script.id)}
-                type="button"
-                disabled={!canEdit}
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-              </Button>
+              {canEdit && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={confirmDelete}
+                  type="button"
+                  className="w-full sm:w-auto"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Delete</span>
+                </Button>
+              )}
             </div>
           </div>
-          <div className="w-full">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowShareDialog(true)}
-              type="button"
-              disabled={isSharedWithMe}
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Script
-            </Button>
-          </div>
+          {!isSharedWithMe && (
+            <div className="w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowShareDialog(true)}
+                type="button"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                <span>Share Script</span>
+              </Button>
+            </div>
+          )}
         </CardFooter>
       </Card>
 
@@ -162,6 +195,24 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
         isOpen={showShareDialog}
         onClose={() => setShowShareDialog(false)}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{script.title || "Untitled Script"}" and remove it from your scripts list. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
