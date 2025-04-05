@@ -34,7 +34,6 @@ const ScriptsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
-  const [isScriptsFetched, setIsScriptsFetched] = useState<boolean>(false);
   const [isViewingAll, setIsViewingAll] = useState<boolean>(false);
   
   const { user } = useFirebase();
@@ -82,7 +81,6 @@ const ScriptsList: React.FC = () => {
       
       setScripts(userScripts);
       setFilteredScripts(userScripts);
-      setIsScriptsFetched(true);
     } catch (error) {
       console.error("Error fetching scripts:", error);
       toast({
@@ -95,12 +93,23 @@ const ScriptsList: React.FC = () => {
     }
   }, [user, scriptService, toast, isAdminUser]);
 
+  // Use a dedicated state to track whether initial fetch has happened
+  const [hasInitialFetch, setHasInitialFetch] = useState(false);
+
   useEffect(() => {
-    // Only fetch scripts if we haven't already and user is authenticated
-    if (user && !isScriptsFetched) {
+    // Only fetch scripts if user is authenticated and we haven't done the initial fetch yet
+    if (user && !hasInitialFetch) {
       fetchScripts(isViewingAll);
+      setHasInitialFetch(true);
     }
-  }, [user, fetchScripts, isScriptsFetched, isViewingAll]);
+  }, [user, fetchScripts, hasInitialFetch, isViewingAll]);
+
+  // Reset the flag if user changes - this allows fetching scripts again for a new user
+  useEffect(() => {
+    if (user) {
+      setHasInitialFetch(false);
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -197,12 +206,16 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
-    setIsScriptsFetched(false);
+    // Reset the fetch flag so we fetch all scripts
+    setHasInitialFetch(false);
+    // isViewingAll will be set inside fetchScripts
     fetchScripts(true);
   };
 
   const handleViewMyScripts = () => {
-    setIsScriptsFetched(false);
+    // Reset the fetch flag so we fetch user scripts
+    setHasInitialFetch(false);
+    // isViewingAll will be set inside fetchScripts
     fetchScripts(false);
   };
 
@@ -230,11 +243,6 @@ const ScriptsList: React.FC = () => {
       </div>
     );
   }
-
-  // Reset the flag if user changes - this allows fetching scripts again for a new user
-  useEffect(() => {
-    setIsScriptsFetched(false);
-  }, [user?.uid]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -334,3 +342,4 @@ const ScriptsList: React.FC = () => {
 };
 
 export default ScriptsList;
+
