@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Save, FileDown, Lock, Unlock, List } from "lucide-react";
+import { Save, FileDown, Lock, Unlock, List, Loader } from "lucide-react";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -28,11 +28,11 @@ const ScriptHeader: React.FC = () => {
     loading, 
     currentScriptId,
     isViewOnly,
-    isModified
   } = useScript();
 
   const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
   const [isFromViewAll, setIsFromViewAll] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Check if we're coming from the view all scripts page
   useEffect(() => {
@@ -46,7 +46,10 @@ const ScriptHeader: React.FC = () => {
   const forceViewOnly = (user?.email === ADMIN_EMAIL && isFromViewAll) || isViewOnly;
 
   const handleSave = async () => {
+    setIsSaving(true);
     await saveScript(visibility);
+    setIsSaving(false);
+    navigate("/scripts");
   };
 
   const handleExport = () => {
@@ -140,11 +143,20 @@ const ScriptHeader: React.FC = () => {
           {!forceViewOnly && (
             <Button 
               onClick={handleSave}
-              disabled={loading || !isModified}
+              disabled={loading || isSaving}
               size="sm"
             >
-              <Save className="h-4 w-4 mr-1" />
-              Save
+              {isSaving ? (
+                <>
+                  <Loader className="h-4 w-4 mr-1 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-1" />
+                  Save
+                </>
+              )}
             </Button>
           )}
         </div>

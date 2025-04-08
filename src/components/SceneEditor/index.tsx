@@ -5,6 +5,7 @@ import { SpeechRecognitionProvider } from "./SpeechRecognitionContext";
 import ElementEditor from "./ElementEditor";
 import ElementButtons from "./ElementButtons";
 import LanguageSelector from "./LanguageSelector";
+import { Loader } from "lucide-react";
 
 interface SceneEditorProps {
   scene: Scene;
@@ -14,6 +15,7 @@ interface SceneEditorProps {
 const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const { updateScene } = useScript();
   const [elements, setElements] = useState<SceneElement[]>(scene.elements);
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleElementTypeChange = (index: number, type: SceneElement["type"]) => {
     const newElements = [...elements];
@@ -37,18 +39,31 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     setElements(newElements);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
     updateScene(scene.id, elements);
-    onClose();
+    setTimeout(() => {
+      setIsSaving(false);
+      onClose();
+    }, 500);
   };
 
   const handleCancel = () => {
     onClose();
   };
 
+  if (isSaving) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 animate-fade-in">
+        <Loader className="h-10 w-10 text-blue-500 animate-spin mb-4" />
+        <p className="text-lg font-medium">Saving scene changes...</p>
+      </div>
+    );
+  }
+
   return (
     <SpeechRecognitionProvider>
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-in">
         <LanguageSelector />
         
         {elements.map((element, index) => (

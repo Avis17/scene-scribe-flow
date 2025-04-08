@@ -1,14 +1,46 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader } from "lucide-react";
+import { Progress } from "./ui/progress";
 
 const ScriptEditor: React.FC = () => {
-  const { scenes, reorderScenes, addScene, isViewOnly } = useScript();
+  const { scenes, reorderScenes, addScene, isViewOnly, loading } = useScript();
+  const [isAddingScene, setIsAddingScene] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const newProgress = prev + 5;
+          if (newProgress >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 100);
+      
+      return () => {
+        clearInterval(interval);
+        setProgress(0);
+      };
+    } else {
+      setProgress(100);
+      const timeout = setTimeout(() => {
+        setProgress(0);
+      }, 500);
+      
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [loading]);
 
   const onDragEnd = (result: any) => {
     // Dropped outside the list
@@ -18,12 +50,27 @@ const ScriptEditor: React.FC = () => {
 
     reorderScenes(result.source.index, result.destination.index);
   };
+  
+  const handleAddScene = () => {
+    setIsAddingScene(true);
+    addScene();
+    setTimeout(() => {
+      setIsAddingScene(false);
+    }, 500);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <ScriptHeader />
       
-      <div className="container mx-auto p-4">
+      {loading && progress > 0 && (
+        <Progress 
+          value={progress} 
+          className="h-1 w-full bg-blue-100 dark:bg-blue-900/30" 
+        />
+      )}
+      
+      <div className="container mx-auto p-4 animate-fade-in">
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="scenes">
             {(provided) => (
@@ -54,13 +101,21 @@ const ScriptEditor: React.FC = () => {
         {/* Add Scene Button */}
         <div className="mt-6 flex justify-center">
           <Button 
-            onClick={addScene} 
-            disabled={isViewOnly}
+            onClick={handleAddScene} 
+            disabled={isViewOnly || isAddingScene}
             className="flex items-center gap-2"
             size="lg"
             variant="outline"
           >
-            <Plus className="h-5 w-5" /> Add Scene
+            {isAddingScene ? (
+              <>
+                <Loader className="h-5 w-5 animate-spin" /> Adding Scene...
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" /> Add Scene
+              </>
+            )}
           </Button>
         </div>
       </div>

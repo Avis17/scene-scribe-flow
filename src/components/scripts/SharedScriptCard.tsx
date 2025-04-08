@@ -1,7 +1,8 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, FileDown, Eye, Edit, Users, Clock, User } from "lucide-react";
+import { File, FileLock, FileDown, Eye, Edit, Users, Clock, User, Loader } from "lucide-react";
 import { ScriptVisibility, ScriptAccessLevel, ScriptData } from "@/services/ScriptService";
 import { useNavigate } from "react-router-dom";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -21,6 +22,11 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useFirebase();
+  const [loading, setLoading] = useState<{[key: string]: boolean}>({
+    view: false,
+    edit: false,
+    export: false
+  });
   
   const accessLevel = user?.email && script.sharedWith && script.sharedWith[user.email]
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
@@ -33,7 +39,21 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
   const showExportButton = !isProtected;
   
   const handleView = () => {
+    setLoading({...loading, view: true});
     navigate(`/view/${script.id}`);
+  };
+
+  const handleEdit = () => {
+    setLoading({...loading, edit: true});
+    onOpen(script.id);
+  };
+
+  const handleExport = () => {
+    setLoading({...loading, export: true});
+    onExport(script.id, script.title);
+    setTimeout(() => {
+      setLoading({...loading, export: false});
+    }, 1000);
   };
 
   const getDisplayName = (emailOrName: string) => {
@@ -46,8 +66,8 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
   const lastEditedByDisplay = script.lastEditedBy ? getDisplayName(script.lastEditedBy) : getDisplayName(script.author);
 
   return (
-    <Card className="group hover:border-blue-300 transition-all duration-200 border-2 border-blue-200 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent dark:border-blue-900/30">
-      <CardHeader onClick={() => onOpen(script.id)} className="cursor-pointer group-hover:bg-blue-50/50 dark:group-hover:bg-blue-900/10 rounded-t-lg transition-colors">
+    <Card className="group hover:border-blue-300 transition-all duration-200 border-2 border-blue-200 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent dark:border-blue-900/30 animate-fade-in">
+      <CardHeader onClick={() => !loading.edit && onOpen(script.id)} className="cursor-pointer group-hover:bg-blue-50/50 dark:group-hover:bg-blue-900/10 rounded-t-lg transition-colors">
         <CardTitle className="flex items-center flex-wrap gap-2">
           {script.visibility === "protected" ? (
             <FileLock className="h-5 w-5 mr-1 text-blue-600 dark:text-blue-400 flex-shrink-0" />
@@ -74,7 +94,7 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
           </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-2 cursor-pointer" onClick={() => onOpen(script.id)}>
+      <CardContent className="pb-2 cursor-pointer" onClick={() => !loading.edit && onOpen(script.id)}>
         <div className="space-y-2 pt-2">
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" /> Last updated: {formatDate(script.updatedAt.toDate())}
@@ -94,23 +114,43 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
               variant="outline"
               size="sm"
               onClick={handleView}
+              disabled={loading.view}
               type="button"
               className="w-full bg-white dark:bg-slate-900 group-hover:border-blue-300 transition-colors"
             >
-              <Eye className="h-4 w-4 mr-1" />
-              <span>View</span>
+              {loading.view ? (
+                <>
+                  <Loader className="h-4 w-4 mr-1 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  <span>View</span>
+                </>
+              )}
             </Button>
             
             {hasEditAccess && (
               <Button 
                 variant="outline"
                 size="sm"
-                onClick={() => onOpen(script.id)}
+                onClick={handleEdit}
+                disabled={loading.edit}
                 type="button"
                 className="w-full bg-white dark:bg-slate-900 group-hover:border-blue-300 transition-colors"
               >
-                <Edit className="h-4 w-4 mr-1" />
-                <span>Edit</span>
+                {loading.edit ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-1 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-1" />
+                    <span>Edit</span>
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -119,12 +159,22 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
             <Button 
               variant="outline"
               size="sm"
-              onClick={() => onExport(script.id, script.title)}
+              onClick={handleExport}
+              disabled={loading.export}
               type="button"
               className="w-full bg-white dark:bg-slate-900 group-hover:border-blue-300 transition-colors"
             >
-              <FileDown className="h-4 w-4 mr-1" />
-              <span>Export</span>
+              {loading.export ? (
+                <>
+                  <Loader className="h-4 w-4 mr-1 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4 mr-1" />
+                  <span>Export</span>
+                </>
+              )}
             </Button>
           )}
         </div>

@@ -1,8 +1,10 @@
+
 import React from "react";
 import ScriptCard from "./ScriptCard";
 import SharedScriptCard from "./SharedScriptCard";
 import { ScriptVisibility, ScriptData } from "@/services/ScriptService";
 import { useFirebase } from "@/contexts/FirebaseContext";
+import { Progress } from "@/components/ui/progress";
 
 interface ScriptsGridProps {
   scripts: ScriptData[];
@@ -28,7 +30,7 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   // If we're in view-only mode, we show all scripts as read-only
   if (isViewOnly) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <h2 className="text-xl font-semibold mb-3">All Screenplays (Read Only)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {scripts.map((script) => (
@@ -55,7 +57,7 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {ownScripts.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold mb-3">My Scripts</h2>
