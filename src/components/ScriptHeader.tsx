@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Save, FileDown, Lock, Unlock, List, Loader, X } from "lucide-react";
+import { Save, FileDown, Lock, Unlock, Loader, X } from "lucide-react";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -69,24 +69,10 @@ const ScriptHeader: React.FC = () => {
     exportScriptToPDF(scriptData);
   };
 
-  const handleBackToScripts = () => {
-    navigate("/scripts");
-  };
-
   return (
     <div className="border-b bg-background sticky top-0 z-10">
       <div className="container mx-auto py-4 px-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4 flex-1">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleBackToScripts}
-            className="hidden sm:flex items-center gap-1"
-          >
-            <List className="h-4 w-4" />
-            <span>Scripts</span>
-          </Button>
-
           <div className="flex-1 min-w-[200px]">
             <Label htmlFor="title" className="sr-only">Title</Label>
             <Input 
@@ -161,7 +147,6 @@ const ScriptHeader: React.FC = () => {
             <Button 
               onClick={handleSave}
               size="sm"
-              disabled={loading && isSaving}
             >
               {isSaving ? (
                 <>

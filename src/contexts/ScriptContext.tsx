@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -69,6 +70,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isViewOnly, setIsViewOnly] = useState<boolean>(false);
   const [isModified, setIsModified] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
@@ -98,7 +100,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [user, author]);
 
   const resetScript = useCallback(() => {
-    console.log("Resetting script to default state");
     setTitle("Untitled Screenplay");
     setAuthor(user?.displayName || "");
     setScenes([
@@ -133,13 +134,32 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           setLoading(true);
           setIsEditing(true);
           
-          console.log(`Loading script ${currentScriptId} for user ${user.email}`);
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (scriptData && isMounted) {
             setTitle(scriptData.title || "Untitled Screenplay");
             setAuthor(scriptData.author || "");
-            setScenes(scriptData.scenes || []);
+            
+            // Ensure we're properly loading the scenes
+            if (Array.isArray(scriptData.scenes) && scriptData.scenes.length > 0) {
+              setScenes(scriptData.scenes);
+            } else {
+              // Fallback if no scenes are found
+              setScenes([{
+                id: "scene-1",
+                isCollapsed: false,
+                elements: [
+                  {
+                    type: "scene-heading",
+                    content: "INT. LIVING ROOM - DAY",
+                  },
+                  {
+                    type: "action",
+                    content: "The room is empty. Sunlight streams through large windows.",
+                  },
+                ],
+              }]);
+            }
             
             const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
             let isViewOnlyAccess = false;
@@ -149,7 +169,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             }
             
             setIsViewOnly(isViewOnlyAccess);
-            console.log("Loaded script:", scriptData, "View only:", isViewOnlyAccess);
             
             if (isViewOnlyAccess) {
               toast({
@@ -160,10 +179,10 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             
             // Reset modified state after loading
             setIsModified(false);
+            setIsInitialized(true);
           }
         } catch (error) {
           if (isMounted) {
-            console.error("Error loading script:", error);
             toast({
               title: "Error",
               description: "Failed to load script",
@@ -286,7 +305,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         return newScriptId;
       }
     } catch (error) {
-      console.error("Error saving script:", error);
       toast({
         title: "Error",
         description: "Failed to save script",
