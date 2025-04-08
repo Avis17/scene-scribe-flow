@@ -1,100 +1,76 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FirebaseProvider } from "./contexts/FirebaseContext";
+import { AdminProvider } from "./contexts/AdminContext";
 import { ScriptProvider } from "./contexts/ScriptContext";
-import { ThemeProvider } from "@/hooks/use-theme";
 import AuthGuard from "./components/AuthGuard";
-import Footer from "./components/Footer";
-
+import AdminGuard from "./components/AdminGuard";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import { Toaster } from "./components/ui/toaster";
+import Admin from "./pages/Admin";
 import ScriptsList from "./pages/ScriptsList";
 import ScriptViewer from "./pages/ScriptViewer";
-import NotFound from "./pages/NotFound";
+import Footer from "./Footer";
+import "./App.css";
 
-// Create a stable QueryClient instance that won't be recreated on each render
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false
-    },
-  },
-});
+function App() {
+  useEffect(() => {
+    // Set the title of the document
+    document.title = "Scriptly - Screenplay Editor";
+  }, []);
 
-const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <FirebaseProvider>
-        <ThemeProvider defaultTheme="light">
-          <TooltipProvider>
+    <FirebaseProvider>
+      <AdminProvider>
+        <ScriptProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/scripts"
+                element={
+                  <AuthGuard>
+                    <ScriptsList />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/editor"
+                element={
+                  <AuthGuard>
+                    <Index />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/view/:scriptId"
+                element={
+                  <AuthGuard>
+                    <ScriptViewer />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <AdminGuard>
+                    <Admin />
+                  </AdminGuard>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
             <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <div className="flex flex-col min-h-screen">
-                {/* Added pb-20 for consistent bottom padding throughout the app */}
-                <div className="flex-grow overflow-y-auto pb-20">
-                  <Routes>
-                    <Route 
-                      path="/" 
-                      element={<Navigate to="/scripts" replace />} 
-                    />
-                    <Route 
-                      path="/editor" 
-                      element={
-                        <AuthGuard>
-                          <ScriptProvider>
-                            <Index />
-                          </ScriptProvider>
-                        </AuthGuard>
-                      } 
-                    />
-                    <Route 
-                      path="/login" 
-                      element={
-                        <AuthGuard requireAuth={false}>
-                          <Login />
-                        </AuthGuard>
-                      } 
-                    />
-                    <Route 
-                      path="/scripts" 
-                      element={
-                        <AuthGuard>
-                          <ScriptProvider>
-                            <ScriptsList />
-                          </ScriptProvider>
-                        </AuthGuard>
-                      } 
-                    />
-                    <Route 
-                      path="/view/:scriptId" 
-                      element={
-                        <AuthGuard>
-                          <ScriptProvider>
-                            <ScriptViewer />
-                          </ScriptProvider>
-                        </AuthGuard>
-                      } 
-                    />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-                <Footer />
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ThemeProvider>
-      </FirebaseProvider>
-    </QueryClientProvider>
+          </BrowserRouter>
+        </ScriptProvider>
+      </AdminProvider>
+    </FirebaseProvider>
   );
-};
+}
 
 export default App;

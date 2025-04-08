@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility, ScriptData } from "@/services/ScriptService";
@@ -22,6 +23,8 @@ const ScriptsList: React.FC = () => {
   const [ownScriptsCount, setOwnScriptsCount] = useState<number>(0);
   const [sharedScriptsCount, setSharedScriptsCount] = useState<number>(0);
   const [isViewingAll, setIsViewingAll] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [deletingScriptId, setDeletingScriptId] = useState<string | null>(null);
   const fetchInProgress = useRef<boolean>(false);
   const initialLoadComplete = useRef<boolean>(false);
   
@@ -33,30 +36,23 @@ const ScriptsList: React.FC = () => {
 
   // Direct admin check without relying on AdminContext
   const isAdminUser = user?.email === ADMIN_EMAIL;
-
-  console.log("ScriptsList - User email:", user?.email, "isAdmin:", isAdminUser);
   
   const fetchScripts = useCallback(async (fetchAll = false) => {
     if (!user || fetchInProgress.current) return;
     
     try {
-      console.log("Fetching scripts for", user.email, "isAdmin:", isAdminUser, "viewingAll:", fetchAll);
       fetchInProgress.current = true;
       setLoading(true);
       
       let userScripts;
       
       if (fetchAll && isAdminUser) {
-        console.log("Attempting to fetch ALL scripts as admin user:", user.email);
         userScripts = await scriptService.getAllScripts();
-        console.log("Admin fetch returned scripts:", userScripts.length);
         setIsViewingAll(true);
       } else {
         userScripts = await scriptService.getUserScripts(false);
         setIsViewingAll(false);
       }
-      
-      console.log("All fetched scripts (including shared):", userScripts.length);
       
       if (!fetchAll) {
         const ownScripts = userScripts.filter(script => script.userId === user.uid);
@@ -78,7 +74,6 @@ const ScriptsList: React.FC = () => {
       setFilteredScripts(userScripts);
       initialLoadComplete.current = true;
     } catch (error) {
-      console.error("Error fetching scripts:", error);
       toast({
         title: "Error",
         description: "Failed to load scripts",
@@ -96,9 +91,6 @@ const ScriptsList: React.FC = () => {
     if (user && !initialLoadComplete.current && !fetchInProgress.current) {
       fetchScripts(isViewingAll);
     }
-    
-    return () => {
-    };
   }, [user, fetchScripts, isViewingAll]);
 
   useEffect(() => {
@@ -124,6 +116,9 @@ const ScriptsList: React.FC = () => {
 
   const handleDeleteScript = async (scriptId: string) => {
     try {
+      setIsDeleting(true);
+      setDeletingScriptId(scriptId);
+      
       await scriptService.deleteScript(scriptId);
       
       const updatedScripts = scripts.filter(script => script.id !== scriptId);
@@ -148,18 +143,20 @@ const ScriptsList: React.FC = () => {
         description: "Script deleted successfully",
       });
     } catch (error) {
-      console.error("Error deleting script:", error);
       toast({
         title: "Error",
         description: "Failed to delete script",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setDeletingScriptId(null);
     }
   };
 
   const handleOpenScript = (scriptId: string) => {
     setCurrentScriptId(scriptId);
-    navigate("/editor");
+    navigate("/editor", { state: { scriptId: scriptId } });
   };
 
   const handleCreateNew = () => {
@@ -188,7 +185,6 @@ const ScriptsList: React.FC = () => {
         description: "Script exported successfully",
       });
     } catch (error) {
-      console.error("Error exporting script:", error);
       toast({
         title: "Error",
         description: "Failed to export script",
@@ -198,8 +194,6 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewAllScripts = () => {
-    console.log("Viewing all scripts clicked by admin:", user?.email);
-    
     if (!fetchInProgress.current) {
       setIsViewingAll(true);
       setLoading(true);
@@ -208,8 +202,6 @@ const ScriptsList: React.FC = () => {
   };
 
   const handleViewMyScripts = () => {
-    console.log("Viewing my scripts clicked by admin:", user?.email);
-    
     if (!fetchInProgress.current) {
       setIsViewingAll(false);
       setLoading(true);
@@ -334,6 +326,8 @@ const ScriptsList: React.FC = () => {
             onExportScript={handleExportPDF}
             formatDate={formatDate}
             isViewOnly={isViewingAll}
+            isDeleting={isDeleting}
+            deletingScriptId={deletingScriptId}
           />
         ) : (
           <EmptyState 

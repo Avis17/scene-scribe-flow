@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Clock, User, History } from "lucide-react";
+import { File, FileLock, Edit, FileDown, Trash2, Share2, Eye, Clock, User, History, Loader } from "lucide-react";
 import { ScriptVisibility } from "@/services/ScriptService";
 import ShareScriptDialog from "./ShareScriptDialog";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +34,7 @@ interface ScriptCardProps {
   onDelete: (scriptId: string) => void;
   onExport: (scriptId: string, title: string) => void;
   formatDate: (date: Date) => string;
+  isDeleting?: boolean;
 }
 
 const ScriptCard: React.FC<ScriptCardProps> = ({ 
@@ -41,7 +42,8 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   onOpen, 
   onDelete, 
   onExport, 
-  formatDate 
+  formatDate,
+  isDeleting = false
 }) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -124,6 +126,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               onClick={handleView}
               type="button"
               className="w-full group-hover:border-primary/30 transition-colors"
+              disabled={isDeleting}
             >
               <Eye className="h-4 w-4 mr-1" />
               <span>View</span>
@@ -136,6 +139,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               onClick={() => onOpen(script.id)}
               type="button"
               className="w-full group-hover:border-primary/30 transition-colors"
+              disabled={isDeleting}
             >
               <Edit className="h-4 w-4 mr-1" />
               <span>Edit</span>
@@ -148,6 +152,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               onClick={() => onExport(script.id, script.title)}
               type="button"
               className="w-full group-hover:border-primary/30 transition-colors"
+              disabled={isDeleting}
             >
               <FileDown className="h-4 w-4 mr-1" />
               <span>Export</span>
@@ -160,9 +165,19 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               onClick={confirmDelete}
               type="button"
               className="w-full"
+              disabled={isDeleting}
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              <span>Delete</span>
+              {isDeleting ? (
+                <>
+                  <Loader className="h-4 w-4 mr-1 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  <span>Delete</span>
+                </>
+              )}
             </Button>
           </div>
           
@@ -173,6 +188,7 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               className="w-full"
               onClick={() => setShowShareDialog(true)}
               type="button"
+              disabled={isDeleting}
             >
               <Share2 className="h-4 w-4 mr-2" />
               <span>Share</span>
