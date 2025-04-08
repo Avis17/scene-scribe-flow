@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -124,6 +123,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     setIsModified(false);
   }, [user]);
 
+  // This effect is responsible for loading the script data when currentScriptId changes
   useEffect(() => {
     let isMounted = true;
     
@@ -137,12 +137,15 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (scriptData && isMounted) {
+            // Set the title and author from the loaded script
             setTitle(scriptData.title || "Untitled Screenplay");
             setAuthor(scriptData.author || "");
             
             // Ensure we're properly loading the scenes
             if (Array.isArray(scriptData.scenes) && scriptData.scenes.length > 0) {
-              setScenes(scriptData.scenes);
+              // Make sure we clone the scenes array to prevent reference issues
+              const loadedScenes = JSON.parse(JSON.stringify(scriptData.scenes));
+              setScenes(loadedScenes);
             } else {
               // Fallback if no scenes are found
               setScenes([{
@@ -161,6 +164,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
               }]);
             }
             
+            // Check if the script is shared with the current user
             const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
             let isViewOnlyAccess = false;
             
@@ -199,7 +203,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       } else {
-        if (isMounted) {
+        if (isMounted && !currentScriptId) {
+          // If there's no script ID, reset to new script state
           setIsEditing(false);
           setIsViewOnly(false);
         }

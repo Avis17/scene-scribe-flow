@@ -2,30 +2,34 @@
 import React, { useEffect } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useScript } from "@/contexts/ScriptContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Index: React.FC = () => {
   const { user, loading: authLoading } = useFirebase();
-  const { currentScriptId, resetScript } = useScript();
+  const { currentScriptId, setCurrentScriptId, resetScript } = useScript();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+
+  // Extract scriptId from URL if present in state
+  const scriptIdFromState = location.state?.scriptId;
   
   useEffect(() => {
     const checkScriptAndRedirect = () => {
-      // Only redirect if we're not already redirecting or loading auth
-      if (!authLoading && location.pathname === "/") {
-        console.log("Index - currentScriptId:", currentScriptId);
-        console.log("Index - state from location:", location.state);
-        
+      // Only process if we're not already loading auth
+      if (!authLoading && location.pathname === "/editor") {
         // Check if we have forceNew flag from navigation state
         const isNewScriptRequest = location.state?.forceNew === true;
         
         if (isNewScriptRequest) {
-          console.log("Creating new script as requested");
+          // User explicitly wants a new script
           resetScript();
+        } else if (scriptIdFromState) {
+          // If script ID is provided in navigation state, use it
+          setCurrentScriptId(scriptIdFromState);
         } else if (!currentScriptId) {
-          console.log("No script selected, creating a new script");
           // Reset to a blank script when coming to the editor without a script ID
           resetScript();
         }
@@ -33,7 +37,7 @@ const Index: React.FC = () => {
     };
     
     checkScriptAndRedirect();
-  }, [currentScriptId, navigate, authLoading, location.pathname, location.state, resetScript]);
+  }, [currentScriptId, scriptIdFromState, navigate, authLoading, location.pathname, location.state, resetScript, setCurrentScriptId]);
   
   // Update document title with app name
   useEffect(() => {
