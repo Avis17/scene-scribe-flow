@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Save, FileDown, Lock, Unlock, List, Loader } from "lucide-react";
+import { Save, FileDown, Lock, Unlock, List, Loader, X } from "lucide-react";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -28,6 +28,7 @@ const ScriptHeader: React.FC = () => {
     loading, 
     currentScriptId,
     isViewOnly,
+    resetScript
   } = useScript();
 
   const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
@@ -49,6 +50,11 @@ const ScriptHeader: React.FC = () => {
     setIsSaving(true);
     await saveScript(visibility);
     setIsSaving(false);
+    navigate("/scripts");
+  };
+
+  const handleCancel = () => {
+    resetScript();
     navigate("/scripts");
   };
 
@@ -142,9 +148,20 @@ const ScriptHeader: React.FC = () => {
           
           {!forceViewOnly && (
             <Button 
-              onClick={handleSave}
-              disabled={loading || isSaving}
+              onClick={handleCancel}
+              variant="outline"
               size="sm"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+          )}
+          
+          {!forceViewOnly && (
+            <Button 
+              onClick={handleSave}
+              size="sm"
+              disabled={loading && isSaving}
             >
               {isSaving ? (
                 <>
