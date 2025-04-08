@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
-import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
+import { useScriptService, ScriptVisibility, ScriptData } from "@/services/ScriptService";
 import { useScript } from "@/contexts/ScriptContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -11,18 +11,6 @@ import LoadingState from "@/components/scripts/LoadingState";
 import EmptyState from "@/components/scripts/EmptyState";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import { ScrollText, Share2, UsersRound, BookOpen } from "lucide-react";
-
-interface ScriptData {
-  id: string;
-  title: string;
-  author: string;
-  lastEditedBy?: string;
-  visibility?: ScriptVisibility;
-  createdAt: { toDate: () => Date };
-  updatedAt: { toDate: () => Date };
-  userId?: string;
-  sharedWith?: Record<string, any>;
-}
 
 const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
 
@@ -48,7 +36,6 @@ const ScriptsList: React.FC = () => {
 
   console.log("ScriptsList - User email:", user?.email, "isAdmin:", isAdminUser);
   
-  // Modified fetchScripts to better handle the admin fetch and prevent multiple fetches
   const fetchScripts = useCallback(async (fetchAll = false) => {
     if (!user || fetchInProgress.current) return;
     
@@ -83,12 +70,10 @@ const ScriptsList: React.FC = () => {
         setOwnScriptsCount(ownScripts.length);
         setSharedScriptsCount(sharedScripts.length);
       } else {
-        // When viewing all scripts as admin, there's no need to calculate own/shared counts
         setOwnScriptsCount(0);
         setSharedScriptsCount(0);
       }
       
-      // Set both states at once to avoid multiple renders
       setScripts(userScripts);
       setFilteredScripts(userScripts);
       initialLoadComplete.current = true;
@@ -101,27 +86,21 @@ const ScriptsList: React.FC = () => {
       });
     } finally {
       setLoading(false);
-      // Add a small delay before allowing new fetches to prevent rapid consecutive calls
       setTimeout(() => {
         fetchInProgress.current = false;
       }, 500);
     }
   }, [user, scriptService, toast, isAdminUser]);
 
-  // Use a more stable effect for initial loading with cleanup
   useEffect(() => {
-    // Only run this effect once when user is available and initial load is not complete
     if (user && !initialLoadComplete.current && !fetchInProgress.current) {
       fetchScripts(isViewingAll);
     }
     
-    // Cleanup function
     return () => {
-      // No cleanup needed
     };
   }, [user, fetchScripts, isViewingAll]);
 
-  // Separate effect for search to avoid triggering fetchScripts
   useEffect(() => {
     if (scripts.length > 0) {
       if (searchQuery.trim() === "") {
@@ -289,7 +268,6 @@ const ScriptsList: React.FC = () => {
                       {isViewingAll ? "View My Scripts" : "View All Screenplays"}
                       {loading && <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>}
                     </Button>
-                    {/* Add debug information for admin user */}
                     <p className="bg-amber-100 text-amber-800 p-2 rounded text-sm">
                       Admin user detected: {user?.email}
                     </p>

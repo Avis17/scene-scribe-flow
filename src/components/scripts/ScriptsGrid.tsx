@@ -1,20 +1,8 @@
-
 import React from "react";
 import ScriptCard from "./ScriptCard";
 import SharedScriptCard from "./SharedScriptCard";
-import { ScriptVisibility } from "@/services/ScriptService";
+import { ScriptVisibility, ScriptData } from "@/services/ScriptService";
 import { useFirebase } from "@/contexts/FirebaseContext";
-
-interface ScriptData {
-  id: string;
-  title: string;
-  author: string;
-  visibility?: ScriptVisibility;
-  createdAt: { toDate: () => Date };
-  updatedAt: { toDate: () => Date };
-  userId?: string;
-  sharedWith?: Record<string, any>;
-}
 
 interface ScriptsGridProps {
   scripts: ScriptData[];

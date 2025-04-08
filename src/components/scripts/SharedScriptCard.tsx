@@ -1,23 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { File, FileLock, FileDown, Eye, Edit, Users, Clock, User } from "lucide-react";
-import { ScriptVisibility, ScriptAccessLevel } from "@/services/ScriptService";
+import { ScriptVisibility, ScriptAccessLevel, ScriptData } from "@/services/ScriptService";
 import { useNavigate } from "react-router-dom";
 import { useFirebase } from "@/contexts/FirebaseContext";
-
-interface ScriptData {
-  id: string;
-  title: string;
-  author: string;
-  lastEditedBy?: string;
-  visibility?: ScriptVisibility;
-  createdAt: { toDate: () => Date };
-  updatedAt: { toDate: () => Date };
-  userId?: string;
-  sharedWith?: Record<string, any>;
-}
 
 interface SharedScriptCardProps {
   script: ScriptData;
@@ -35,25 +22,20 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
   const navigate = useNavigate();
   const { user } = useFirebase();
   
-  // Determine access level for the shared script
   const accessLevel = user?.email && script.sharedWith && script.sharedWith[user.email]
     ? script.sharedWith[user.email].accessLevel as ScriptAccessLevel
     : "view"; // Default to view if not specified
   
-  // Check if user has edit permission
   const hasEditAccess = accessLevel === "edit";
   
-  // Check if script is protected
   const isProtected = script.visibility === "protected";
   
-  // Hide export button if script is protected
   const showExportButton = !isProtected;
   
   const handleView = () => {
     navigate(`/view/${script.id}`);
   };
 
-  // Extract name from email if it's an email address
   const getDisplayName = (emailOrName: string) => {
     if (emailOrName?.includes('@')) {
       return emailOrName.split('@')[0];
@@ -108,7 +90,6 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
       <CardFooter className="flex flex-col space-y-2 pt-4 border-t dark:border-slate-800">
         <div className="grid grid-cols-1 gap-2 w-full">
           <div className="grid grid-cols-2 gap-2">
-            {/* View button - always show */}
             <Button 
               variant="outline"
               size="sm"
@@ -120,7 +101,6 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {/* Edit button - only show if user has edit access */}
             {hasEditAccess && (
               <Button 
                 variant="outline"
@@ -135,7 +115,6 @@ const SharedScriptCard: React.FC<SharedScriptCardProps> = ({
             )}
           </div>
           
-          {/* Export button - only show if script is not protected */}
           {showExportButton && (
             <Button 
               variant="outline"

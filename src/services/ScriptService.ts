@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   doc, 
@@ -34,6 +33,19 @@ export interface ScriptVersion {
   author: string;
   scenes: Scene[];
   versionId: string;
+}
+
+export interface ScriptData {
+  id: string;
+  title: string;
+  author: string;
+  scenes: Scene[];
+  userId: string;
+  visibility: ScriptVisibility;
+  createdAt: any;
+  updatedAt: any;
+  lastEditedBy: string;
+  sharedWith: Record<string, any>;
 }
 
 const ADMIN_EMAIL = "studio.semmaclicks@gmail.com";
@@ -284,7 +296,7 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      let scripts: any[] = [];
+      let scripts: ScriptData[] = [];
       
       const userScriptsQuery = query(
         collection(db, "scripts"),
@@ -295,15 +307,18 @@ export const useScriptService = () => {
       userScriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          // Ensure all scripts have consistent structure
+          // Ensure all scripts have consistent structure with the required properties
           scripts.push({
-            ...data,
             id: doc.id,
             title: data.title || "Untitled",
             author: data.author || "Unknown",
             scenes: Array.isArray(data.scenes) ? data.scenes : [],
+            userId: data.userId || "unknown",
+            visibility: data.visibility || "public",
             createdAt: data.createdAt || Timestamp.now(),
-            updatedAt: data.updatedAt || Timestamp.now()
+            updatedAt: data.updatedAt || Timestamp.now(),
+            lastEditedBy: data.lastEditedBy || "unknown",
+            sharedWith: data.sharedWith || {}
           });
         }
       });
@@ -318,13 +333,16 @@ export const useScriptService = () => {
             .map(doc => {
               const data = doc.data();
               return {
-                ...data,
                 id: doc.id,
                 title: data.title || "Untitled",
                 author: data.author || "Unknown",
                 scenes: Array.isArray(data.scenes) ? data.scenes : [],
+                userId: data.userId || "unknown",
+                visibility: data.visibility || "public",
                 createdAt: data.createdAt || Timestamp.now(),
-                updatedAt: data.updatedAt || Timestamp.now()
+                updatedAt: data.updatedAt || Timestamp.now(),
+                lastEditedBy: data.lastEditedBy || "unknown",
+                sharedWith: data.sharedWith || {}
               };
             })
             .filter(script => 
