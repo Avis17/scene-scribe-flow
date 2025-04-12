@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
@@ -25,6 +25,7 @@ const Index: React.FC = () => {
 
   // Extract scriptId from URL if present in state
   const scriptIdFromState = location.state?.scriptId;
+  const loadAttemptRef = useRef(0);
   
   useEffect(() => {
     console.log("Index component mounted/updated");
@@ -75,17 +76,58 @@ const Index: React.FC = () => {
     }
   }, [pageState, title]);
   
-  // Check for loading errors
+  // Check for loading state changes
   useEffect(() => {
     if (scriptLoading) {
       setPageState("loading");
     } else if (location.state?.error) {
       setErrorMessage(location.state.error);
       setPageState("error");
+    } else if (currentScriptId && pageState === "loading") {
+      // Script has finished loading, update state to edit
+      console.log("Script finished loading, updating page state to edit");
+      setPageState("edit");
     }
-  }, [scriptLoading, location.state]);
+  }, [scriptLoading, location.state, currentScriptId, pageState]);
   
+  // Add timeout for stuck loading state
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (pageState === "loading" && currentScriptId) {
+      // If still loading after 10 seconds, check if we should retry
+      timeoutId = setTimeout(() => {
+        if (pageState === "loading") {
+          loadAttemptRef.current += 1;
+          console.log("Loading timeout reached, attempt:", loadAttemptRef.current);
+          
+          if (loadAttemptRef.current < 3) {
+            // Try reloading the script
+            setCurrentScriptId(null);
+            setTimeout(() => {
+              if (scriptIdFromState) {
+                setCurrentScriptId(scriptIdFromState);
+              } else if (currentScriptId) {
+                setCurrentScriptId(currentScriptId);
+              }
+            }, 500);
+          } else {
+            // After 3 attempts, show error
+            setErrorMessage("Script is taking too long to load. Please try again later.");
+            setPageState("error");
+          }
+        }
+      }, 10000);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [pageState, currentScriptId, scriptIdFromState, setCurrentScriptId]);
+
   const handleRetry = () => {
+    loadAttemptRef.current = 0;
+    setPageState("loading");
     if (scriptIdFromState) {
       // Try to load the script again
       setCurrentScriptId(null);
@@ -136,7 +178,7 @@ const Index: React.FC = () => {
   
   return (
     <div className="bg-background min-h-screen">
-      {scriptLoading ? (
+      {scriptLoading || pageState === "loading" ? (
         <div className="flex flex-col items-center justify-center h-screen">
           <Loader className="h-10 w-10 text-primary animate-spin" />
           <p className="mt-4 text-lg font-medium">

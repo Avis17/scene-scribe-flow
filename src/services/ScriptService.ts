@@ -384,12 +384,19 @@ export const useScriptService = () => {
       const data = scriptDoc.data();
       console.log(`Script data retrieved for ID ${scriptId}:`, data);
       
+      if (!data) {
+        console.error("No data found in script document");
+        throw new Error("Script document exists but contains no data");
+      }
+      
       const scriptOwnerId = data.userId;
       const isOwner = user.uid === scriptOwnerId;
       const isShared = data.sharedWith && 
                        user.email && 
                        data.sharedWith[user.email];
                        
+      console.log(`Script access check: isOwner=${isOwner}, isShared=${!!isShared}`);
+      
       if (!isOwner && !isShared) {
         console.error(`User ${user.uid} doesn't have access to script ${scriptId}`);
         throw new Error("You don't have permission to access this script");

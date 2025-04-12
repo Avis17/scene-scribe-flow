@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -77,6 +76,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const scriptService = useScriptService();
   const { toast } = useToast();
   const loadingRef = useRef<boolean>(false);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSetTitle = (newTitle: string) => {
     if (newTitle !== title) {
@@ -137,7 +137,24 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           setIsEditing(true);
           setLoadError(null);
           
+          if (loadTimeoutRef.current) {
+            clearTimeout(loadTimeoutRef.current);
+          }
+          
+          loadTimeoutRef.current = setTimeout(() => {
+            if (isMounted && loadingRef.current) {
+              console.log("Loading timeout reached, forcibly clearing loading state");
+              setLoading(false);
+              loadingRef.current = false;
+            }
+          }, 15000); // 15 second timeout
+          
           const scriptData = await scriptService.getScriptById(currentScriptId);
+          
+          if (!isMounted) {
+            console.log("Component unmounted during script load, aborting");
+            return;
+          }
           
           if (!scriptData) {
             console.error("Script not found:", currentScriptId);
@@ -234,7 +251,12 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           }
         } finally {
           if (isMounted) {
+            console.log("Clearing loading state after script load");
             setLoading(false);
+            if (loadTimeoutRef.current) {
+              clearTimeout(loadTimeoutRef.current);
+              loadTimeoutRef.current = null;
+            }
             setTimeout(() => {
               loadingRef.current = false;
             }, 500);
@@ -252,6 +274,10 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     
     return () => {
       isMounted = false;
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
     };
   }, [currentScriptId, user, toast, scriptService, resetScript]);
 
