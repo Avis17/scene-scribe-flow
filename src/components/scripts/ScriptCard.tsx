@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,11 +57,11 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   };
 
   const handleDelete = () => {
+    console.log("Deleting script:", script.id);
     onDelete(script.id);
     setShowDeleteDialog(false);
   };
 
-  // Extract name from email if it's an email address
   const getDisplayName = (emailOrName: string) => {
     if (emailOrName?.includes('@')) {
       return emailOrName.split('@')[0];
@@ -119,7 +118,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 pt-4 border-t dark:border-slate-800">
           <div className="grid grid-cols-2 gap-2 w-full">
-            {/* View button */}
             <Button 
               variant="outline"
               size="sm"
@@ -132,7 +130,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            {/* Edit button */}
             <Button 
               variant="outline"
               size="sm"
@@ -145,7 +142,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>Edit</span>
             </Button>
             
-            {/* Export button */}
             <Button 
               variant="outline"
               size="sm"
@@ -158,7 +154,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>Export</span>
             </Button>
             
-            {/* Delete button */}
             <Button 
               variant="destructive" 
               size="sm"

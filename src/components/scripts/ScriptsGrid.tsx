@@ -33,8 +33,8 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sortedScripts.map((script) => {
-        // Check if the script is owned by the current user
-        const isOwnScript = !script.userId || script.userId === script.userId;
+        // Check if the script is owned by the current user or has no user ID
+        const isOwnScript = !script.userId || script.userId === user?.uid;
         
         if (isViewOnly || isOwnScript) {
           return (
