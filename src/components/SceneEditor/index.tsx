@@ -1,11 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
 import { SpeechRecognitionProvider } from "./SpeechRecognitionContext";
 import ElementEditor from "./ElementEditor";
 import ElementButtons from "./ElementButtons";
 import LanguageSelector from "./LanguageSelector";
 import { Loader } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SceneEditorProps {
   scene: Scene;
@@ -16,6 +16,11 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const { updateScene } = useScript();
   const [elements, setElements] = useState<SceneElement[]>(scene.elements);
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    setElements(scene.elements);
+  }, [scene]);
   
   const handleElementTypeChange = (index: number, type: SceneElement["type"]) => {
     const newElements = [...elements];
@@ -40,12 +45,38 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    updateScene(scene.id, elements);
-    setTimeout(() => {
+    try {
+      setIsSaving(true);
+      
+      const elementsCopy = JSON.parse(JSON.stringify(elements));
+      
+      if (elementsCopy.length === 0) {
+        elementsCopy.push({
+          type: "scene-heading",
+          content: "INT. LOCATION - TIME"
+        });
+      }
+      
+      updateScene(scene.id, elementsCopy);
+      
+      toast({
+        title: "Scene saved",
+        description: "Your changes have been saved successfully",
+      });
+      
+      setTimeout(() => {
+        setIsSaving(false);
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error("Error saving scene:", error);
+      toast({
+        title: "Save failed",
+        description: "There was a problem saving your changes",
+        variant: "destructive"
+      });
       setIsSaving(false);
-      onClose();
-    }, 500);
+    }
   };
 
   const handleCancel = () => {

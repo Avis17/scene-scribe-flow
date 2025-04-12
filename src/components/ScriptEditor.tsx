@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
@@ -7,6 +7,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "./ui/button";
 import { Plus, Loader, FileText, Edit } from "lucide-react";
 import { Progress } from "./ui/progress";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScriptEditorProps {
   mode?: "create" | "edit";
@@ -16,6 +17,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   const { scenes, reorderScenes, addScene, isViewOnly, loading, currentScriptId } = useScript();
   const [isAddingScene, setIsAddingScene] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (loading) {
@@ -55,16 +57,32 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     reorderScenes(result.source.index, result.destination.index);
   };
   
-  const handleAddScene = () => {
-    setIsAddingScene(true);
-    addScene();
-    setTimeout(() => {
-      setIsAddingScene(false);
-    }, 500);
-  };
+  const handleAddScene = useCallback(() => {
+    if (isViewOnly || isAddingScene) return;
+    
+    try {
+      setIsAddingScene(true);
+      addScene();
+      toast({
+        title: "Scene added",
+        description: "New scene has been added to your script"
+      });
+    } catch (error) {
+      console.error("Error adding scene:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add new scene",
+        variant: "destructive"
+      });
+    } finally {
+      setTimeout(() => {
+        setIsAddingScene(false);
+      }, 500);
+    }
+  }, [addScene, isAddingScene, isViewOnly, toast]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       {/* Page mode indicator */}
       <div className="bg-slate-100 dark:bg-slate-800 border-b">
         <div className="container mx-auto py-2 px-4">
@@ -122,8 +140,8 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
           </Droppable>
         </DragDropContext>
         
-        {/* Add Scene Button */}
-        <div className="mt-6 flex justify-center">
+        {/* Add Scene Button - now not hidden by footer */}
+        <div className="mt-8 mb-20 flex justify-center">
           <Button 
             onClick={handleAddScene} 
             disabled={isViewOnly || isAddingScene}

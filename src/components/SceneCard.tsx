@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Trash2, Pencil, X } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface SceneCardProps {
   scene: Scene;
@@ -22,21 +23,22 @@ interface SceneCardProps {
 }
 
 const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
-  const { toggleSceneCollapse, deleteScene } = useScript();
+  const { toggleSceneCollapse, deleteScene, isViewOnly } = useScript();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { toast } = useToast();
 
-  const getSceneTitle = () => {
+  const getSceneTitle = useCallback(() => {
     const heading = scene.elements.find(
       (element) => element.type === "scene-heading"
     );
     return heading ? heading.content : "Untitled Scene";
-  };
+  }, [scene.elements]);
 
-  const getScenePreview = () => {
+  const getScenePreview = useCallback(() => {
     const action = scene.elements.find((element) => element.type === "action");
     return action ? action.content.substring(0, 100) + (action.content.length > 100 ? "..." : "") : "";
-  };
+  }, [scene.elements]);
 
   const handleCancelEdit = () => {
     setIsEditing(false);
@@ -47,8 +49,34 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
   };
   
   const handleDelete = () => {
-    deleteScene(scene.id);
-    setShowDeleteDialog(false);
+    try {
+      deleteScene(scene.id);
+      toast({
+        title: "Scene deleted",
+        description: `Scene ${index + 1} has been removed`
+      });
+    } catch (error) {
+      console.error("Error deleting scene:", error);
+      toast({
+        title: "Delete failed",
+        description: "There was a problem deleting the scene",
+        variant: "destructive"
+      });
+    } finally {
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleEdit = () => {
+    if (isViewOnly) {
+      toast({
+        title: "View only mode",
+        description: "You cannot edit this script in view-only mode",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsEditing(true);
   };
 
   return (
@@ -84,8 +112,9 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsEditing(true)}
+                onClick={handleEdit}
                 type="button"
+                disabled={isViewOnly}
               >
                 <Pencil className="h-4 w-4" />
                 <span className="ml-1 text-xs md:text-sm">Edit</span>
@@ -97,6 +126,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               onClick={confirmDelete}
               type="button"
               className="hover:text-destructive"
+              disabled={isViewOnly}
             >
               <Trash2 className="h-4 w-4" />
               <span className="ml-1 text-xs md:text-sm">Delete</span>

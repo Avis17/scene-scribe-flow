@@ -29,6 +29,7 @@ const Index: React.FC = () => {
   const scriptIdFromState = location.state?.scriptId;
   const loadAttemptRef = useRef(0);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMountRef = useRef(true);
   
   // Cleanup function to clear any timeouts
   useEffect(() => {
@@ -62,7 +63,7 @@ const Index: React.FC = () => {
           console.log("Loading script from state ID:", scriptIdFromState);
           // If script ID is provided in navigation state, use it
           setCurrentScriptId(scriptIdFromState);
-          setPageState("edit");
+          setPageState("loading");
         } else if (!currentScriptId) {
           console.log("No script ID found, creating new script");
           // Reset to a blank script when coming to the editor without a script ID
@@ -76,7 +77,10 @@ const Index: React.FC = () => {
       }
     };
     
-    checkScriptAndRedirect();
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      checkScriptAndRedirect();
+    }
   }, [authLoading, location.pathname, location.state, resetScript, scriptIdFromState, currentScriptId, setCurrentScriptId]);
   
   // Update document title based on whether we're creating or editing
@@ -148,17 +152,25 @@ const Index: React.FC = () => {
           
           if (loadAttemptRef.current < 3) {
             // Try reloading the script by briefly clearing and resetting the ID
+            const currentId = currentScriptId;
             setCurrentScriptId(null);
             setTimeout(() => {
               if (scriptIdFromState) {
                 setCurrentScriptId(scriptIdFromState);
+              } else if (currentId) {
+                setCurrentScriptId(currentId);
               }
-            }, 300);
+            }, 500);
           } else {
             // After 3 attempts, show error
             clearInterval(watchdogInterval);
             setErrorMessage("Script is taking too long to load. Please try again later.");
             setPageState("error");
+            toast({
+              title: "Loading Error",
+              description: "Failed to load script after multiple attempts",
+              variant: "destructive"
+            });
           }
         }
       }, 5000);
@@ -167,7 +179,7 @@ const Index: React.FC = () => {
         clearInterval(watchdogInterval);
       };
     }
-  }, [pageState, loadStartTime, scriptLoading, scriptIdFromState, setCurrentScriptId]);
+  }, [pageState, loadStartTime, scriptLoading, scriptIdFromState, setCurrentScriptId, currentScriptId, toast]);
 
   const handleRetry = () => {
     loadAttemptRef.current = 0;
@@ -175,13 +187,12 @@ const Index: React.FC = () => {
     setLoadStartTime(Date.now());
     
     // Force a complete reset of the loading process
+    const idToLoad = scriptIdFromState || currentScriptId;
     setCurrentScriptId(null);
     
     setTimeout(() => {
-      if (scriptIdFromState) {
-        setCurrentScriptId(scriptIdFromState);
-      } else if (currentScriptId) {
-        setCurrentScriptId(currentScriptId);
+      if (idToLoad) {
+        setCurrentScriptId(idToLoad);
       } else {
         // If no script ID, go to new script mode
         resetScript();
