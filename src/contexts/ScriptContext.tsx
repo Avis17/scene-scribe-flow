@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -70,6 +71,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const [isViewOnly, setIsViewOnly] = useState<boolean>(false);
   const [isModified, setIsModified] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   const { user } = useFirebase();
   const scriptService = useScriptService();
@@ -120,6 +122,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     setIsViewOnly(false);
     setIsEditing(false);
     setIsModified(false);
+    setLoadError(null);
   }, [user]);
 
   useEffect(() => {
@@ -132,10 +135,25 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           loadingRef.current = true;
           setLoading(true);
           setIsEditing(true);
+          setLoadError(null);
           
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
-          if (scriptData && isMounted) {
+          if (!scriptData) {
+            console.error("Script not found:", currentScriptId);
+            if (isMounted) {
+              setLoadError(`Script with ID ${currentScriptId} not found.`);
+              toast({
+                title: "Error",
+                description: "Script not found. It may have been deleted.",
+                variant: "destructive",
+              });
+              resetScript();
+            }
+            return;
+          }
+          
+          if (isMounted) {
             console.log("Script loaded successfully:", scriptData);
             
             setTitle(scriptData.title || "Untitled Screenplay");
@@ -150,7 +168,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
                 ...scene,
                 isCollapsed: scene.isCollapsed !== undefined ? scene.isCollapsed : false,
                 id: scene.id || `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                elements: Array.isArray(scene.elements) ? scene.elements : [
+                elements: Array.isArray(scene.elements) && scene.elements.length > 0 ? scene.elements : [
                   {
                     type: "scene-heading",
                     content: "INT. LOCATION - DAY",
@@ -200,18 +218,16 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             
             setIsModified(false);
             setIsInitialized(true);
-          } else {
-            console.error("No script data returned or component unmounted");
-            if (isMounted) {
-              resetScript();
-            }
           }
         } catch (error) {
           console.error("Error loading script:", error);
           if (isMounted) {
+            const errorMessage = error instanceof Error ? error.message : "Failed to load script";
+            setLoadError(errorMessage);
+            
             toast({
               title: "Error",
-              description: "Failed to load script",
+              description: errorMessage,
               variant: "destructive",
             });
             resetScript();

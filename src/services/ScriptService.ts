@@ -265,7 +265,6 @@ export const useScriptService = () => {
       scriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          // Create a standardized object with all required fields
           const processedData = {
             id: doc.id,
             title: data.title || "Untitled",
@@ -307,7 +306,6 @@ export const useScriptService = () => {
       userScriptsSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data) {
-          // Ensure all scripts have consistent structure with the required properties
           scripts.push({
             id: doc.id,
             title: data.title || "Untitled",
@@ -370,16 +368,37 @@ export const useScriptService = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
-      
-      if (scriptDoc.exists()) {
-        return scriptDoc.data();
+      if (!scriptId) {
+        console.error("Invalid script ID:", scriptId);
+        throw new Error("Invalid script ID provided");
       }
       
-      return null;
+      console.log(`Fetching script with ID: ${scriptId}`);
+      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      
+      if (!scriptDoc.exists()) {
+        console.error(`Script not found with ID: ${scriptId}`);
+        return null;
+      }
+      
+      const data = scriptDoc.data();
+      console.log(`Script data retrieved for ID ${scriptId}:`, data);
+      
+      const scriptOwnerId = data.userId;
+      const isOwner = user.uid === scriptOwnerId;
+      const isShared = data.sharedWith && 
+                       user.email && 
+                       data.sharedWith[user.email];
+                       
+      if (!isOwner && !isShared) {
+        console.error(`User ${user.uid} doesn't have access to script ${scriptId}`);
+        throw new Error("You don't have permission to access this script");
+      }
+      
+      return data;
     } catch (error) {
       console.error("Error getting script:", error);
-      throw new Error("Failed to get script. Please try again.");
+      throw error;
     }
   };
 

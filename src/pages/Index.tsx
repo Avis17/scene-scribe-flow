@@ -5,7 +5,8 @@ import ScriptEditor from "@/components/ScriptEditor";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useScript } from "@/contexts/ScriptContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader } from "lucide-react";
+import { Loader, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index: React.FC = () => {
   const { user, loading: authLoading } = useFirebase();
@@ -19,7 +20,8 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [pageState, setPageState] = useState<"new" | "edit" | "loading">("loading");
+  const [pageState, setPageState] = useState<"new" | "edit" | "loading" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Extract scriptId from URL if present in state
   const scriptIdFromState = location.state?.scriptId;
@@ -73,6 +75,34 @@ const Index: React.FC = () => {
     }
   }, [pageState, title]);
   
+  // Check for loading errors
+  useEffect(() => {
+    if (scriptLoading) {
+      setPageState("loading");
+    } else if (location.state?.error) {
+      setErrorMessage(location.state.error);
+      setPageState("error");
+    }
+  }, [scriptLoading, location.state]);
+  
+  const handleRetry = () => {
+    if (scriptIdFromState) {
+      // Try to load the script again
+      setCurrentScriptId(null);
+      setTimeout(() => {
+        setCurrentScriptId(scriptIdFromState);
+      }, 500);
+    } else {
+      // Navigate to scripts list
+      navigate('/scripts');
+    }
+  };
+  
+  const handleCreateNew = () => {
+    resetScript();
+    navigate('/editor', { state: { forceNew: true } });
+  };
+  
   console.log("Rendering editor component", {
     currentScriptId,
     scriptIdFromState,
@@ -81,6 +111,29 @@ const Index: React.FC = () => {
     pageState
   });
   
+  if (pageState === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background p-4">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h1 className="text-xl font-semibold mb-2">Error Loading Script</h1>
+        <p className="text-muted-foreground mb-6 text-center max-w-md">
+          {errorMessage || "There was a problem loading your screenplay. The script may have been deleted or you don't have access to it."}
+        </p>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={handleRetry}>
+            Try Again
+          </Button>
+          <Button onClick={handleCreateNew}>
+            Create New Script
+          </Button>
+          <Button variant="secondary" onClick={() => navigate('/scripts')}>
+            Go to My Scripts
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="bg-background min-h-screen">
       {scriptLoading ? (
@@ -88,6 +141,9 @@ const Index: React.FC = () => {
           <Loader className="h-10 w-10 text-primary animate-spin" />
           <p className="mt-4 text-lg font-medium">
             {pageState === "edit" ? "Loading script..." : "Preparing editor..."}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {scriptIdFromState && `Script ID: ${scriptIdFromState}`}
           </p>
         </div>
       ) : (
