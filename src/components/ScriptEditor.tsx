@@ -5,11 +5,15 @@ import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "./ui/button";
-import { Plus, Loader } from "lucide-react";
+import { Plus, Loader, FileText, Edit } from "lucide-react";
 import { Progress } from "./ui/progress";
 
-const ScriptEditor: React.FC = () => {
-  const { scenes, reorderScenes, addScene, isViewOnly, loading } = useScript();
+interface ScriptEditorProps {
+  mode?: "create" | "edit";
+}
+
+const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
+  const { scenes, reorderScenes, addScene, isViewOnly, loading, currentScriptId } = useScript();
   const [isAddingScene, setIsAddingScene] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -61,6 +65,26 @@ const ScriptEditor: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page mode indicator */}
+      <div className="bg-slate-100 dark:bg-slate-800 border-b">
+        <div className="container mx-auto py-2 px-4">
+          <div className="flex items-center text-sm text-muted-foreground">
+            {mode === "create" ? (
+              <>
+                <FileText className="h-4 w-4 mr-2 text-primary" />
+                <span>Creating new screenplay</span>
+              </>
+            ) : (
+              <>
+                <Edit className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Editing existing screenplay</span>
+                {currentScriptId && <span className="ml-2 text-xs opacity-50">ID: {currentScriptId}</span>}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      
       <ScriptHeader />
       
       {loading && progress > 0 && (
