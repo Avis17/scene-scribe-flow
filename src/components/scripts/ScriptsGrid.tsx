@@ -3,6 +3,7 @@ import React from "react";
 import { ScriptData } from "@/services/ScriptService";
 import ScriptCard from "./ScriptCard";
 import SharedScriptCard from "./SharedScriptCard";
+import { useFirebase } from "@/contexts/FirebaseContext";
 
 interface ScriptsGridProps {
   scripts: ScriptData[];
@@ -25,6 +26,8 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   isDeleting = false,
   deletingScriptId = null
 }) => {
+  const { user } = useFirebase();
+
   // Sort scripts by updatedAt (newest first)
   const sortedScripts = [...scripts].sort((a, b) => {
     return b.updatedAt.toDate().getTime() - a.updatedAt.toDate().getTime();
