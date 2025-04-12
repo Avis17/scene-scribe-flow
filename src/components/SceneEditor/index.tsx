@@ -5,7 +5,6 @@ import { SpeechRecognitionProvider } from "./SpeechRecognitionContext";
 import ElementEditor from "./ElementEditor";
 import ElementButtons from "./ElementButtons";
 import LanguageSelector from "./LanguageSelector";
-import { Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SceneEditorProps {
@@ -16,7 +15,6 @@ interface SceneEditorProps {
 const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const { updateScene } = useScript();
   const [elements, setElements] = useState<SceneElement[]>(scene.elements);
-  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -45,9 +43,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     setElements(newElements);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     try {
-      setIsSaving(true);
       console.log("Saving scene:", scene.id);
       console.log("With elements:", elements);
       
@@ -66,15 +63,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
       updateScene(scene.id, elementsCopy);
       
       toast({
-        title: "Scene saved",
+        title: "Scene updated",
         description: "Your changes have been saved successfully",
       });
       
-      // Short delay before closing to show the success state
-      setTimeout(() => {
-        setIsSaving(false);
-        onClose();
-      }, 800);
+      // Close immediately without waiting
+      onClose();
     } catch (error) {
       console.error("Error saving scene:", error);
       toast({
@@ -82,22 +76,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         description: "There was a problem saving your changes",
         variant: "destructive"
       });
-      setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
     onClose();
   };
-
-  if (isSaving) {
-    return (
-      <div className="flex flex-col items-center justify-center p-20 animate-fade-in">
-        <Loader className="h-10 w-10 text-blue-500 animate-spin mb-4" />
-        <p className="text-lg font-medium">Saving scene changes...</p>
-      </div>
-    );
-  }
 
   return (
     <SpeechRecognitionProvider>

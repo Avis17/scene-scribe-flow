@@ -80,6 +80,11 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
     setIsEditing(true);
   };
 
+  const handleEditorClose = () => {
+    console.log("Editor closing for scene:", scene.id);
+    setIsEditing(false);
+  };
+
   return (
     <>
       <Card className={`mb-4 border-l-4 ${scene.isCollapsed ? 'border-l-slate-300 dark:border-l-slate-700' : 'border-l-primary'} hover:shadow-md transition-all duration-200 animate-fade-in group`}>
@@ -149,7 +154,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
         {!scene.isCollapsed && (
           <CardContent className="p-3 md:p-4 pt-0 bg-white/50 dark:bg-slate-900/50">
             {isEditing ? (
-              <SceneEditor scene={scene} onClose={() => setIsEditing(false)} />
+              <SceneEditor scene={scene} onClose={handleEditorClose} />
             ) : (
               <div className="space-y-2 prose max-w-none pt-4">
                 {scene.elements.map((element, i) => (

@@ -15,15 +15,10 @@ interface ScriptEditorProps {
 
 const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   const { scenes, reorderScenes, addScene, isViewOnly, loading, currentScriptId } = useScript();
-  const [isAddingScene, setIsAddingScene] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   
-  // Reset isAddingScene on component mount or when scenes change
-  useEffect(() => {
-    setIsAddingScene(false);
-  }, [scenes.length]);
-
+  // Handle loading state changes and progress
   useEffect(() => {
     if (loading) {
       const interval = setInterval(() => {
@@ -62,7 +57,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     reorderScenes(result.source.index, result.destination.index);
   };
   
-  const handleAddScene = useCallback(async () => {
+  const handleAddScene = useCallback(() => {
     if (isViewOnly) {
       toast({
         title: "View Only Mode",
@@ -72,14 +67,8 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
       return;
     }
     
-    if (isAddingScene) {
-      console.log("Already adding scene, please wait...");
-      return;
-    }
-    
     console.log("Adding new scene...");
     try {
-      setIsAddingScene(true);
       addScene();
       toast({
         title: "Scene added",
@@ -92,13 +81,8 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
         description: "Failed to add new scene",
         variant: "destructive"
       });
-    } finally {
-      // Let's make sure isAddingScene gets reset even if there's an error
-      setTimeout(() => {
-        setIsAddingScene(false);
-      }, 1000);
     }
-  }, [addScene, isAddingScene, isViewOnly, toast]);
+  }, [addScene, isViewOnly, toast]);
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -163,20 +147,12 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
         <div className="mt-8 mb-20 flex justify-center">
           <Button 
             onClick={handleAddScene} 
-            disabled={isViewOnly || isAddingScene}
+            disabled={isViewOnly}
             className="flex items-center gap-2 relative z-10"
             size="lg"
             variant="outline"
           >
-            {isAddingScene ? (
-              <>
-                <Loader className="h-5 w-5 animate-spin" /> Adding Scene...
-              </>
-            ) : (
-              <>
-                <Plus className="h-5 w-5" /> Add Scene
-              </>
-            )}
+            <Plus className="h-5 w-5" /> Add Scene
           </Button>
         </div>
       </div>

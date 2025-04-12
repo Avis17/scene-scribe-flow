@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Check, X, Loader } from "lucide-react";
+import { PlusCircle, Check, X } from "lucide-react";
 import { SceneElement } from "@/contexts/ScriptContext";
 
 interface ElementButtonsProps {
@@ -31,11 +31,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           disabled={isAdding !== null}
           className="mr-2"
         >
-          {isAdding === "action" ? (
-            <Loader className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <PlusCircle className="h-4 w-4 mr-1" />
-          )} Action
+          <PlusCircle className="h-4 w-4 mr-1" /> Action
         </Button>
         <Button 
           variant="outline" 
@@ -44,11 +40,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           disabled={isAdding !== null}
           className="mr-2"
         >
-          {isAdding === "character" ? (
-            <Loader className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <PlusCircle className="h-4 w-4 mr-1" />
-          )} Character
+          <PlusCircle className="h-4 w-4 mr-1" /> Character
         </Button>
         <Button 
           variant="outline" 
@@ -56,11 +48,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           onClick={() => handleAddElement("dialogue")}
           disabled={isAdding !== null}
         >
-          {isAdding === "dialogue" ? (
-            <Loader className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <PlusCircle className="h-4 w-4 mr-1" />
-          )} Dialogue
+          <PlusCircle className="h-4 w-4 mr-1" /> Dialogue
         </Button>
       </div>
       <div className="space-x-2">
@@ -68,7 +56,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           <X className="h-4 w-4 mr-1" /> Cancel
         </Button>
         <Button onClick={onSave}>
-          <Check className="h-4 w-4 mr-1" /> Done
+          <Check className="h-4 w-4 mr-1" /> Update
         </Button>
       </div>
     </div>
