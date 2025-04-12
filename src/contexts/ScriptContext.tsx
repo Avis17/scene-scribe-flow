@@ -33,6 +33,7 @@ interface ScriptContextType {
   isEditing: boolean;
   isViewOnly: boolean;
   isModified: boolean;
+  loadError: string | null;
 }
 
 const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
@@ -77,6 +78,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const loadingRef = useRef<boolean>(false);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef<boolean>(true);
 
   const handleSetTitle = (newTitle: string) => {
     if (newTitle !== title) {
@@ -91,6 +93,18 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       setAuthor(newAuthor);
     }
   };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      mountedRef.current = false;
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (user && user.displayName && author === "") {
@@ -126,8 +140,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    let isMounted = true;
-    
     const loadScript = async () => {
       if (currentScriptId && !loadingRef.current) {
         try {
@@ -141,129 +153,122 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             clearTimeout(loadTimeoutRef.current);
           }
           
-          loadTimeoutRef.current = setTimeout(() => {
-            if (isMounted && loadingRef.current) {
-              console.log("Loading timeout reached, forcibly clearing loading state");
-              setLoading(false);
-              loadingRef.current = false;
-            }
-          }, 15000); // 15 second timeout
-          
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
-          if (!isMounted) {
+          if (!mountedRef.current) {
             console.log("Component unmounted during script load, aborting");
             return;
           }
           
           if (!scriptData) {
             console.error("Script not found:", currentScriptId);
-            if (isMounted) {
-              setLoadError(`Script with ID ${currentScriptId} not found.`);
-              toast({
-                title: "Error",
-                description: "Script not found. It may have been deleted.",
-                variant: "destructive",
-              });
-              resetScript();
-            }
-            return;
-          }
-          
-          if (isMounted) {
-            console.log("Script loaded successfully:", scriptData);
-            
-            setTitle(scriptData.title || "Untitled Screenplay");
-            setAuthor(scriptData.author || "");
-            
-            if (Array.isArray(scriptData.scenes) && scriptData.scenes.length > 0) {
-              console.log("Loaded scenes:", scriptData.scenes.length);
-              
-              const loadedScenes = JSON.parse(JSON.stringify(scriptData.scenes));
-              
-              const processedScenes = loadedScenes.map((scene: any) => ({
-                ...scene,
-                isCollapsed: scene.isCollapsed !== undefined ? scene.isCollapsed : false,
-                id: scene.id || `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                elements: Array.isArray(scene.elements) && scene.elements.length > 0 ? scene.elements : [
-                  {
-                    type: "scene-heading",
-                    content: "INT. LOCATION - DAY",
-                  },
-                  {
-                    type: "action",
-                    content: "",
-                  },
-                ]
-              }));
-              
-              console.log("Processed scenes:", processedScenes);
-              setScenes(processedScenes);
-            } else {
-              console.warn("No scenes found in the loaded script, using default");
-              setScenes([{
-                id: "scene-1",
-                isCollapsed: false,
-                elements: [
-                  {
-                    type: "scene-heading",
-                    content: "INT. LIVING ROOM - DAY",
-                  },
-                  {
-                    type: "action",
-                    content: "The room is empty. Sunlight streams through large windows.",
-                  },
-                ],
-              }]);
-            }
-            
-            const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
-            let isViewOnlyAccess = false;
-            
-            if (isSharedWithMe && user?.email && scriptData.sharedWith?.[user.email]) {
-              isViewOnlyAccess = scriptData.sharedWith[user.email].accessLevel === "view";
-            }
-            
-            setIsViewOnly(isViewOnlyAccess);
-            
-            if (isViewOnlyAccess) {
-              toast({
-                title: "View Only Access",
-                description: "You have view-only access to this script and cannot make changes.",
-              });
-            }
-            
-            setIsModified(false);
-            setIsInitialized(true);
-          }
-        } catch (error) {
-          console.error("Error loading script:", error);
-          if (isMounted) {
-            const errorMessage = error instanceof Error ? error.message : "Failed to load script";
-            setLoadError(errorMessage);
-            
+            setLoadError(`Script with ID ${currentScriptId} not found.`);
             toast({
               title: "Error",
-              description: errorMessage,
+              description: "Script not found. It may have been deleted.",
               variant: "destructive",
             });
             resetScript();
+            return;
           }
+          
+          console.log("Script loaded successfully:", scriptData);
+          
+          setTitle(scriptData.title || "Untitled Screenplay");
+          setAuthor(scriptData.author || "");
+          
+          if (Array.isArray(scriptData.scenes) && scriptData.scenes.length > 0) {
+            console.log("Loaded scenes:", scriptData.scenes.length);
+            
+            const loadedScenes = JSON.parse(JSON.stringify(scriptData.scenes));
+            
+            const processedScenes = loadedScenes.map((scene: any) => ({
+              ...scene,
+              isCollapsed: scene.isCollapsed !== undefined ? scene.isCollapsed : false,
+              id: scene.id || `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              elements: Array.isArray(scene.elements) && scene.elements.length > 0 ? scene.elements : [
+                {
+                  type: "scene-heading",
+                  content: "INT. LOCATION - DAY",
+                },
+                {
+                  type: "action",
+                  content: "",
+                },
+              ]
+            }));
+            
+            console.log("Processed scenes:", processedScenes);
+            setScenes(processedScenes);
+          } else {
+            console.warn("No scenes found in the loaded script, using default");
+            setScenes([{
+              id: "scene-1",
+              isCollapsed: false,
+              elements: [
+                {
+                  type: "scene-heading",
+                  content: "INT. LIVING ROOM - DAY",
+                },
+                {
+                  type: "action",
+                  content: "The room is empty. Sunlight streams through large windows.",
+                },
+              ],
+            }]);
+          }
+          
+          const isSharedWithMe = user?.uid && scriptData.userId && user.uid !== scriptData.userId;
+          let isViewOnlyAccess = false;
+          
+          if (isSharedWithMe && user?.email && scriptData.sharedWith?.[user.email]) {
+            isViewOnlyAccess = scriptData.sharedWith[user.email].accessLevel === "view";
+          }
+          
+          setIsViewOnly(isViewOnlyAccess);
+          
+          if (isViewOnlyAccess) {
+            toast({
+              title: "View Only Access",
+              description: "You have view-only access to this script and cannot make changes.",
+            });
+          }
+          
+          setIsModified(false);
+          setIsInitialized(true);
+        } catch (error) {
+          if (!mountedRef.current) {
+            console.log("Component unmounted during error handling, aborting");
+            return;
+          }
+          
+          console.error("Error loading script:", error);
+          const errorMessage = error instanceof Error ? error.message : "Failed to load script";
+          setLoadError(errorMessage);
+          
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          resetScript();
         } finally {
-          if (isMounted) {
+          if (mountedRef.current) {
             console.log("Clearing loading state after script load");
             setLoading(false);
-            if (loadTimeoutRef.current) {
-              clearTimeout(loadTimeoutRef.current);
-              loadTimeoutRef.current = null;
-            }
-            setTimeout(() => {
-              loadingRef.current = false;
-            }, 500);
           }
+          
+          if (loadTimeoutRef.current) {
+            clearTimeout(loadTimeoutRef.current);
+            loadTimeoutRef.current = null;
+          }
+          
+          setTimeout(() => {
+            loadingRef.current = false;
+          }, 300);
         }
       } else {
-        if (isMounted && !currentScriptId) {
+        if (mountedRef.current && !currentScriptId) {
           setIsEditing(false);
           setIsViewOnly(false);
         }
@@ -271,14 +276,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     };
     
     loadScript();
-    
-    return () => {
-      isMounted = false;
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = null;
-      }
-    };
   }, [currentScriptId, user, toast, scriptService, resetScript]);
 
   const addScene = () => {
@@ -405,6 +402,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         isEditing,
         isViewOnly,
         isModified,
+        loadError
       }}
     >
       {children}

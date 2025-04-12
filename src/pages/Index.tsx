@@ -5,7 +5,7 @@ import ScriptEditor from "@/components/ScriptEditor";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useScript } from "@/contexts/ScriptContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader, AlertCircle } from "lucide-react";
+import { Loader, AlertCircle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index: React.FC = () => {
@@ -15,18 +15,31 @@ const Index: React.FC = () => {
     setCurrentScriptId, 
     resetScript, 
     loading: scriptLoading,
-    title
+    title,
+    loadError
   } = useScript();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const [pageState, setPageState] = useState<"new" | "edit" | "loading" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loadStartTime, setLoadStartTime] = useState<number>(0);
 
   // Extract scriptId from URL if present in state
   const scriptIdFromState = location.state?.scriptId;
   const loadAttemptRef = useRef(0);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Cleanup function to clear any timeouts
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Effect to handle script ID and loading status
   useEffect(() => {
     console.log("Index component mounted/updated");
     console.log("Current script ID:", currentScriptId);
@@ -57,13 +70,14 @@ const Index: React.FC = () => {
           setPageState("new");
         } else {
           // We have a currentScriptId, so we must be editing
+          console.log("Script finished loading, updating page state to edit");
           setPageState("edit");
         }
       }
     };
     
     checkScriptAndRedirect();
-  }, [currentScriptId, scriptIdFromState, navigate, authLoading, location.pathname, location.state, resetScript, setCurrentScriptId]);
+  }, [authLoading, location.pathname, location.state, resetScript, scriptIdFromState, currentScriptId, setCurrentScriptId]);
   
   // Update document title based on whether we're creating or editing
   useEffect(() => {
@@ -76,73 +90,113 @@ const Index: React.FC = () => {
     }
   }, [pageState, title]);
   
-  // Check for loading state changes
+  // Handle loading state changes
   useEffect(() => {
-    if (scriptLoading) {
+    if (scriptLoading && pageState !== "loading") {
       setPageState("loading");
+      setLoadStartTime(Date.now());
+      
+      // Set a master timeout to prevent indefinite loading
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (scriptLoading) {
+          console.log("Master loading timeout reached, forcing error state");
+          setPageState("error");
+          setErrorMessage("Loading timed out. Please try again later.");
+        }
+      }, 20000); // 20 second maximum loading time
+      
+    } else if (loadError) {
+      // If there's an error from the ScriptContext
+      setErrorMessage(loadError);
+      setPageState("error");
+      
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    } else if (!scriptLoading && currentScriptId && pageState === "loading") {
+      // Script finished loading successfully
+      console.log("Script finished loading, updating page state to edit");
+      setPageState("edit");
+      
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     } else if (location.state?.error) {
       setErrorMessage(location.state.error);
       setPageState("error");
-    } else if (currentScriptId && pageState === "loading") {
-      // Script has finished loading, update state to edit
-      console.log("Script finished loading, updating page state to edit");
-      setPageState("edit");
     }
-  }, [scriptLoading, location.state, currentScriptId, pageState]);
+  }, [scriptLoading, loadError, location.state, currentScriptId, pageState]);
   
-  // Add timeout for stuck loading state
+  // Set up a watchdog timer to detect stuck loading states
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    if (pageState === "loading" && currentScriptId) {
-      // If still loading after 10 seconds, check if we should retry
-      timeoutId = setTimeout(() => {
-        if (pageState === "loading") {
+    if (pageState === "loading") {
+      const watchdogInterval = setInterval(() => {
+        const currentTime = Date.now();
+        const loadingTime = currentTime - loadStartTime;
+        
+        // If loading for more than 10 seconds, increment attempt counter
+        if (loadingTime > 10000 && scriptLoading) {
           loadAttemptRef.current += 1;
           console.log("Loading timeout reached, attempt:", loadAttemptRef.current);
+          setLoadStartTime(currentTime); // Reset the timer
           
           if (loadAttemptRef.current < 3) {
-            // Try reloading the script
+            // Try reloading the script by briefly clearing and resetting the ID
             setCurrentScriptId(null);
             setTimeout(() => {
               if (scriptIdFromState) {
                 setCurrentScriptId(scriptIdFromState);
-              } else if (currentScriptId) {
-                setCurrentScriptId(currentScriptId);
               }
-            }, 500);
+            }, 300);
           } else {
             // After 3 attempts, show error
+            clearInterval(watchdogInterval);
             setErrorMessage("Script is taking too long to load. Please try again later.");
             setPageState("error");
           }
         }
-      }, 10000);
+      }, 5000);
+      
+      return () => {
+        clearInterval(watchdogInterval);
+      };
     }
-    
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [pageState, currentScriptId, scriptIdFromState, setCurrentScriptId]);
+  }, [pageState, loadStartTime, scriptLoading, scriptIdFromState, setCurrentScriptId]);
 
   const handleRetry = () => {
     loadAttemptRef.current = 0;
     setPageState("loading");
-    if (scriptIdFromState) {
-      // Try to load the script again
-      setCurrentScriptId(null);
-      setTimeout(() => {
+    setLoadStartTime(Date.now());
+    
+    // Force a complete reset of the loading process
+    setCurrentScriptId(null);
+    
+    setTimeout(() => {
+      if (scriptIdFromState) {
         setCurrentScriptId(scriptIdFromState);
-      }, 500);
-    } else {
-      // Navigate to scripts list
-      navigate('/scripts');
-    }
+      } else if (currentScriptId) {
+        setCurrentScriptId(currentScriptId);
+      } else {
+        // If no script ID, go to new script mode
+        resetScript();
+        setPageState("new");
+      }
+    }, 500);
   };
   
   const handleCreateNew = () => {
     resetScript();
     navigate('/editor', { state: { forceNew: true } });
+  };
+  
+  const goToScripts = () => {
+    navigate('/scripts');
   };
   
   console.log("Rendering editor component", {
@@ -161,14 +215,15 @@ const Index: React.FC = () => {
         <p className="text-muted-foreground mb-6 text-center max-w-md">
           {errorMessage || "There was a problem loading your screenplay. The script may have been deleted or you don't have access to it."}
         </p>
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={handleRetry}>
+        <div className="flex gap-4 flex-wrap justify-center">
+          <Button variant="default" onClick={handleRetry} className="flex items-center gap-2">
+            <RefreshCcw className="h-4 w-4" />
             Try Again
           </Button>
           <Button onClick={handleCreateNew}>
             Create New Script
           </Button>
-          <Button variant="secondary" onClick={() => navigate('/scripts')}>
+          <Button variant="secondary" onClick={goToScripts}>
             Go to My Scripts
           </Button>
         </div>
@@ -187,6 +242,22 @@ const Index: React.FC = () => {
           <p className="text-sm text-muted-foreground mt-2">
             {scriptIdFromState && `Script ID: ${scriptIdFromState}`}
           </p>
+          {loadAttemptRef.current > 0 && (
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground">
+                Loading attempt: {loadAttemptRef.current}/3
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2" 
+                onClick={handleRetry}
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Retry Now
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <ScriptEditor mode={pageState === "new" ? "create" : "edit"} />

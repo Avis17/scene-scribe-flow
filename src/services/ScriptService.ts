@@ -374,7 +374,17 @@ export const useScriptService = () => {
       }
       
       console.log(`Fetching script with ID: ${scriptId}`);
-      const scriptDoc = await getDoc(doc(db, "scripts", scriptId));
+      const scriptDocRef = doc(db, "scripts", scriptId);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Script fetch operation timed out"));
+        }, 15000); // 15 second timeout
+      });
+      
+      const fetchPromise = getDoc(scriptDocRef);
+      
+      const scriptDoc = await Promise.race([fetchPromise, timeoutPromise]) as any;
       
       if (!scriptDoc.exists()) {
         console.error(`Script not found with ID: ${scriptId}`);
@@ -397,14 +407,29 @@ export const useScriptService = () => {
                        
       console.log(`Script access check: isOwner=${isOwner}, isShared=${!!isShared}`);
       
-      if (!isOwner && !isShared) {
+      if (!isOwner && !isShared && user.email !== ADMIN_EMAIL) {
         console.error(`User ${user.uid} doesn't have access to script ${scriptId}`);
         throw new Error("You don't have permission to access this script");
+      }
+      
+      if (data && !data.id) {
+        data.id = scriptId;
       }
       
       return data;
     } catch (error) {
       console.error("Error getting script:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("timeout")) {
+          throw new Error("Script loading timed out. The server might be busy, please try again later.");
+        } else if (error.message.includes("permission")) {
+          throw new Error("You don't have permission to access this script. Contact the owner for access.");
+        } else if (error.message.includes("network")) {
+          throw new Error("Network error. Please check your internet connection and try again.");
+        }
+      }
+      
       throw error;
     }
   };
