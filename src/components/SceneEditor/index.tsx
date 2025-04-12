@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Scene, SceneElement, useScript } from "@/contexts/ScriptContext";
 import { SpeechRecognitionProvider } from "./SpeechRecognitionContext";
@@ -47,9 +48,13 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
+      console.log("Saving scene:", scene.id);
+      console.log("With elements:", elements);
       
+      // Create a deep copy to avoid reference issues
       const elementsCopy = JSON.parse(JSON.stringify(elements));
       
+      // Make sure we have at least one element
       if (elementsCopy.length === 0) {
         elementsCopy.push({
           type: "scene-heading",
@@ -57,6 +62,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         });
       }
       
+      // Update the scene in the context
       updateScene(scene.id, elementsCopy);
       
       toast({
@@ -64,10 +70,11 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         description: "Your changes have been saved successfully",
       });
       
+      // Short delay before closing to show the success state
       setTimeout(() => {
         setIsSaving(false);
         onClose();
-      }, 500);
+      }, 800);
     } catch (error) {
       console.error("Error saving scene:", error);
       toast({

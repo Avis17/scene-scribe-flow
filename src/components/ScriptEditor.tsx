@@ -18,6 +18,11 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   const [isAddingScene, setIsAddingScene] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+  
+  // Reset isAddingScene on component mount or when scenes change
+  useEffect(() => {
+    setIsAddingScene(false);
+  }, [scenes.length]);
 
   useEffect(() => {
     if (loading) {
@@ -57,9 +62,22 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     reorderScenes(result.source.index, result.destination.index);
   };
   
-  const handleAddScene = useCallback(() => {
-    if (isViewOnly || isAddingScene) return;
+  const handleAddScene = useCallback(async () => {
+    if (isViewOnly) {
+      toast({
+        title: "View Only Mode",
+        description: "You cannot add scenes in view-only mode",
+        variant: "destructive"
+      });
+      return;
+    }
     
+    if (isAddingScene) {
+      console.log("Already adding scene, please wait...");
+      return;
+    }
+    
+    console.log("Adding new scene...");
     try {
       setIsAddingScene(true);
       addScene();
@@ -75,14 +93,15 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
         variant: "destructive"
       });
     } finally {
+      // Let's make sure isAddingScene gets reset even if there's an error
       setTimeout(() => {
         setIsAddingScene(false);
-      }, 500);
+      }, 1000);
     }
   }, [addScene, isAddingScene, isViewOnly, toast]);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-28">
       {/* Page mode indicator */}
       <div className="bg-slate-100 dark:bg-slate-800 border-b">
         <div className="container mx-auto py-2 px-4">
@@ -140,12 +159,12 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
           </Droppable>
         </DragDropContext>
         
-        {/* Add Scene Button - now not hidden by footer */}
+        {/* Add Scene Button - improved positioning */}
         <div className="mt-8 mb-20 flex justify-center">
           <Button 
             onClick={handleAddScene} 
             disabled={isViewOnly || isAddingScene}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 relative z-10"
             size="lg"
             variant="outline"
           >

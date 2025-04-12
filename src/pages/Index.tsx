@@ -36,6 +36,7 @@ const Index: React.FC = () => {
     return () => {
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
       }
     };
   }, []);
@@ -46,7 +47,9 @@ const Index: React.FC = () => {
     console.log("Current script ID:", currentScriptId);
     console.log("Script ID from state:", scriptIdFromState);
     
-    const checkScriptAndRedirect = () => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      
       // Only process if we're not already loading auth
       if (!authLoading && location.pathname === "/editor") {
         console.log("Checking script status for editor page");
@@ -62,24 +65,18 @@ const Index: React.FC = () => {
         } else if (scriptIdFromState) {
           console.log("Loading script from state ID:", scriptIdFromState);
           // If script ID is provided in navigation state, use it
-          setCurrentScriptId(scriptIdFromState);
+          if (currentScriptId !== scriptIdFromState) {
+            setCurrentScriptId(scriptIdFromState);
+          }
           setPageState("loading");
+          setLoadStartTime(Date.now());
         } else if (!currentScriptId) {
           console.log("No script ID found, creating new script");
           // Reset to a blank script when coming to the editor without a script ID
           resetScript();
           setPageState("new");
-        } else {
-          // We have a currentScriptId, so we must be editing
-          console.log("Script finished loading, updating page state to edit");
-          setPageState("edit");
         }
       }
-    };
-    
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      checkScriptAndRedirect();
     }
   }, [authLoading, location.pathname, location.state, resetScript, scriptIdFromState, currentScriptId, setCurrentScriptId]);
   
@@ -94,11 +91,16 @@ const Index: React.FC = () => {
     }
   }, [pageState, title]);
   
-  // Handle loading state changes
+  // Handle loading state changes and script data
   useEffect(() => {
-    if (scriptLoading && pageState !== "loading") {
+    // If we're loading, set a timeout to prevent indefinite loading
+    if (scriptLoading && pageState !== "error") {
+      console.log("Script is loading, updating page state");
       setPageState("loading");
-      setLoadStartTime(Date.now());
+      
+      if (loadStartTime === 0) {
+        setLoadStartTime(Date.now());
+      }
       
       // Set a master timeout to prevent indefinite loading
       if (loadingTimeoutRef.current) {
@@ -112,9 +114,10 @@ const Index: React.FC = () => {
           setErrorMessage("Loading timed out. Please try again later.");
         }
       }, 20000); // 20 second maximum loading time
-      
-    } else if (loadError) {
-      // If there's an error from the ScriptContext
+    } 
+    // If we have an error from ScriptContext
+    else if (loadError) {
+      console.log("Load error detected:", loadError);
       setErrorMessage(loadError);
       setPageState("error");
       
@@ -122,8 +125,9 @@ const Index: React.FC = () => {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
-    } else if (!scriptLoading && currentScriptId && pageState === "loading") {
-      // Script finished loading successfully
+    } 
+    // Script loaded successfully
+    else if (!scriptLoading && currentScriptId) {
       console.log("Script finished loading, updating page state to edit");
       setPageState("edit");
       
@@ -131,55 +135,13 @@ const Index: React.FC = () => {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
-    } else if (location.state?.error) {
+    } 
+    // Handle explicit error state from navigation
+    else if (location.state?.error) {
       setErrorMessage(location.state.error);
       setPageState("error");
     }
-  }, [scriptLoading, loadError, location.state, currentScriptId, pageState]);
-  
-  // Set up a watchdog timer to detect stuck loading states
-  useEffect(() => {
-    if (pageState === "loading") {
-      const watchdogInterval = setInterval(() => {
-        const currentTime = Date.now();
-        const loadingTime = currentTime - loadStartTime;
-        
-        // If loading for more than 10 seconds, increment attempt counter
-        if (loadingTime > 10000 && scriptLoading) {
-          loadAttemptRef.current += 1;
-          console.log("Loading timeout reached, attempt:", loadAttemptRef.current);
-          setLoadStartTime(currentTime); // Reset the timer
-          
-          if (loadAttemptRef.current < 3) {
-            // Try reloading the script by briefly clearing and resetting the ID
-            const currentId = currentScriptId;
-            setCurrentScriptId(null);
-            setTimeout(() => {
-              if (scriptIdFromState) {
-                setCurrentScriptId(scriptIdFromState);
-              } else if (currentId) {
-                setCurrentScriptId(currentId);
-              }
-            }, 500);
-          } else {
-            // After 3 attempts, show error
-            clearInterval(watchdogInterval);
-            setErrorMessage("Script is taking too long to load. Please try again later.");
-            setPageState("error");
-            toast({
-              title: "Loading Error",
-              description: "Failed to load script after multiple attempts",
-              variant: "destructive"
-            });
-          }
-        }
-      }, 5000);
-      
-      return () => {
-        clearInterval(watchdogInterval);
-      };
-    }
-  }, [pageState, loadStartTime, scriptLoading, scriptIdFromState, setCurrentScriptId, currentScriptId, toast]);
+  }, [scriptLoading, loadError, location.state, currentScriptId, pageState, loadStartTime]);
 
   const handleRetry = () => {
     loadAttemptRef.current = 0;

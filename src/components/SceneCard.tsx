@@ -76,6 +76,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
       });
       return;
     }
+    console.log("Opening editor for scene:", scene.id);
     setIsEditing(true);
   };
 
@@ -96,7 +97,6 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
               </div>
             )}
           </div>
-          {/* Modified for better mobile responsiveness - removed hidden classes */}
           <div className="flex items-center gap-1 md:gap-2 flex-wrap">
             {isEditing ? (
               <Button
