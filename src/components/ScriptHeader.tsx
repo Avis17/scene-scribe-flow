@@ -78,7 +78,8 @@ const ScriptHeader: React.FC = () => {
     }
   }, [localAuthor, author, setAuthor]);
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
     setIsSaving(true);
     
     // Make sure title and author are saved before calling saveScript
@@ -94,12 +95,14 @@ const ScriptHeader: React.FC = () => {
     navigate("/scripts");
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
     resetScript();
     navigate("/scripts");
   };
 
-  const handleExport = () => {
+  const handleExport = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
     const scriptData = {
       id: currentScriptId || "temp",
       title: localTitle || "Untitled",
@@ -180,6 +183,7 @@ const ScriptHeader: React.FC = () => {
               onClick={handleCancel}
               variant="outline"
               size="sm"
+              type="button"
             >
               <X className="h-4 w-4 mr-1" />
               Cancel
@@ -190,6 +194,7 @@ const ScriptHeader: React.FC = () => {
             <Button 
               onClick={handleSave}
               size="sm"
+              type="button"
             >
               <Save className="h-4 w-4 mr-1" />
               {currentScriptId ? "Update" : "Save"}

@@ -1,12 +1,11 @@
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "./ui/button";
 import { Plus, FileText, Edit } from "lucide-react";
-import { Progress } from "./ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
 interface ScriptEditorProps {
@@ -14,38 +13,8 @@ interface ScriptEditorProps {
 }
 
 const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
-  const { scenes, reorderScenes, addScene, isViewOnly, loading, currentScriptId } = useScript();
-  const [progress, setProgress] = useState(0);
+  const { scenes, reorderScenes, addScene, isViewOnly, currentScriptId } = useScript();
   const { toast } = useToast();
-  
-  // Only show progress for initial script loading, not for user interactions
-  useEffect(() => {
-    if (loading && progress === 0) {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = prev + 5;
-          if (newProgress >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return newProgress;
-        });
-      }, 100);
-      
-      return () => {
-        clearInterval(interval);
-      };
-    } else if (!loading && progress > 0) {
-      setProgress(100);
-      const timeout = setTimeout(() => {
-        setProgress(0);
-      }, 500);
-      
-      return () => {
-        clearTimeout(timeout);
-      };
-    }
-  }, [loading, progress]);
 
   const onDragEnd = (result: any) => {
     // Dropped outside the list
@@ -56,7 +25,9 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     reorderScenes(result.source.index, result.destination.index);
   };
   
-  const handleAddScene = () => {
+  const handleAddScene = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    
     if (isViewOnly) {
       toast({
         title: "View Only Mode",
@@ -108,14 +79,6 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
       
       <ScriptHeader />
       
-      {/* Only show progress for initial load */}
-      {loading && progress > 0 && (
-        <Progress 
-          value={progress} 
-          className="h-1 w-full bg-blue-100 dark:bg-blue-900/30" 
-        />
-      )}
-      
       <div className="container mx-auto p-4 animate-fade-in">
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="scenes">
@@ -152,6 +115,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
             className="flex items-center gap-2 relative z-10"
             size="lg"
             variant="outline"
+            type="button"
           >
             <Plus className="h-5 w-5" /> Add Scene
           </Button>

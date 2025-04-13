@@ -43,7 +43,9 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     setElements(newElements);
   };
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
+    
     try {
       console.log("Saving scene:", scene.id);
       console.log("With elements:", elements);
@@ -59,7 +61,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         });
       }
       
-      // Directly update scene without triggering app reload
+      // Update scene without triggering navigation
       updateScene(scene.id, elementsCopy);
       
       toast({
@@ -79,7 +81,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
     onClose();
   };
 

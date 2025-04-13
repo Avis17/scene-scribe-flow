@@ -51,24 +51,6 @@ export function ThemeProvider({
     console.log("Applied theme:", theme);
   }, [theme]);
 
-  // Apply theme on initial load
-  useEffect(() => {
-    // Apply theme directly on component mount
-    const savedTheme = localStorage.getItem(storageKey) as Theme;
-    if (savedTheme) {
-      const root = window.document.documentElement;
-      root.classList.remove("light", "dark");
-      if (savedTheme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-        root.classList.add(systemTheme);
-      } else {
-        root.classList.add(savedTheme);
-      }
-    }
-  }, [storageKey]);
-
   const value = {
     theme,
     setTheme: (theme: Theme) => {
