@@ -7,16 +7,20 @@ interface ScriptData {
 }
 
 export const exportScriptToPDF = (scriptData: ScriptData): void => {
-  // Create the title page content
-  const titlePageContent = `
+  // Create a single HTML document containing both title page and script content
+  const combinedContent = `
     <html>
       <head>
         <title>${scriptData.title}</title>
         <style>
           @media print {
-            @page { margin: 1in; }
+            @page { 
+              size: letter;
+              margin: 1in; 
+            }
             body { margin: 0; }
             .avoid-break { page-break-inside: avoid; }
+            .page-break { page-break-before: always; }
           }
           body { 
             font-family: Courier, monospace; 
@@ -26,6 +30,7 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
           .title-page {
             height: 11in;
             position: relative;
+            page-break-after: always;
           }
           .title-wrapper {
             position: absolute;
@@ -50,43 +55,9 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
             bottom: 1in;
             text-align: center;
           }
-        </style>
-      </head>
-      <body>
-        <div class="title-page">
-          <div class="title-wrapper">
-            <div class="title">${scriptData.title}</div>
-            <div>Written by</div>
-            <div class="author-section">${scriptData.author}</div>
-          </div>
-          <div class="contact-info">studio.semmaclicks@gmail.com | +91-XXXXXXXXXX</div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  // Create the script content
-  const scriptContent = `
-    <html>
-      <head>
-        <title>${scriptData.title}</title>
-        <style>
-          @media print {
-            @page { 
-              margin: 1in 1in 1in 1.5in;
-              size: letter;
-            }
-            body { margin: 0; }
-            .avoid-break { page-break-inside: avoid; }
-          }
-          body { 
-            font-family: Courier, monospace; 
-            font-size: 12pt;
-            line-height: 1.6;
-            counter-reset: page 1;
-          }
           .script-content {
             position: relative;
+            counter-reset: page 1;
           }
           .page-number {
             position: absolute;
@@ -97,6 +68,10 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
           .page-number::after {
             counter-increment: page;
             content: counter(page);
+          }
+          .script-page {
+            margin-left: 1.5in;
+            margin-right: 1in;
           }
           .scene-heading { 
             font-weight: bold; 
@@ -143,12 +118,23 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
         </style>
       </head>
       <body>
-        <div class="script-content">
+        <!-- Title Page -->
+        <div class="title-page">
+          <div class="title-wrapper">
+            <div class="title">${scriptData.title}</div>
+            <div>Written by</div>
+            <div class="author-section">${scriptData.author}</div>
+          </div>
+          <div class="contact-info">studio.semmaclicks@gmail.com | +91-XXXXXXXXXX</div>
+        </div>
+        
+        <!-- Script Content -->
+        <div class="script-content script-page">
           <div class="page-number"></div>
   `;
   
   // Add script content, scene by scene
-  let contentWithScenes = scriptContent;
+  let contentWithScenes = combinedContent;
   
   scriptData.scenes.forEach((scene, sceneIndex) => {
     contentWithScenes += `
@@ -184,39 +170,23 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
     </html>
   `;
   
-  // Create and print the title page
-  const titleIframe = document.createElement('iframe');
-  titleIframe.style.position = 'absolute';
-  titleIframe.style.top = '-9999px';
-  document.body.appendChild(titleIframe);
+  // Create and print a single iframe with the combined content
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.top = '-9999px';
+  document.body.appendChild(iframe);
   
-  const titleWindow = titleIframe.contentWindow;
-  if (titleWindow) {
-    titleWindow.document.open();
-    titleWindow.document.write(titlePageContent);
-    titleWindow.document.close();
-  }
-  
-  // Create and print the script content
-  const scriptIframe = document.createElement('iframe');
-  scriptIframe.style.position = 'absolute';
-  scriptIframe.style.top = '-9999px';
-  document.body.appendChild(scriptIframe);
-  
-  const scriptWindow = scriptIframe.contentWindow;
-  if (scriptWindow) {
-    scriptWindow.document.open();
-    scriptWindow.document.write(contentWithScenes);
-    scriptWindow.document.close();
+  const contentWindow = iframe.contentWindow;
+  if (contentWindow) {
+    contentWindow.document.open();
+    contentWindow.document.write(contentWithScenes);
+    contentWindow.document.close();
     
-    // Wait for all content to load then print both frames
+    // Wait for all content to load then print
     setTimeout(() => {
-      titleWindow?.print();
+      contentWindow.print();
       setTimeout(() => {
-        scriptWindow.focus();
-        scriptWindow.print();
-        document.body.removeChild(titleIframe);
-        document.body.removeChild(scriptIframe);
+        document.body.removeChild(iframe);
       }, 500);
     }, 500);
   }
