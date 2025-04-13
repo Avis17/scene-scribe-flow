@@ -1,12 +1,14 @@
 
 interface ScriptData {
+  id: string;
   title: string;
   author: string;
   scenes: any[];
 }
 
 export const exportScriptToPDF = (scriptData: ScriptData): void => {
-  let content = `
+  // Create the title page content
+  const titlePageContent = `
     <html>
       <head>
         <title>${scriptData.title}</title>
@@ -14,52 +16,81 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
           @media print {
             @page { margin: 1in; }
             body { margin: 0; }
+            .avoid-break { page-break-inside: avoid; }
           }
           body { 
             font-family: Courier, monospace; 
-            line-height: 1.6; 
             font-size: 12pt;
-            counter-reset: page;
+            line-height: 1.6;
           }
           .title-page {
             height: 11in;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-          }
-          .title-page h1 { 
-            font-size: 24pt; 
-            margin-bottom: 1in;
-          }
-          .scene-content {
             position: relative;
           }
-          .scene-heading { 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            margin-top: 20px; 
+          .title-wrapper {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 33%;
+            text-align: center;
           }
-          .scene-number {
+          .title { 
+            font-size: 24pt;
+            text-transform: uppercase;
+            margin-bottom: 1in;
+          }
+          .author-section {
+            text-align: center;
+            margin-top: 0.5in;
+          }
+          .contact-info {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 1in;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="title-page">
+          <div class="title-wrapper">
+            <div class="title">${scriptData.title}</div>
+            <div>Written by</div>
+            <div class="author-section">${scriptData.author}</div>
+          </div>
+          <div class="contact-info">studio.semmaclicks@gmail.com | +91-XXXXXXXXXX</div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  // Create the script content
+  const scriptContent = `
+    <html>
+      <head>
+        <title>${scriptData.title}</title>
+        <style>
+          @media print {
+            @page { 
+              margin: 1in 1in 1in 1.5in;
+              size: letter;
+            }
+            body { margin: 0; }
+            .avoid-break { page-break-inside: avoid; }
+          }
+          body { 
+            font-family: Courier, monospace; 
             font-size: 12pt;
-            color: #666;
-            margin-bottom: 0.5in;
-            font-weight: bold;
+            line-height: 1.6;
+            counter-reset: page 1;
           }
-          .action { margin: 10px 0; }
-          .character { 
-            margin-left: 20%; 
-            margin-bottom: 0; 
-            margin-top: 20px; 
-            font-weight: bold; 
+          .script-content {
+            position: relative;
           }
-          .dialogue { margin-left: 10%; margin-right: 20%; margin-bottom: 20px; }
-          .parenthetical { margin-left: 15%; margin-bottom: 0; font-style: italic; }
-          .transition { margin-left: 60%; font-weight: bold; margin-top: 20px; }
           .page-number {
             position: absolute;
-            bottom: 0.5in;
+            top: 0.5in;
             right: 0.5in;
             font-size: 12pt;
           }
@@ -67,51 +98,126 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
             counter-increment: page;
             content: counter(page);
           }
+          .scene-heading { 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-top: 20px; 
+          }
+          .action { 
+            margin: 10px 0; 
+          }
+          .character { 
+            margin-left: 4.2in; 
+            margin-right: auto;
+            width: 3in;
+            text-align: center;
+            margin-bottom: 0; 
+            margin-top: 20px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+          }
+          .dialogue { 
+            margin-left: auto; 
+            margin-right: auto;
+            width: 2.9in;
+            text-align: left;
+            margin-bottom: 20px; 
+          }
+          .parenthetical { 
+            margin-left: auto; 
+            margin-right: auto;
+            width: 2in;
+            text-align: center;
+            margin-bottom: 0; 
+            font-style: italic; 
+          }
+          .transition { 
+            margin-left: 60%; 
+            font-weight: bold; 
+            margin-top: 20px; 
+          }
+          .scene-number {
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
         </style>
       </head>
       <body>
-        <div class="title-page">
-          <h1>${scriptData.title}</h1>
-          <p>by</p>
-          <p style="font-weight: bold; font-size: 16pt;">${scriptData.author}</p>
-        </div>
+        <div class="script-content">
+          <div class="page-number"></div>
   `;
   
-  // Add script content, starting with scene 1
-  content += `<div class="scene-content">`;
+  // Add script content, scene by scene
+  let contentWithScenes = scriptContent;
   
   scriptData.scenes.forEach((scene, sceneIndex) => {
-    content += `
-      <div class="scene-number">SCENE ${sceneIndex + 1}</div>
+    contentWithScenes += `
+      <div class="scene-number avoid-break">SCENE ${sceneIndex + 1}</div>
     `;
     
     scene.elements.forEach((element: any) => {
-      content += `<div class="${element.type}">${element.content}</div>`;
+      let elementClass = element.type;
+      let content = element.content;
+      
+      // Special formatting for different element types
+      switch(element.type) {
+        case 'scene-heading':
+          content = content.toUpperCase();
+          break;
+        case 'character':
+          content = content.toUpperCase();
+          break;
+        case 'parenthetical':
+          if (!content.startsWith('(') && !content.endsWith(')')) {
+            content = `(${content})`;
+          }
+          break;
+      }
+      
+      contentWithScenes += `<div class="${elementClass} avoid-break">${content}</div>`;
     });
   });
   
-  content += `
-        <div class="page-number"></div>
-      </div>
+  contentWithScenes += `
+        </div>
       </body>
     </html>
   `;
   
-  const printIframe = document.createElement('iframe');
-  printIframe.style.position = 'absolute';
-  printIframe.style.top = '-9999px';
-  document.body.appendChild(printIframe);
+  // Create and print the title page
+  const titleIframe = document.createElement('iframe');
+  titleIframe.style.position = 'absolute';
+  titleIframe.style.top = '-9999px';
+  document.body.appendChild(titleIframe);
   
-  const contentWindow = printIframe.contentWindow;
-  if (contentWindow) {
-    contentWindow.document.open();
-    contentWindow.document.write(content);
-    contentWindow.document.close();
+  const titleWindow = titleIframe.contentWindow;
+  if (titleWindow) {
+    titleWindow.document.open();
+    titleWindow.document.write(titlePageContent);
+    titleWindow.document.close();
+  }
+  
+  // Create and print the script content
+  const scriptIframe = document.createElement('iframe');
+  scriptIframe.style.position = 'absolute';
+  scriptIframe.style.top = '-9999px';
+  document.body.appendChild(scriptIframe);
+  
+  const scriptWindow = scriptIframe.contentWindow;
+  if (scriptWindow) {
+    scriptWindow.document.open();
+    scriptWindow.document.write(contentWithScenes);
+    scriptWindow.document.close();
     
+    // Wait for all content to load then print both frames
     setTimeout(() => {
-      contentWindow.focus();
-      contentWindow.print();
-      document.body.removeChild(printIframe);
-    }, 250);
+      titleWindow?.print();
+      setTimeout(() => {
+        scriptWindow.focus();
+        scriptWindow.print();
+        document.body.removeChild(titleIframe);
+        document.body.removeChild(scriptIframe);
+      }, 500);
+    }, 500);
   }
 };
