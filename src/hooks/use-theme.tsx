@@ -45,17 +45,13 @@ export function ThemeProvider({
         : "light";
 
       root.classList.add(systemTheme);
-      console.log("Applied system theme:", systemTheme);
     } else {
       // Add the selected theme class
       root.classList.add(theme);
-      console.log("Applied theme class:", theme);
     }
     
     // Save to localStorage
     localStorage.setItem(storageKey, theme);
-    
-    console.log("Theme saved to localStorage:", theme);
   }, [theme, storageKey]);
 
   // Listen for system theme changes
@@ -68,7 +64,6 @@ export function ThemeProvider({
         root.classList.remove("light", "dark");
         const systemTheme = mediaQuery.matches ? "dark" : "light";
         root.classList.add(systemTheme);
-        console.log("System theme changed to:", systemTheme);
       };
       
       mediaQuery.addEventListener("change", handleChange);
@@ -79,7 +74,6 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme: Theme) => {
-      console.log("Setting theme to:", newTheme);
       setTheme(newTheme);
     },
   };

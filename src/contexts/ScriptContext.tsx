@@ -120,7 +120,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [user, author]);
 
   const resetScript = useCallback(() => {
-    console.log("Resetting script to default state");
     setTitle("Untitled Screenplay");
     setAuthor(user?.displayName || "");
     setScenes([
@@ -150,7 +149,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     const loadScript = async () => {
       if (currentScriptId && !loadingRef.current && !isModified) {
         try {
-          console.log("Loading script:", currentScriptId);
           loadingRef.current = true;
           setLoading(true);
           setIsEditing(true);
@@ -163,12 +161,10 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           const scriptData = await scriptService.getScriptById(currentScriptId);
           
           if (!mountedRef.current) {
-            console.log("Component unmounted during script load, aborting");
             return;
           }
           
           if (!scriptData) {
-            console.error("Script not found:", currentScriptId);
             setLoadError(`Script with ID ${currentScriptId} not found.`);
             toast({
               title: "Error",
@@ -179,14 +175,10 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
           
-          console.log("Script loaded successfully:", scriptData);
-          
           setTitle(scriptData.title || "Untitled Screenplay");
           setAuthor(scriptData.author || "");
           
           if (Array.isArray(scriptData.scenes) && scriptData.scenes.length > 0) {
-            console.log("Loaded scenes:", scriptData.scenes.length);
-            
             const loadedScenes = JSON.parse(JSON.stringify(scriptData.scenes));
             
             const processedScenes = loadedScenes.map((scene: any) => ({
@@ -205,10 +197,8 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
               ]
             }));
             
-            console.log("Processed scenes:", processedScenes);
             setScenes(processedScenes);
           } else {
-            console.warn("No scenes found in the loaded script, using default");
             setScenes([{
               id: "scene-1",
               isCollapsed: false,
@@ -245,11 +235,9 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           setIsInitialized(true);
         } catch (error) {
           if (!mountedRef.current) {
-            console.log("Component unmounted during error handling, aborting");
             return;
           }
           
-          console.error("Error loading script:", error);
           const errorMessage = error instanceof Error ? error.message : "Failed to load script";
           setLoadError(errorMessage);
           
@@ -261,7 +249,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           resetScript();
         } finally {
           if (mountedRef.current) {
-            console.log("Clearing loading state after script load");
             setLoading(false);
           }
           
@@ -286,7 +273,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   }, [currentScriptId, user, toast, scriptService, resetScript, isModified]);
 
   const addScene = () => {
-    console.log("Adding a new scene to the script");
     setIsModified(true);
     const newId = `scene-${Date.now()}`;
     setScenes(prevScenes => {
@@ -307,19 +293,16 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           ],
         },
       ];
-      console.log("New scenes count:", newScenes.length);
       return newScenes;
     });
   };
 
   const updateScene = (id: string, elements: SceneElement[]) => {
-    console.log(`Updating scene ${id} with ${elements.length} elements`);
     setIsModified(true);
     setScenes(prevScenes => {
       const newScenes = prevScenes.map(scene => 
         scene.id === id ? { ...scene, elements } : scene
       );
-      console.log("Updated scenes:", newScenes.length);
       return newScenes;
     });
   };
@@ -369,7 +352,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       if (currentScriptId) {
-        console.log("Updating existing script:", currentScriptId);
         await scriptService.updateScript(currentScriptId, title, author, currentScenesRef.current, visibility, user.email);
         toast({
           title: "Success",
@@ -378,7 +360,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         setIsModified(false);
         return currentScriptId;
       } else {
-        console.log("Creating new script");
         const newScriptId = await scriptService.saveScript(title, author, currentScenesRef.current, visibility);
         setCurrentScriptId(newScriptId);
         toast({
@@ -389,7 +370,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         return newScriptId;
       }
     } catch (error) {
-      console.error("Error saving script:", error);
       toast({
         title: "Error",
         description: "Failed to save script",

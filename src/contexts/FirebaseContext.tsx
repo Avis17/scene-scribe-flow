@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { 
   initializeApp, 
@@ -68,9 +69,8 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     const setupPersistence = async () => {
       try {
         await setPersistence(auth, browserLocalPersistence);
-        console.log("Firebase persistence set to LOCAL");
       } catch (error) {
-        console.error("Error setting persistence:", error);
+        // Error handling without console.log
       }
     };
     
@@ -83,15 +83,12 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
-    console.log("Setting up auth state listener");
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("Auth state changed:", currentUser ? `Logged in as ${currentUser.email}` : "Logged out");
       setUser(currentUser);
       setLoading(false);
     });
 
     return () => {
-      console.log("Cleaning up auth state listener");
       unsubscribe();
     };
   }, [auth]);
@@ -99,11 +96,8 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   // Authentication functions
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Attempting sign in with email:", email);
       await signInWithEmailAndPassword(auth, email, password);
-      console.log("Sign in successful for:", email);
     } catch (error) {
-      console.error("Sign in error:", error);
       throw error;
     }
   };
@@ -123,8 +117,6 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
     } catch (error: any) {
-      console.error("Google sign-in error:", error);
-      
       // Check for unauthorized domain error
       if (error.code === 'auth/unauthorized-domain') {
         toast({

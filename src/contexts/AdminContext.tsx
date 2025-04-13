@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { 
@@ -49,7 +50,6 @@ export const ADMIN_EMAIL = "sivasubramanian1617@gmail.com";
 export const useAdmin = () => {
   const context = useContext(AdminContext);
   if (context === undefined) {
-    console.error("useAdmin must be used within an AdminProvider");
     return defaultContextValue;
   }
   return context;
@@ -79,7 +79,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         adminCheckInProgress.current = true;
-        console.log("Starting admin status check for:", user.email);
         
         const userEmailLower = user.email ? user.email.toLowerCase() : '';
         const adminEmailLower = ADMIN_EMAIL.toLowerCase();
@@ -87,7 +86,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         let isUserAdmin = false;
         
         if (userEmailLower === adminEmailLower) {
-          console.log("✅ Email matches admin email exactly, granting admin access");
           isUserAdmin = true;
           
           try {
@@ -102,40 +100,31 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
                   permissions: ["read", "write", "delete", "admin"],
                   lastUpdated: new Date().toISOString()
                 });
-                console.log("Created admin record in database");
               } catch (dbError) {
-                console.warn("Could not create admin record in database:", dbError);
+                // Error handling without console.log
               }
             }
           } catch (error) {
-            console.warn("Error checking database for admin record:", error);
+            // Error handling without console.log
           }
         } else {
           try {
-            console.log("Checking for admin permission in database for uid:", user.uid);
             const userRef = doc(db, "permissions", user.uid);
             const userDoc = await getDoc(userRef);
             
             if (userDoc.exists() && userDoc.data().permissions?.includes("admin")) {
-              console.log("✅ User has admin permission in database");
               isUserAdmin = true;
             } else {
-              console.log("❌ User does not have admin permission");
               isUserAdmin = false;
             }
           } catch (error) {
-            console.error("Error checking database permissions:", error);
             isUserAdmin = false;
           }
         }
         
-        console.log("Final admin status determination:", isUserAdmin);
         setIsAdmin(isUserAdmin);
       } catch (error) {
-        console.error("Error checking admin status:", error);
-        
         if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          console.log("⚠️ Error occurred, but email matches admin - granting access");
           setIsAdmin(true);
         } else {
           setIsAdmin(false);
@@ -162,7 +151,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     
     try {
-      console.log("Fetching users...");
       setLoading(true);
       const permissionsRef = collection(db, "permissions");
       const querySnapshot = await getDocs(permissionsRef);
@@ -181,7 +169,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       
       setUsers(usersData);
     } catch (error) {
-      console.error("Error fetching users:", error);
       setUsers([]);
     } finally {
       setLoading(false);
@@ -203,7 +190,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       
       return;
     } catch (error) {
-      console.error("Error updating user permissions:", error);
       throw new Error("Could not update permissions. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
@@ -220,7 +206,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       
       return;
     } catch (error) {
-      console.error("Error removing user:", error);
       throw new Error("Could not remove user. You may not have sufficient access rights.");
     } finally {
       setLoading(false);
@@ -271,8 +256,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       
       return;
     } catch (error) {
-      console.error("Error adding user:", error);
-      
       if (error instanceof Error && error.message === "User already has permissions") {
         throw error;
       } else {
@@ -292,8 +275,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     removeUser,
     addUser
   };
-
-  console.log("AdminProvider rendering with isAdmin:", isAdmin, "adminCheckComplete:", adminCheckComplete, "loading:", loading);
   
   return (
     <AdminContext.Provider value={contextValue}>

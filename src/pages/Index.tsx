@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import ScriptEditor from "@/components/ScriptEditor";
@@ -44,24 +45,19 @@ const Index: React.FC = () => {
       isInitialMountRef.current = false;
       
       if (!authLoading && location.pathname === "/editor") {
-        console.log("Checking script status for editor page");
-        
         const isNewScriptRequest = location.state?.forceNew === true;
         
         if (isNewScriptRequest) {
-          console.log("Force new script requested, resetting script");
           resetScript();
           setPageState("new");
           setInitialLoadComplete(true);
         } else if (scriptIdFromState) {
-          console.log("Loading script from state ID:", scriptIdFromState);
           if (currentScriptId !== scriptIdFromState) {
             setCurrentScriptId(scriptIdFromState);
           }
           setPageState("loading");
           setLoadStartTime(Date.now());
         } else if (!currentScriptId) {
-          console.log("No script ID found, creating new script");
           resetScript();
           setPageState("new");
           setInitialLoadComplete(true);
@@ -83,7 +79,6 @@ const Index: React.FC = () => {
   useEffect(() => {
     if (!initialLoadComplete) {
       if (scriptLoading && pageState !== "error") {
-        console.log("Initial script loading, updating page state");
         setPageState("loading");
         
         if (loadStartTime === 0) {
@@ -96,14 +91,12 @@ const Index: React.FC = () => {
         
         loadingTimeoutRef.current = setTimeout(() => {
           if (scriptLoading) {
-            console.log("Master loading timeout reached, forcing error state");
             setPageState("error");
             setErrorMessage("Loading timed out. Please try again later.");
           }
         }, 20000);
       } 
       else if (loadError) {
-        console.log("Load error detected:", loadError);
         setErrorMessage(loadError);
         setPageState("error");
         
@@ -113,7 +106,6 @@ const Index: React.FC = () => {
         }
       } 
       else if (!scriptLoading && currentScriptId) {
-        console.log("Script finished initial loading, updating page state to edit");
         setPageState("edit");
         setInitialLoadComplete(true);
         

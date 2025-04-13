@@ -18,7 +18,6 @@ const ThemeToggle: React.FC = () => {
   const toggleTheme = () => {
     // Explicitly toggle between dark and light, bypassing system
     const newTheme = currentTheme === "dark" ? "light" : "dark";
-    console.log(`Toggling theme from ${currentTheme} to ${newTheme}`);
     setTheme(newTheme);
   };
 
