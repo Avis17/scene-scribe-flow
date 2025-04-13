@@ -28,6 +28,7 @@ const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       aria-label={`Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} mode`}
       type="button"
+      className="w-10 h-10 flex items-center justify-center"
     >
       {currentTheme === "dark" ? (
         <Sun className="h-5 w-5" />

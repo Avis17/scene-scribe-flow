@@ -27,12 +27,14 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return defaultTheme;
+    return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
+  });
 
   // Apply theme immediately when component mounts and when theme changes
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
     
     // First remove all theme classes
@@ -56,6 +58,7 @@ export function ThemeProvider({
 
   // Listen for system theme changes
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (theme === "system") {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       
