@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -7,21 +7,25 @@ import { useTheme } from "@/hooks/use-theme";
 const ThemeToggle: React.FC = () => {
   const { theme, setTheme } = useTheme();
 
-  // Force theme application on mount
-  useEffect(() => {
+  const toggleTheme = () => {
+    // Force immediate DOM update along with state change
+    const newTheme = theme === "dark" ? "light" : "dark";
     const root = window.document.documentElement;
-    if (theme === "dark") {
+    
+    if (newTheme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-  }, [theme]);
+    
+    setTheme(newTheme);
+  };
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={toggleTheme}
       aria-label="Toggle theme"
     >
       {theme === "dark" ? (

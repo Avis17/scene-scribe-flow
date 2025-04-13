@@ -20,7 +20,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   
   // Only show progress for initial script loading, not for user interactions
   useEffect(() => {
-    if (loading) {
+    if (loading && progress === 0) {
       const interval = setInterval(() => {
         setProgress(prev => {
           const newProgress = prev + 5;
@@ -34,9 +34,8 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
       
       return () => {
         clearInterval(interval);
-        setProgress(0);
       };
-    } else {
+    } else if (!loading && progress > 0) {
       setProgress(100);
       const timeout = setTimeout(() => {
         setProgress(0);
@@ -46,7 +45,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
         clearTimeout(timeout);
       };
     }
-  }, [loading]);
+  }, [loading, progress]);
 
   const onDragEnd = (result: any) => {
     // Dropped outside the list
@@ -57,7 +56,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     reorderScenes(result.source.index, result.destination.index);
   };
   
-  const handleAddScene = useCallback(() => {
+  const handleAddScene = () => {
     if (isViewOnly) {
       toast({
         title: "View Only Mode",
@@ -69,7 +68,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     
     console.log("Adding new scene...");
     try {
-      // Directly add scene without setting loading state
+      // Add scene directly without reload
       addScene();
       toast({
         title: "Scene added",
@@ -83,7 +82,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
         variant: "destructive"
       });
     }
-  }, [addScene, isViewOnly, toast]);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -145,10 +144,10 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
           </Droppable>
         </DragDropContext>
         
-        {/* Add Scene Button - improved positioning to ensure visibility */}
+        {/* Add Scene Button - fixed position */}
         <div className="mt-8 mb-20 flex justify-center">
           <Button 
-            onClick={handleAddScene} 
+            onClick={handleAddScene}
             disabled={isViewOnly}
             className="flex items-center gap-2 relative z-10"
             size="lg"

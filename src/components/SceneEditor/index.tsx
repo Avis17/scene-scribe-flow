@@ -59,7 +59,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         });
       }
       
-      // Direct update without setting loading state
+      // Directly update scene without triggering app reload
       updateScene(scene.id, elementsCopy);
       
       toast({
@@ -67,7 +67,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         description: "Your changes have been saved",
       });
       
-      // Close immediately
+      // Close immediately to prevent state reset
       onClose();
     } catch (error) {
       console.error("Error saving scene:", error);
