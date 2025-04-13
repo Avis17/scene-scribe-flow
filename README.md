@@ -154,7 +154,7 @@ This application is built with:
 
 ## Support & Feedback
 
-For support or to provide feedback, please contact us at support@screenplaywriter.com
+For support or to provide feedback, please contact us at studio.semmaclicks@gmail.com
 
 ---
 
