@@ -54,7 +54,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
       // Make sure we have at least one element
       if (elementsCopy.length === 0) {
         elementsCopy.push({
-          type: "scene-heading",
+          type: "scene-heading" as const,
           content: "INT. LOCATION - TIME"
         });
       }

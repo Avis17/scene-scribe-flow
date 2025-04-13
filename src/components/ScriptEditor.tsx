@@ -27,6 +27,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   
   const handleAddScene = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     
     if (isViewOnly) {
       toast({

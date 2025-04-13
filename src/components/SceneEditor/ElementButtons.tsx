@@ -30,6 +30,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           onClick={() => handleAddElement("action")}
           disabled={isAdding !== null}
           className="mr-2"
+          type="button"
         >
           <PlusCircle className="h-4 w-4 mr-1" /> Action
         </Button>
@@ -39,6 +40,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           onClick={() => handleAddElement("character")}
           disabled={isAdding !== null}
           className="mr-2"
+          type="button"
         >
           <PlusCircle className="h-4 w-4 mr-1" /> Character
         </Button>
@@ -47,6 +49,7 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
           size="sm"
           onClick={() => handleAddElement("dialogue")}
           disabled={isAdding !== null}
+          type="button"
         >
           <PlusCircle className="h-4 w-4 mr-1" /> Dialogue
         </Button>

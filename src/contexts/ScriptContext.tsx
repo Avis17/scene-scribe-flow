@@ -278,18 +278,6 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     loadScript();
   }, [currentScriptId, user, toast, scriptService, resetScript]);
 
-  const updateScene = (id: string, elements: SceneElement[]) => {
-    console.log(`Updating scene ${id} with ${elements.length} elements`);
-    setIsModified(true);
-    setScenes(prevScenes => {
-      const newScenes = prevScenes.map(scene => 
-        scene.id === id ? { ...scene, elements } : scene
-      );
-      console.log("Updated scenes:", newScenes.length);
-      return newScenes;
-    });
-  };
-
   const addScene = () => {
     console.log("Adding a new scene to the script");
     setIsModified(true);
@@ -302,11 +290,11 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
           isCollapsed: false,
           elements: [
             {
-              type: "scene-heading",
+              type: "scene-heading" as const,
               content: "INT. LOCATION - TIME",
             },
             {
-              type: "action",
+              type: "action" as const,
               content: "",
             },
           ],
@@ -317,22 +305,36 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateScene = (id: string, elements: SceneElement[]) => {
+    console.log(`Updating scene ${id} with ${elements.length} elements`);
+    setIsModified(true);
+    setScenes(prevScenes => {
+      const newScenes = prevScenes.map(scene => 
+        scene.id === id ? { ...scene, elements } : scene
+      );
+      console.log("Updated scenes:", newScenes.length);
+      return newScenes;
+    });
+  };
+
   const deleteScene = (id: string) => {
     setIsModified(true);
-    setScenes(scenes.filter((scene) => scene.id !== id));
+    setScenes(prevScenes => prevScenes.filter((scene) => scene.id !== id));
   };
 
   const reorderScenes = (sourceIndex: number, destinationIndex: number) => {
     setIsModified(true);
-    const result = Array.from(scenes);
-    const [removed] = result.splice(sourceIndex, 1);
-    result.splice(destinationIndex, 0, removed);
-    setScenes(result);
+    setScenes(prevScenes => {
+      const result = Array.from(prevScenes);
+      const [removed] = result.splice(sourceIndex, 1);
+      result.splice(destinationIndex, 0, removed);
+      return result;
+    });
   };
 
   const toggleSceneCollapse = (id: string) => {
-    setScenes(
-      scenes.map((scene) =>
+    setScenes(prevScenes =>
+      prevScenes.map((scene) =>
         scene.id === id ? { ...scene, isCollapsed: !scene.isCollapsed } : scene
       )
     );
