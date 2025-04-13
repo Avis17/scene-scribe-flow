@@ -48,13 +48,6 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
             text-align: center;
             margin-top: 0.5in;
           }
-          .contact-info {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 1in;
-            text-align: center;
-          }
           .script-content {
             position: relative;
             counter-reset: page 1;
@@ -114,6 +107,7 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
           .scene-number {
             font-weight: bold;
             margin-bottom: 10px;
+            margin-top: 30px; /* Added space after each scene */
           }
         </style>
       </head>
@@ -125,7 +119,6 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
             <div>Written by</div>
             <div class="author-section">${scriptData.author}</div>
           </div>
-          <div class="contact-info">studio.semmaclicks@gmail.com | +91-XXXXXXXXXX</div>
         </div>
         
         <!-- Script Content -->
@@ -184,6 +177,14 @@ export const exportScriptToPDF = (scriptData: ScriptData): void => {
     
     // Wait for all content to load then print
     setTimeout(() => {
+      // Set the filename with the screenplay title
+      const fileName = `${scriptData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_scriptly.pdf`;
+      
+      // For browsers that support it, set the filename
+      if ((contentWindow as any).document.title) {
+        (contentWindow as any).document.title = fileName;
+      }
+      
       contentWindow.print();
       setTimeout(() => {
         document.body.removeChild(iframe);
