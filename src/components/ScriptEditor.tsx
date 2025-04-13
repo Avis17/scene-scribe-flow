@@ -41,6 +41,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     try {
       // Add scene directly without reload
       addScene();
+      
       toast({
         title: "Scene added",
         description: "New scene has been added to your script"

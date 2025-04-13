@@ -34,6 +34,8 @@ export function ThemeProvider({
   // Apply theme on mount and when theme changes
   useEffect(() => {
     const root = window.document.documentElement;
+    
+    // First remove all theme classes
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -47,15 +49,20 @@ export function ThemeProvider({
       return;
     }
 
+    // Add the selected theme class
     root.classList.add(theme);
+    
+    // Save to localStorage
     localStorage.setItem(storageKey, theme);
+    
     console.log("Applied theme:", theme);
   }, [theme, storageKey]);
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      console.log("Setting theme to:", newTheme);
+      setTheme(newTheme);
     },
   };
 

@@ -278,33 +278,43 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     loadScript();
   }, [currentScriptId, user, toast, scriptService, resetScript]);
 
-  const addScene = () => {
+  const updateScene = (id: string, elements: SceneElement[]) => {
+    console.log(`Updating scene ${id} with ${elements.length} elements`);
     setIsModified(true);
-    const newId = `scene-${Date.now()}`;
-    setScenes([
-      ...scenes,
-      {
-        id: newId,
-        isCollapsed: false,
-        elements: [
-          {
-            type: "scene-heading",
-            content: "INT. LOCATION - TIME",
-          },
-          {
-            type: "action",
-            content: "",
-          },
-        ],
-      },
-    ]);
+    setScenes(prevScenes => {
+      const newScenes = prevScenes.map(scene => 
+        scene.id === id ? { ...scene, elements } : scene
+      );
+      console.log("Updated scenes:", newScenes.length);
+      return newScenes;
+    });
   };
 
-  const updateScene = (id: string, elements: SceneElement[]) => {
+  const addScene = () => {
+    console.log("Adding a new scene to the script");
     setIsModified(true);
-    setScenes(scenes.map((scene) => 
-      scene.id === id ? { ...scene, elements } : scene
-    ));
+    const newId = `scene-${Date.now()}`;
+    setScenes(prevScenes => {
+      const newScenes = [
+        ...prevScenes,
+        {
+          id: newId,
+          isCollapsed: false,
+          elements: [
+            {
+              type: "scene-heading",
+              content: "INT. LOCATION - TIME",
+            },
+            {
+              type: "action",
+              content: "",
+            },
+          ],
+        },
+      ];
+      console.log("New scenes count:", newScenes.length);
+      return newScenes;
+    });
   };
 
   const deleteScene = (id: string) => {

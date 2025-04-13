@@ -52,10 +52,10 @@ const ElementButtons: React.FC<ElementButtonsProps> = ({ onAddElement, onSave, o
         </Button>
       </div>
       <div className="space-x-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel} type="button">
           <X className="h-4 w-4 mr-1" /> Cancel
         </Button>
-        <Button onClick={onSave}>
+        <Button onClick={onSave} type="button">
           <Check className="h-4 w-4 mr-1" /> Update
         </Button>
       </div>
