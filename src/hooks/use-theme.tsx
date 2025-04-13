@@ -48,13 +48,13 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme);
+    localStorage.setItem(storageKey, theme);
     console.log("Applied theme:", theme);
-  }, [theme]);
+  }, [theme, storageKey]);
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
       setTheme(theme);
     },
   };

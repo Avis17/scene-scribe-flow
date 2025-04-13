@@ -43,9 +43,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     setElements(newElements);
   };
 
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default form submission
-    
+  const handleSave = () => {
     try {
       console.log("Saving scene:", scene.id);
       console.log("With elements:", elements);
@@ -81,8 +79,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
     }
   };
 
-  const handleCancel = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default form submission
+  const handleCancel = () => {
     onClose();
   };
 
