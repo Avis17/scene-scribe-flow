@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useScript } from "@/contexts/ScriptContext";
 import ScriptHeader from "./ScriptHeader";
 import SceneCard from "./SceneCard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "./ui/button";
-import { Plus, Loader, FileText, Edit } from "lucide-react";
+import { Plus, FileText, Edit } from "lucide-react";
 import { Progress } from "./ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,7 +18,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   
-  // Handle loading state changes and progress
+  // Only show progress for initial script loading, not for user interactions
   useEffect(() => {
     if (loading) {
       const interval = setInterval(() => {
@@ -69,6 +69,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
     
     console.log("Adding new scene...");
     try {
+      // Directly add scene without setting loading state
       addScene();
       toast({
         title: "Scene added",
@@ -108,6 +109,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
       
       <ScriptHeader />
       
+      {/* Only show progress for initial load */}
       {loading && progress > 0 && (
         <Progress 
           value={progress} 
@@ -143,7 +145,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({ mode = "create" }) => {
           </Droppable>
         </DragDropContext>
         
-        {/* Add Scene Button - improved positioning */}
+        {/* Add Scene Button - improved positioning to ensure visibility */}
         <div className="mt-8 mb-20 flex justify-center">
           <Button 
             onClick={handleAddScene} 

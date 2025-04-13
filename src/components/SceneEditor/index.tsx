@@ -59,20 +59,20 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ scene, onClose }) => {
         });
       }
       
-      // Update the scene in the context
+      // Direct update without setting loading state
       updateScene(scene.id, elementsCopy);
       
       toast({
         title: "Scene updated",
-        description: "Your changes have been saved successfully",
+        description: "Your changes have been saved",
       });
       
-      // Close immediately without waiting
+      // Close immediately
       onClose();
     } catch (error) {
       console.error("Error saving scene:", error);
       toast({
-        title: "Save failed",
+        title: "Update failed",
         description: "There was a problem saving your changes",
         variant: "destructive"
       });

@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useScript } from "@/contexts/ScriptContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Save, FileDown, Lock, Unlock, Loader, X } from "lucide-react";
+import { Save, FileDown, Lock, Unlock, X } from "lucide-react";
 import { exportScriptToPDF } from "@/utils/ScriptsExporter";
 import ScriptVersionHistory from "./scripts/ScriptVersionHistory";
 import { useFirebase } from "@/contexts/FirebaseContext";
@@ -34,6 +34,14 @@ const ScriptHeader: React.FC = () => {
   const [visibility, setVisibility] = useState<"public" | "protected" | "private">("public");
   const [isFromViewAll, setIsFromViewAll] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [localTitle, setLocalTitle] = useState(title);
+  const [localAuthor, setLocalAuthor] = useState(author);
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalTitle(title);
+    setLocalAuthor(author);
+  }, [title, author]);
 
   // Check if we're coming from the view all scripts page
   useEffect(() => {
@@ -46,8 +54,41 @@ const ScriptHeader: React.FC = () => {
   // or if script is already in view-only mode
   const forceViewOnly = (user?.email === ADMIN_EMAIL && isFromViewAll) || isViewOnly;
 
+  // Debounce title and author changes to avoid unnecessary re-renders
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalTitle(newValue);
+  }, []);
+
+  const handleAuthorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalAuthor(newValue);
+  }, []);
+
+  // Only update context when focus is lost
+  const handleTitleBlur = useCallback(() => {
+    if (localTitle !== title) {
+      setTitle(localTitle);
+    }
+  }, [localTitle, title, setTitle]);
+
+  const handleAuthorBlur = useCallback(() => {
+    if (localAuthor !== author) {
+      setAuthor(localAuthor);
+    }
+  }, [localAuthor, author, setAuthor]);
+
   const handleSave = async () => {
     setIsSaving(true);
+    
+    // Make sure title and author are saved before calling saveScript
+    if (localTitle !== title) {
+      setTitle(localTitle);
+    }
+    if (localAuthor !== author) {
+      setAuthor(localAuthor);
+    }
+    
     await saveScript(visibility);
     setIsSaving(false);
     navigate("/scripts");
@@ -61,8 +102,8 @@ const ScriptHeader: React.FC = () => {
   const handleExport = () => {
     const scriptData = {
       id: currentScriptId || "temp",
-      title: title || "Untitled",
-      author: author || "Unknown",
+      title: localTitle || "Untitled",
+      author: localAuthor || "Unknown",
       scenes,
     };
     
@@ -77,8 +118,9 @@ const ScriptHeader: React.FC = () => {
             <Label htmlFor="title" className="sr-only">Title</Label>
             <Input 
               id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={localTitle}
+              onChange={handleTitleChange}
+              onBlur={handleTitleBlur}
               placeholder="Script Title"
               className="text-lg font-bold"
               disabled={forceViewOnly}
@@ -89,8 +131,9 @@ const ScriptHeader: React.FC = () => {
             <Label htmlFor="author" className="sr-only">Author</Label>
             <Input 
               id="author"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
+              value={localAuthor}
+              onChange={handleAuthorChange}
+              onBlur={handleAuthorBlur}
               placeholder="Author Name"
               disabled={forceViewOnly}
             />
@@ -148,17 +191,8 @@ const ScriptHeader: React.FC = () => {
               onClick={handleSave}
               size="sm"
             >
-              {isSaving ? (
-                <>
-                  <Loader className="h-4 w-4 mr-1 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-1" />
-                  Save
-                </>
-              )}
+              <Save className="h-4 w-4 mr-1" />
+              {currentScriptId ? "Update" : "Save"}
             </Button>
           )}
         </div>
