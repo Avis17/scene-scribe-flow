@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "./FirebaseContext";
 import { useScriptService, ScriptVisibility } from "@/services/ScriptService";
@@ -79,6 +80,12 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
   const loadingRef = useRef<boolean>(false);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef<boolean>(true);
+  const currentScenesRef = useRef<Scene[]>(scenes);
+
+  // Update the ref when scenes change
+  useEffect(() => {
+    currentScenesRef.current = scenes;
+  }, [scenes]);
 
   const handleSetTitle = (newTitle: string) => {
     if (newTitle !== title) {
@@ -141,7 +148,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const loadScript = async () => {
-      if (currentScriptId && !loadingRef.current) {
+      if (currentScriptId && !loadingRef.current && !isModified) {
         try {
           console.log("Loading script:", currentScriptId);
           loadingRef.current = true;
@@ -188,11 +195,11 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
               id: scene.id || `scene-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               elements: Array.isArray(scene.elements) && scene.elements.length > 0 ? scene.elements : [
                 {
-                  type: "scene-heading",
+                  type: "scene-heading" as const,
                   content: "INT. LOCATION - DAY",
                 },
                 {
-                  type: "action",
+                  type: "action" as const,
                   content: "",
                 },
               ]
@@ -207,11 +214,11 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
               isCollapsed: false,
               elements: [
                 {
-                  type: "scene-heading",
+                  type: "scene-heading" as const,
                   content: "INT. LIVING ROOM - DAY",
                 },
                 {
-                  type: "action",
+                  type: "action" as const,
                   content: "The room is empty. Sunlight streams through large windows.",
                 },
               ],
@@ -276,7 +283,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     };
     
     loadScript();
-  }, [currentScriptId, user, toast, scriptService, resetScript]);
+  }, [currentScriptId, user, toast, scriptService, resetScript, isModified]);
 
   const addScene = () => {
     console.log("Adding a new scene to the script");
@@ -363,7 +370,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       if (currentScriptId) {
         console.log("Updating existing script:", currentScriptId);
-        await scriptService.updateScript(currentScriptId, title, author, scenes, visibility, user.email);
+        await scriptService.updateScript(currentScriptId, title, author, currentScenesRef.current, visibility, user.email);
         toast({
           title: "Success",
           description: "Script updated successfully",
@@ -372,7 +379,7 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
         return currentScriptId;
       } else {
         console.log("Creating new script");
-        const newScriptId = await scriptService.saveScript(title, author, scenes, visibility);
+        const newScriptId = await scriptService.saveScript(title, author, currentScenesRef.current, visibility);
         setCurrentScriptId(newScriptId);
         toast({
           title: "Success",
