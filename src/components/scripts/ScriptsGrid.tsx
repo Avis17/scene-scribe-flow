@@ -14,6 +14,7 @@ interface ScriptsGridProps {
   isViewOnly?: boolean;
   isDeleting?: boolean;
   deletingScriptId?: string | null;
+  isAdminViewingAll?: boolean;
 }
 
 const ScriptsGrid: React.FC<ScriptsGridProps> = ({
@@ -24,7 +25,8 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
   formatDate,
   isViewOnly = false,
   isDeleting = false,
-  deletingScriptId = null
+  deletingScriptId = null,
+  isAdminViewingAll = false
 }) => {
   const { user } = useFirebase();
 
@@ -49,6 +51,8 @@ const ScriptsGrid: React.FC<ScriptsGridProps> = ({
               onExport={onExportScript}
               formatDate={formatDate}
               isDeleting={isDeleting && deletingScriptId === script.id}
+              isViewOnly={isViewOnly}
+              isAdminViewingAll={isAdminViewingAll}
             />
           );
         } else {

@@ -56,7 +56,6 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
         description: `Scene ${index + 1} has been removed`
       });
     } catch (error) {
-      console.error("Error deleting scene:", error);
       toast({
         title: "Delete failed",
         description: "There was a problem deleting the scene",
@@ -76,12 +75,10 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
       });
       return;
     }
-    console.log("Opening editor for scene:", scene.id);
     setIsEditing(true);
   };
 
   const handleEditorClose = () => {
-    console.log("Editor closing for scene:", scene.id);
     setIsEditing(false);
   };
 
@@ -103,39 +100,41 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
             )}
           </div>
           <div className="flex items-center gap-1 md:gap-2 flex-wrap">
-            {isEditing ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancelEdit}
-                type="button"
-              >
-                <X className="h-4 w-4" />
-                <span className="ml-1 text-xs md:text-sm">Cancel</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleEdit}
-                type="button"
-                disabled={isViewOnly}
-              >
-                <Pencil className="h-4 w-4" />
-                <span className="ml-1 text-xs md:text-sm">Edit</span>
-              </Button>
+            {!isViewOnly && (
+              <>
+                {isEditing ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    type="button"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="ml-1 text-xs md:text-sm">Cancel</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEdit}
+                    type="button"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="ml-1 text-xs md:text-sm">Edit</span>
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={confirmDelete}
+                  type="button"
+                  className="hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="ml-1 text-xs md:text-sm">Delete</span>
+                </Button>
+              </>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={confirmDelete}
-              type="button"
-              className="hover:text-destructive"
-              disabled={isViewOnly}
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="ml-1 text-xs md:text-sm">Delete</span>
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -153,7 +152,7 @@ const SceneCard: React.FC<SceneCardProps> = ({ scene, index }) => {
         </CardHeader>
         {!scene.isCollapsed && (
           <CardContent className="p-3 md:p-4 pt-0 bg-white/50 dark:bg-slate-900/50">
-            {isEditing ? (
+            {isEditing && !isViewOnly ? (
               <SceneEditor scene={scene} onClose={handleEditorClose} />
             ) : (
               <div className="space-y-2 prose max-w-none pt-4">

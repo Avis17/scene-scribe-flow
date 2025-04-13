@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ interface ScriptCardProps {
   onExport: (scriptId: string, title: string) => void;
   formatDate: (date: Date) => string;
   isDeleting?: boolean;
+  isViewOnly?: boolean;
+  isAdminViewingAll?: boolean;
 }
 
 const ScriptCard: React.FC<ScriptCardProps> = ({ 
@@ -42,7 +45,9 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   onDelete, 
   onExport, 
   formatDate,
-  isDeleting = false
+  isDeleting = false,
+  isViewOnly = false,
+  isAdminViewingAll = false
 }) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -57,7 +62,6 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   };
 
   const handleDelete = () => {
-    console.log("Deleting script:", script.id);
     onDelete(script.id);
     setShowDeleteDialog(false);
   };
@@ -72,6 +76,9 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
   const lastEditedByDisplay = script.lastEditedBy ? getDisplayName(script.lastEditedBy) : "you";
 
   const isProtected = script.visibility === "protected";
+  
+  // If admin is viewing all scripts, disable editing and deleting
+  const showEditDelete = !isAdminViewingAll;
 
   return (
     <>
@@ -98,6 +105,11 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               {isProtected && (
                 <span className="text-xs bg-primary/10 p-1 px-2 rounded-sm text-primary font-medium whitespace-nowrap">
                   Protected
+                </span>
+              )}
+              {isAdminViewingAll && (
+                <span className="text-xs bg-amber-100 p-1 px-2 rounded-sm text-amber-700 font-medium whitespace-nowrap">
+                  View Only
                 </span>
               )}
             </div>
@@ -130,17 +142,31 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>View</span>
             </Button>
             
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => onOpen(script.id)}
-              type="button"
-              className="w-full group-hover:border-primary/30 transition-colors"
-              disabled={isDeleting}
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              <span>Edit</span>
-            </Button>
+            {showEditDelete ? (
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => onOpen(script.id)}
+                type="button"
+                className="w-full group-hover:border-primary/30 transition-colors"
+                disabled={isDeleting}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                <span>Edit</span>
+              </Button>
+            ) : (
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => onOpen(script.id)}
+                type="button"
+                className="w-full group-hover:border-primary/30 transition-colors"
+                disabled={true}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                <span>View Only</span>
+              </Button>
+            )}
             
             <Button 
               variant="outline"
@@ -154,40 +180,64 @@ const ScriptCard: React.FC<ScriptCardProps> = ({
               <span>Export</span>
             </Button>
             
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={confirmDelete}
-              type="button"
-              className="w-full"
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader className="h-4 w-4 mr-1 animate-spin" />
-                  <span>Deleting...</span>
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  <span>Delete</span>
-                </>
-              )}
-            </Button>
+            {showEditDelete ? (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={confirmDelete}
+                type="button"
+                className="w-full"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-1 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    <span>Delete</span>
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                variant="outline"
+                size="sm"
+                className="w-full opacity-50"
+                disabled={true}
+              >
+                <FileDown className="h-4 w-4 mr-1" />
+                <span>Admin View</span>
+              </Button>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-2 w-full">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowShareDialog(true)}
-              type="button"
-              disabled={isDeleting}
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              <span>Share</span>
-            </Button>
+            {showEditDelete ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowShareDialog(true)}
+                type="button"
+                disabled={isDeleting}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                <span>Share</span>
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full opacity-50"
+                disabled={true}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                <span>Share</span>
+              </Button>
+            )}
 
             <ScriptVersionHistory scriptId={script.id} />
           </div>

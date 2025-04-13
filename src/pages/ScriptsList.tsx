@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useScriptService, ScriptVisibility, ScriptData } from "@/services/ScriptService";
@@ -34,7 +33,6 @@ const ScriptsList: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Direct admin check without relying on AdminContext
   const isAdminUser = user?.email === ADMIN_EMAIL;
   
   const fetchScripts = useCallback(async (fetchAll = false) => {
@@ -328,6 +326,7 @@ const ScriptsList: React.FC = () => {
             isViewOnly={isViewingAll}
             isDeleting={isDeleting}
             deletingScriptId={deletingScriptId}
+            isAdminViewingAll={isViewingAll && isAdminUser}
           />
         ) : (
           <EmptyState 

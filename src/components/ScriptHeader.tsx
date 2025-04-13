@@ -52,7 +52,8 @@ const ScriptHeader: React.FC = () => {
 
   // Force view-only mode if user is admin and coming from view all page 
   // or if script is already in view-only mode
-  const forceViewOnly = (user?.email === ADMIN_EMAIL && isFromViewAll) || isViewOnly;
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const forceViewOnly = (isAdmin && isFromViewAll) || isViewOnly;
 
   // Debounce title and author changes to avoid unnecessary re-renders
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,9 +145,9 @@ const ScriptHeader: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {isFromViewAll && (
+          {isFromViewAll && isAdmin && (
             <div className="text-xs bg-amber-100 text-amber-800 p-1 px-2 rounded-md flex items-center border border-amber-200">
-              Viewing all scripts (Read only)
+              Viewing as admin (Read only)
             </div>
           )}
           
