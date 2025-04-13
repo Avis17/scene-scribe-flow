@@ -31,7 +31,7 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
-  // Apply theme on mount and when theme changes
+  // Apply theme immediately when component mounts and when theme changes
   useEffect(() => {
     const root = window.document.documentElement;
     
@@ -46,17 +46,35 @@ export function ThemeProvider({
 
       root.classList.add(systemTheme);
       console.log("Applied system theme:", systemTheme);
-      return;
+    } else {
+      // Add the selected theme class
+      root.classList.add(theme);
+      console.log("Applied theme class:", theme);
     }
-
-    // Add the selected theme class
-    root.classList.add(theme);
     
     // Save to localStorage
     localStorage.setItem(storageKey, theme);
     
-    console.log("Applied theme:", theme);
+    console.log("Theme saved to localStorage:", theme);
   }, [theme, storageKey]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      
+      const handleChange = () => {
+        const root = window.document.documentElement;
+        root.classList.remove("light", "dark");
+        const systemTheme = mediaQuery.matches ? "dark" : "light";
+        root.classList.add(systemTheme);
+        console.log("System theme changed to:", systemTheme);
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+  }, [theme]);
 
   const value = {
     theme,

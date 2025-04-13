@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { FirebaseProvider } from "./contexts/FirebaseContext";
 import { AdminProvider } from "./contexts/AdminContext";
 import { ScriptProvider } from "./contexts/ScriptContext";
+import { ThemeProvider } from "./hooks/use-theme";
 import AuthGuard from "./components/AuthGuard";
 import AdminGuard from "./components/AdminGuard";
 import Index from "./pages/Index";
@@ -23,53 +24,55 @@ function App() {
   }, []);
 
   return (
-    <FirebaseProvider>
-      <AdminProvider>
-        <ScriptProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/scripts"
-                element={
-                  <AuthGuard>
-                    <ScriptsList />
-                  </AuthGuard>
-                }
-              />
-              <Route
-                path="/editor"
-                element={
-                  <AuthGuard>
-                    <Index />
-                  </AuthGuard>
-                }
-              />
-              <Route
-                path="/view/:scriptId"
-                element={
-                  <AuthGuard>
-                    <ScriptViewer />
-                  </AuthGuard>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <AdminGuard>
-                    <Admin />
-                  </AdminGuard>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Footer />
-            <Toaster />
-          </BrowserRouter>
-        </ScriptProvider>
-      </AdminProvider>
-    </FirebaseProvider>
+    <ThemeProvider defaultTheme="system" storageKey="scriptly-theme">
+      <FirebaseProvider>
+        <AdminProvider>
+          <ScriptProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/scripts"
+                  element={
+                    <AuthGuard>
+                      <ScriptsList />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/editor"
+                  element={
+                    <AuthGuard>
+                      <Index />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/view/:scriptId"
+                  element={
+                    <AuthGuard>
+                      <ScriptViewer />
+                    </AuthGuard>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminGuard>
+                      <Admin />
+                    </AdminGuard>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+              <Toaster />
+            </BrowserRouter>
+          </ScriptProvider>
+        </AdminProvider>
+      </FirebaseProvider>
+    </ThemeProvider>
   );
 }
 
