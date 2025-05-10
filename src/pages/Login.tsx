@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useFirebase } from "@/contexts/FirebaseContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -200,9 +199,12 @@ const Login: React.FC = () => {
                   <div className="flex justify-between">
                     <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">Password</Label>
                     {isLogin && (
-                      <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                      <Link
+                        to="/forgot-password"
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      >
                         Forgot password?
-                      </a>
+                      </Link>
                     )}
                   </div>
                   <div className="relative">
