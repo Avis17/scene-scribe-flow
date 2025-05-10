@@ -17,14 +17,10 @@ const config: CapacitorConfig = {
     },
     Permissions: {
       permissions: [
-        "record_audio"
+        "record_audio",
+        "microphone"
       ]
     }
-  },
-  android: {
-    permissions: [
-      "android.permission.RECORD_AUDIO"
-    ]
   }
 };
 
