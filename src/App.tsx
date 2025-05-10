@@ -14,8 +14,8 @@ import { Toaster } from "./components/ui/toaster";
 import Admin from "./pages/Admin";
 import ScriptsList from "./pages/ScriptsList";
 import ScriptViewer from "./pages/ScriptViewer";
-import Footer from "./Footer";
 import "./App.css";
+import MainLayout from "./MainLayout";
 
 function App() {
   useEffect(() => {
@@ -36,7 +36,9 @@ function App() {
                   path="/scripts"
                   element={
                     <AuthGuard>
-                      <ScriptsList />
+                      <MainLayout>
+                        <ScriptsList />
+                      </MainLayout>
                     </AuthGuard>
                   }
                 />
@@ -44,29 +46,29 @@ function App() {
                   path="/editor"
                   element={
                     <AuthGuard>
-                      <Index />
-                    </AuthGuard>
+                      <MainLayout>
+                        <Index />
+                      </MainLayout>                    </AuthGuard>
                   }
                 />
                 <Route
                   path="/view/:scriptId"
                   element={
-                    <AuthGuard>
+                    <MainLayout>
                       <ScriptViewer />
-                    </AuthGuard>
+                    </MainLayout>
                   }
                 />
                 <Route
                   path="/admin"
                   element={
-                    <AdminGuard>
+                    <MainLayout>
                       <Admin />
-                    </AdminGuard>
+                    </MainLayout>
                   }
                 />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Footer />
               <Toaster />
             </BrowserRouter>
           </ScriptProvider>
