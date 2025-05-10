@@ -9,6 +9,7 @@ import AuthGuard from "./components/AuthGuard";
 import AdminGuard from "./components/AdminGuard";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "./components/ui/toaster";
 import Admin from "./pages/Admin";
@@ -32,6 +33,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route
                   path="/scripts"
                   element={
