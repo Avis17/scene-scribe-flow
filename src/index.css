@@ -170,6 +170,11 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+  
+  /* Help dialog touch-friendly tabs */
+  .touch-target {
+    @apply min-h-[36px] min-w-[36px] md:min-h-[44px] md:min-w-[44px];
+  }
 }
 
 @layer utilities {
@@ -222,6 +227,25 @@
   input, select, textarea, button {
     font-size: 16px !important; /* Prevent zoom on focus in iOS */
   }
+  
+  /* Ensure dialog content is properly sized on mobile */
+  .dialog-mobile-fix {
+    max-height: 80vh !important;
+    max-width: 95vw !important;
+  }
+}
+
+/* Allow for extra small screens */
+@media screen and (max-width: 360px) {
+  .xs\:hidden {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 361px) {
+  .xs\:inline {
+    display: inline;
+  }
 }
 
 /* iOS specific styles */
@@ -230,4 +254,3 @@
     height: -webkit-fill-available;
   }
 }
-
