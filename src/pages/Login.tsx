@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/card";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { LogIn, Mail, Lock, Eye, EyeOff, Smartphone, Users } from "lucide-react";
 import AppLogo from "@/components/AppLogo";
-import Footer from "@/components/Footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -29,6 +29,7 @@ const Login: React.FC = () => {
   const { signIn, signUp, signInWithGoogle } = useFirebase();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,33 +109,85 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
+    <div className="min-h-screen w-full flex flex-col md:flex-row items-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-indigo-950 p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
+      {/* Feature showcase section */}
+      <div className={`w-full ${isMobile ? 'mb-6' : 'md:w-1/2'} p-6 flex flex-col justify-center animate-fade-in`}>
+        <div className="text-center md:text-left mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mb-4">
+            Scriptly
+          </h1>
+          <p className="text-xl md:text-2xl text-slate-700 dark:text-slate-300 mb-6">
+            Your professional screenplay writing assistant
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+            <div className="flex flex-col items-center md:items-start p-4 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-md hover:shadow-lg transition-all">
+              <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full mb-4">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Collaborative Writing</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-center md:text-left">
+                Share scripts with teammates and collaborate in real-time
+              </p>
+            </div>
+            
+            <div className="flex flex-col items-center md:items-start p-4 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-md hover:shadow-lg transition-all">
+              <div className="bg-indigo-100 dark:bg-indigo-900 p-3 rounded-full mb-4">
+                <Smartphone className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Mobile Ready</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-center md:text-left">
+                Write and edit your screenplays on any device, anytime
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-10 space-y-6">
+            <div className="flex items-center">
+              <div className="h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 mr-3"></div>
+              <p className="text-slate-700 dark:text-slate-300">Industry-standard screenplay formatting</p>
+            </div>
+            <div className="flex items-center">
+              <div className="h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 mr-3"></div>
+              <p className="text-slate-700 dark:text-slate-300">Export to PDF with professional layouts</p>
+            </div>
+            <div className="flex items-center">
+              <div className="h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 mr-3"></div>
+              <p className="text-slate-700 dark:text-slate-300">Secure cloud storage for all your scripts</p>
+            </div>
+          </div>
         </div>
-
-        <Card className="w-full max-w-md">
+      </div>
+      
+      {/* Login/Signup card */}
+      <div className={`w-full ${isMobile ? '' : 'md:w-1/2'} flex justify-center items-center`}>
+        <Card className="w-full max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
               <AppLogo size="lg" />
             </div>
-            <CardTitle className="text-2xl font-bold">Scriptly</CardTitle>
-            <CardDescription>
-              {isLogin ? "Sign in to your account" : "Create a new account"}
+            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-purple-400">
+              {isLogin ? "Welcome Back" : "Join Scriptly"}
+            </CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400">
+              {isLogin ? "Sign in to your account to continue" : "Create a new account to get started"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleAuth} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="your.email@example.com"
-                    className="pl-10"
+                    className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-blue-500 dark:focus:ring-blue-400"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -142,14 +195,21 @@ const Login: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex justify-between">
+                  <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">Password</Label>
+                  {isLogin && (
+                    <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                      Forgot password?
+                    </a>
+                  )}
+                </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
+                    className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-blue-500 dark:focus:ring-blue-400"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
@@ -157,7 +217,7 @@ const Login: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -169,7 +229,7 @@ const Login: React.FC = () => {
               </div>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-500 dark:to-indigo-500 text-white shadow-md"
                 disabled={loading}
               >
                 <LogIn className="mr-2 h-4 w-4" />
@@ -186,7 +246,7 @@ const Login: React.FC = () => {
             <Button
               variant="outline"
               type="button"
-              className="w-full"
+              className="w-full border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
               onClick={handleGoogleSignIn}
               disabled={loading}
             >
@@ -220,7 +280,7 @@ const Login: React.FC = () => {
           <CardFooter>
             <Button
               variant="link"
-              className="w-full"
+              className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
               onClick={() => setIsLogin(!isLogin)}
               disabled={loading}
             >
@@ -231,8 +291,6 @@ const Login: React.FC = () => {
           </CardFooter>
         </Card>
       </div>
-      <Footer />
-
     </div>
   );
 };
