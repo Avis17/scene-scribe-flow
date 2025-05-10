@@ -1,11 +1,11 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { 
-  initializeApp, 
-  FirebaseApp 
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import {
+  initializeApp,
+  FirebaseApp
 } from "firebase/app";
-import { 
-  getAuth, 
+import {
+  getAuth,
   Auth,
   onAuthStateChanged,
   User,
@@ -15,7 +15,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   browserLocalPersistence,
-  setPersistence
+  setPersistence,
+  signInWithCredential
 } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
@@ -31,6 +32,8 @@ const firebaseConfig = {
   appId: "1:640088332181:web:7ecdc96d8d2209373c489c",
   measurementId: "G-5FKRBSY4N9"
 };
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 
 interface FirebaseContextType {
   app: FirebaseApp;
@@ -63,7 +66,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  
+
   // Set persistence to LOCAL (browser persistence)
   useEffect(() => {
     const setupPersistence = async () => {
@@ -73,10 +76,10 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
         // Error handling without console.log
       }
     };
-    
+
     setupPersistence();
   }, [auth]);
-  
+
   // Initialize Analytics in browser environment
   if (typeof window !== 'undefined') {
     getAnalytics(app);
@@ -110,30 +113,45 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     await firebaseSignOut(auth);
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // Force authorization even if the user has already granted it
-      provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      // Check for unauthorized domain error
-      if (error.code === 'auth/unauthorized-domain') {
-        toast({
-          title: "Unauthorized Domain",
-          description: "This domain is not authorized for authentication. Please add it in Firebase console under Authentication > Sign-in method > Authorized domains.",
-          variant: "destructive",
-        });
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      if (Capacitor.getPlatform() === 'android') {
+        // ✅ Native mobile (Capacitor)
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        const idToken = result.credential?.idToken;
+
+        if (!idToken) {
+          throw new Error("No ID token returned from native Google sign-in.");
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, credential);
+        console.log("✅ Signed in with Google (mobile)");
       } else {
-        toast({
-          title: "Google Sign-in Failed",
-          description: error.message || "Failed to sign in with Google",
-          variant: "destructive",
-        });
+        // ✅ Web platform
+        await signInWithPopup(auth, provider);
+        console.log("✅ Signed in with Google (web)");
       }
-      throw error;
+
+      // Optional: Add a toast on success
+      toast({
+        title: "Signed in",
+        description: "You have successfully signed in with Google.",
+      });
+    } catch (error: any) {
+      console.error("Google Sign-in Error:", error);
+      toast({
+        title: "Sign-in Failed",
+        description:
+          error?.message ||
+          "Google sign-in failed. Please try again.",
+        variant: "destructive",
+      });
     }
-  };
+  }, [toast]);
 
   const value = {
     app,

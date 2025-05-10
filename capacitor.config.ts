@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: 'Scriptly',
   webDir: 'dist',
   server: {
-       androidScheme: 'https'
+    androidScheme: 'https'
   },
   plugins: {
     SplashScreen: {
@@ -15,12 +15,6 @@ const config: CapacitorConfig = {
       showSpinner: true,
       spinnerColor: "#FFFFFF"
     }
-  },
-  ios: {
-    contentInset: "always"
-  },
-  android: {
-    allowMixedContent: true
   }
 };
 

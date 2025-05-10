@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "640088332181",
+    "project_id": "scriptly-c27ff",
+    "storage_bucket": "scriptly-c27ff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:640088332181:android:ae11af13e683e6be3c489c",
+        "android_client_info": {
+          "package_name": "com.scriptly.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "640088332181-jvadqqg80hfrcc7r54d0713i93dme0tr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.scriptly.app",
+            "certificate_hash": "e92b3f61fda93c0a6d56092ae45b4b6478bbfff6"
+          }
+        },
+        {
+          "client_id": "640088332181-5t2q2p67rnknfk8sc5adriatfr18o56b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDg5MHTFQfq0Vrx_Wt8Wk8mC9UPNkRRD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "640088332181-5t2q2p67rnknfk8sc5adriatfr18o56b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

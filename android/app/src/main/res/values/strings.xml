@@ -4,4 +4,7 @@
     <string name="title_activity_main">Scriptly</string>
     <string name="package_name">com.scriptly.app</string>
     <string name="custom_url_scheme">com.scriptly.app</string>
+
+    <string name="default_web_client_id">676798387814-r6fg8691ngoa856t5oam766ct6l6beg7.apps.googleusercontent.com</string>
+
 </resources>
