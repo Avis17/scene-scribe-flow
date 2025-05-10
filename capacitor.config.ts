@@ -14,7 +14,17 @@ const config: CapacitorConfig = {
       backgroundColor: "#4361EE",
       showSpinner: true,
       spinnerColor: "#FFFFFF"
+    },
+    Permissions: {
+      permissions: [
+        "record_audio"
+      ]
     }
+  },
+  android: {
+    permissions: [
+      "android.permission.RECORD_AUDIO"
+    ]
   }
 };
 
