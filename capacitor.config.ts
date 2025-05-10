@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a1664315b2e6480ba44543467c434ea0',
+  appId: 'app.lovable.scriptly',
   appName: 'Scriptly',
   webDir: 'dist',
   server: {
@@ -12,7 +12,18 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 0
+    },
+    Keyboard: {
+      resize: "body",
+      style: "dark",
+      resizeOnFullScreen: true
     }
+  },
+  ios: {
+    contentInset: "always"
+  },
+  android: {
+    allowMixedContent: true
   }
 };
 
